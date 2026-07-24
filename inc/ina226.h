@@ -3,62 +3,70 @@
 
 #include <stdint.h>
 
-// 1. Alert Okuma Durumları (8-bit)
-typedef enum : uint8_t {
-    INA226_ALERT_NO_ALERT                      = 0,
-    INA226_ALERT_SHUNT_VOLTAGE_OVER_LIMIT      = 1,
-    INA226_ALERT_SHUNT_VOLTAGE_UNDER_LIMIT     = 2,
-    INA226_ALERT_BUS_VOLTAGE_OVER_LIMIT        = 3,
-    INA226_ALERT_BUS_VOLTAGE_UNDER_LIMIT       = 4,
-    INA226_ALERT_POWER_OVER_LIMIT              = 5,
-    INA226_ALERT_CONVERSION_READY              = 6
-} INA226_Alert_Status_t;
+// --- Platform-specific I2C functions to be implemented by the user ---
+extern uint8_t INA226_Platform_I2C_Write(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
+extern uint8_t INA226_Platform_I2C_Read(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
 
-// 2. Dönüşüm Süreleri (Register bitiyle birebir eşleşir)
-typedef enum : uint8_t {
-    INA226_CT_140_US  = 0,
-    INA226_CT_204_US  = 1,
-    INA226_CT_332_US  = 2,
-    INA226_CT_588_US  = 3,
-    INA226_CT_1100_US = 4,
-    INA226_CT_2116_US = 5,
-    INA226_CT_4156_US = 6,
-    INA226_CT_8244_US = 7 
-} INA226_Conv_Time_t;
+/* ========================================================================= */
+/*                              TYPES & DEFINES                              */
+/* ========================================================================= */
 
-// 3. Örnekleme / Ortalamalar (Register bitiyle birebir eşleşir)
-typedef enum : uint8_t {
-    INA226_AVG_1    = 0,
-    INA226_AVG_4    = 1,
-    INA226_AVG_16   = 2,
-    INA226_AVG_64   = 3,
-    INA226_AVG_128  = 4,
-    INA226_AVG_256  = 5,
-    INA226_AVG_512  = 6,
-    INA226_AVG_1024 = 7
-} INA226_Avg_Time_t;
+// 1. Library Function Return Statuses
+typedef uint8_t INA226_Status_t;
+#define INA226_OK                   ((INA226_Status_t)0U)
+#define INA226_ERR_I2C              ((INA226_Status_t)1U)
+#define INA226_ERR_INVALID_PARAM    ((INA226_Status_t)2U)
 
-// 4. Çalışma Modları (Register bitiyle birebir eşleşir)
-typedef enum : uint8_t {
-    INA226_SHUT_DOWN                        = 0,
-    INA226_TRIGGERED_SHUNT_VOLTAGE          = 1,
-    INA226_TRIGGERED_BUS_VOLTAGE            = 2,
-    INA226_TRIGGERED_BUS_AND_SHUNT_VOLTAGE  = 3,
-    INA226_CONTINUOUS_SHUNT_VOLTAGE         = 5, 
-    INA226_CONTINUOUS_BUS_VOLTAGE           = 6,
-    INA226_CONTINUOUS_BUS_AND_SHUNT_VOLTAGE = 7  
-} INA226_Mode_t;
+// 2. Alert Read Statuses
+typedef uint8_t INA226_Alert_Status_t;
+#define INA226_ALERT_NO_ALERT                   ((INA226_Alert_Status_t)0U)
+#define INA226_ALERT_SHUNT_VOLTAGE_OVER_LIMIT   ((INA226_Alert_Status_t)1U)
+#define INA226_ALERT_SHUNT_VOLTAGE_UNDER_LIMIT  ((INA226_Alert_Status_t)2U)
+#define INA226_ALERT_BUS_VOLTAGE_OVER_LIMIT     ((INA226_Alert_Status_t)3U)
+#define INA226_ALERT_BUS_VOLTAGE_UNDER_LIMIT    ((INA226_Alert_Status_t)4U)
+#define INA226_ALERT_POWER_OVER_LIMIT           ((INA226_Alert_Status_t)5U)
+#define INA226_ALERT_CONVERSION_READY           ((INA226_Alert_Status_t)6U)
 
+// 3. Conversion Times (Matches register bits directly)
+typedef uint8_t INA226_Conv_Time_t;
+#define INA226_CT_140_US            ((INA226_Conv_Time_t)0U)
+#define INA226_CT_204_US            ((INA226_Conv_Time_t)1U)
+#define INA226_CT_332_US            ((INA226_Conv_Time_t)2U)
+#define INA226_CT_588_US            ((INA226_Conv_Time_t)3U)
+#define INA226_CT_1100_US           ((INA226_Conv_Time_t)4U)
+#define INA226_CT_2116_US           ((INA226_Conv_Time_t)5U)
+#define INA226_CT_4156_US           ((INA226_Conv_Time_t)6U)
+#define INA226_CT_8244_US           ((INA226_Conv_Time_t)7U)
 
-typedef enum : uint8_t {
-    INA226_ALERT_FUNC_SHUNT_VOLTAGE_OVER_LIMIT  = 15,
-    INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT = 14,
-    INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT    = 13,
-    INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT   = 12,
-    INA226_ALERT_FUNC_POWER_OVER_LIMIT          = 11,
-    INA226_ALERT_FUNC_CONVERSION_READY          = 10
-} INA226_Alert_Func_t;
+// 4. Averaging Modes (Matches register bits directly)
+typedef uint8_t INA226_Avg_Time_t;
+#define INA226_AVG_1                ((INA226_Avg_Time_t)0U)
+#define INA226_AVG_4                ((INA226_Avg_Time_t)1U)
+#define INA226_AVG_16               ((INA226_Avg_Time_t)2U)
+#define INA226_AVG_64               ((INA226_Avg_Time_t)3U)
+#define INA226_AVG_128              ((INA226_Avg_Time_t)4U)
+#define INA226_AVG_256              ((INA226_Avg_Time_t)5U)
+#define INA226_AVG_512              ((INA226_Avg_Time_t)6U)
+#define INA226_AVG_1024             ((INA226_Avg_Time_t)7U)
 
+// 5. Operating Modes (Matches register bits directly)
+typedef uint8_t INA226_Mode_t;
+#define INA226_SHUT_DOWN                        ((INA226_Mode_t)0U)
+#define INA226_TRIGGERED_SHUNT_VOLTAGE          ((INA226_Mode_t)1U)
+#define INA226_TRIGGERED_BUS_VOLTAGE            ((INA226_Mode_t)2U)
+#define INA226_TRIGGERED_BUS_AND_SHUNT_VOLTAGE  ((INA226_Mode_t)3U)
+#define INA226_CONTINUOUS_SHUNT_VOLTAGE         ((INA226_Mode_t)5U)
+#define INA226_CONTINUOUS_BUS_VOLTAGE           ((INA226_Mode_t)6U)
+#define INA226_CONTINUOUS_BUS_AND_SHUNT_VOLTAGE ((INA226_Mode_t)7U)
+
+// 6. Alert Pin Functions (Matches register bit positions directly)
+typedef uint8_t INA226_Alert_Func_t;
+#define INA226_ALERT_FUNC_SHUNT_VOLTAGE_OVER_LIMIT  ((INA226_Alert_Func_t)15U)
+#define INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT ((INA226_Alert_Func_t)14U)
+#define INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT    ((INA226_Alert_Func_t)13U)
+#define INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT   ((INA226_Alert_Func_t)12U)
+#define INA226_ALERT_FUNC_POWER_OVER_LIMIT          ((INA226_Alert_Func_t)11U)
+#define INA226_ALERT_FUNC_CONVERSION_READY          ((INA226_Alert_Func_t)10U)
 
 
 #endif /* INA226_H_ */
