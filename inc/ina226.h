@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 // --- Platform-specific I2C functions to be implemented by the user ---
-extern uint8_t INA226_Platform_I2C_Write(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
+extern uint8_t INA226_Platform_I2C_Write(uint8_t dev_addr, uint8_t reg_addr, const uint8_t *data, uint16_t len);
 extern uint8_t INA226_Platform_I2C_Read(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
 
 /* ========================================================================= */
