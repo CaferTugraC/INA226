@@ -69,4 +69,29 @@ typedef uint8_t INA226_Alert_Func_t;
 #define INA226_ALERT_FUNC_CONVERSION_READY          ((INA226_Alert_Func_t)10U)
 
 
+/* ========================================================================= */
+/*                            FUNCTION PROTOTYPES                            */
+/* ========================================================================= */
+
+// Configuration Register Operations
+INA226_Status_t INA226_Reset(uint8_t addr);
+INA226_Status_t INA226_Set_Shunt_Voltage_Conversion_Time(uint8_t addr, INA226_Conv_Time_t conv_time);
+INA226_Status_t INA226_Set_Bus_Voltage_Conversion_Time(uint8_t addr, INA226_Conv_Time_t conv_time);
+INA226_Status_t INA226_Set_Operating_Mode(uint8_t addr, INA226_Mode_t mode);
+INA226_Status_t INA226_Set_Averaging_Mode(uint8_t addr, INA226_Avg_Time_t avr_time);
+
+// Calibration
+INA226_Status_t INA226_Set_Calibration_Reg(uint8_t addr, uint16_t cal_reg_value);
+
+// Alert Operations
+INA226_Status_t INA226_Set_Alert_Pin_Function(uint8_t addr, INA226_Alert_Func_t alert_func);
+INA226_Status_t INA226_Set_Alert_Limit(uint8_t addr, uint16_t limit_value);
+INA226_Status_t INA226_Get_Alert_Status(uint8_t addr, INA226_Alert_Status_t *alert_status);
+
+// Read Measurements (Values are returned via pointer based on their type)
+INA226_Status_t INA226_Read_Current(uint8_t addr, int16_t *current);
+INA226_Status_t INA226_Read_Shunt_Voltage(uint8_t addr, int16_t *voltage);
+INA226_Status_t INA226_Read_Bus_Voltage(uint8_t addr, uint16_t *voltage);
+INA226_Status_t INA226_Read_Power(uint8_t addr, uint16_t *power);
+
 #endif /* INA226_H_ */
