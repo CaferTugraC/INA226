@@ -79,7 +79,7 @@ INA226_Status_t INA226_Reset(uint8_t addr);
 INA226_Status_t INA226_Set_Shunt_Voltage_Conversion_Time(uint8_t addr, INA226_Conv_Time_t conv_time);
 INA226_Status_t INA226_Set_Bus_Voltage_Conversion_Time(uint8_t addr, INA226_Conv_Time_t conv_time);
 INA226_Status_t INA226_Set_Operating_Mode(uint8_t addr, INA226_Mode_t mode);
-INA226_Status_t INA226_Set_Averaging_Mode(uint8_t addr, INA226_Avg_Time_t avr_time);
+INA226_Status_t INA226_Set_Averaging_Mode(uint8_t addr, INA226_Avg_Time_t avg_time);
 
 // Calibration
 INA226_Status_t INA226_Set_Calibration_Reg(uint8_t addr, uint16_t cal_reg_value);
