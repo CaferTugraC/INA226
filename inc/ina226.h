@@ -122,20 +122,20 @@ typedef uint16_t INA226_Alert_Func_t;
  *
  *        These masks are used when packing field values into the 16-bit registers.
  */
-#define INA226_CFG_RESET_MASK          (0x8000U)
-#define INA226_CFG_RESET_POS           (15U)
+#define INA226_CONFIG_RESET_MASK          (0x8000U)
+#define INA226_CONFIG_RESET_POS           (15U)
 
-#define INA226_CFG_AVG_MASK            (0x0E00U) // Bits 11-9 (0000 1110 0000 0000)
-#define INA226_CFG_AVG_POS             (9U)
+#define INA226_CONFIG_AVG_MASK            (0x0E00U) // Bits 11-9 (0000 1110 0000 0000)
+#define INA226_CONFIG_AVG_POS             (9U)
 
-#define INA226_CFG_BUS_CT_MASK         (0x01C0U) // Bits 8-6 (0000 0001 1100 0000)
-#define INA226_CFG_BUS_CT_POS          (6U)
+#define INA226_CONFIG_BUS_CT_MASK         (0x01C0U) // Bits 8-6 (0000 0001 1100 0000)
+#define INA226_CONFIG_BUS_CT_POS          (6U)
 
-#define INA226_CFG_SHUNT_CT_MASK       (0x0038U) // Bits 5-3 (0000 0000 0011 1000)
-#define INA226_CFG_SHUNT_CT_POS        (3U)
+#define INA226_CONFIG_SHUNT_CT_MASK       (0x0038U) // Bits 5-3 (0000 0000 0011 1000)
+#define INA226_CONFIG_SHUNT_CT_POS        (3U)
 
-#define INA226_CFG_MODE_MASK           (0x0007U) // Bits 2-0 (0000 0000 0000 0111)
-#define INA226_CFG_MODE_POS            (0U)
+#define INA226_CONFIG_MODE_MASK           (0x0007U) // Bits 2-0 (0000 0000 0000 0111)
+#define INA226_CONFIG_MODE_POS            (0U)
 
 #define INA226_MASK_ENABLE_ALERT_FUNC_MASK   (0xFC00U) // Bits 15-10
 
