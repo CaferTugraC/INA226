@@ -112,7 +112,29 @@ static INA226_Status_t INA226_Write_Reg(uint8_t dev_addr, uint8_t reg_addr, uint
 }
 
 static INA226_Status_t set_conversion_time_internal(uint8_t addr, INA226_Conv_Time_t conv_time, uint16_t mask, uint8_t pos) {
+        
+    // Validate the conv_time parameter
+    if (conv_time > INA226_CT_8244_US) {
+        return INA226_ERR_INVALID_PARAM;
+    }
 
+    uint16_t config_reg_val = 0;
+
+    // Read the configuration register value from destination device.
+    INA226_Status_t op_status = INA226_Read_Reg(addr, INA226_CONFIG_REG, &config_reg_val);
+
+    // check the I2C operation result.
+    if (op_status != INA226_OK) {
+        return op_status;
+    }
+
+    // Modify the configuration register: First clear the interested bitfield,
+    // followed by setting the interested bitfield with the user input.
+    config_reg_val &= ~(mask);
+    config_reg_val |= ((uint16_t)conv_time << pos);
+
+    // Write the configuration register of destination device and return the result of write operation.
+    return INA226_Write_Reg(addr, INA226_CONFIG_REG, config_reg_val);
 }
 
 /* ========================================================================= */
