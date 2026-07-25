@@ -1,4 +1,25 @@
+/**
+ * @file ina226.c
+ * @author Cafer Tura Çetin
+ * @brief INA226 sensor driver source file
+ * @version 0.1
+ * @date 2026-07-25
+ * 
+ * @copyright Copyright (c) 2026 Cafer Tura Çetin
+ * SPDX-License-Identifier: MIT
+ * 
+ */
+
+/* ========================================================================= */
+/*                                  INCLUDES                                 */
+/* ========================================================================= */
+
 #include "ina226.h"
+
+
+/* ========================================================================= */
+/*                              MACRO DEFINATIONS                            */
+/* ========================================================================= */
 
 /**
  * @brief Register address macros for INA226.
@@ -14,5 +35,11 @@
 #define INA226_ALERT_LIM_REG                (0x07)
 #define INA226_MANCUFACTURE_ID_REG          (0xFE)
 #define INA226_DIE_ID_REG                   (0xFF)
+
+
+
+/* ========================================================================= */
+/*                                 FUNCTIONES                                */
+/* ========================================================================= */
 
 
