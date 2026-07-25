@@ -42,7 +42,7 @@ extern uint8_t INA226_Platform_I2C_Read(uint8_t dev_addr, uint8_t reg_addr, uint
 /* ========================================================================= */
 
 /**
- * @brief Return value macros of the driver funcitons.
+ * @brief Return value macros of the driver functions.
  * 
  */
 typedef uint8_t INA226_Status_t;
@@ -138,7 +138,7 @@ INA226_Status_t INA226_Reset(uint8_t addr);
  * 
  * @param addr      : Destination INA226 device Address
  * @param conv_time : Selected conversion time option for the device. This value must be from macro
- *                    or decimal value of bit combination from dataheet. 
+ *                    or decimal value of bit combination from datasheet. 
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success
  *         - 1 : INA226_ERR_I2C; Error from INA226_Platform_I2C_Read.
@@ -151,7 +151,7 @@ INA226_Status_t INA226_Set_Shunt_Voltage_Conversion_Time(uint8_t addr, INA226_Co
  * 
  * @param addr      : Destination INA226 device Address
  * @param conv_time : Selected conversion time option for the device. This value must be from macro
- *                    or decimal value of bit combination from dataheet.
+ *                    or decimal value of bit combination from datasheet.
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success
  *         - 1 : INA226_ERR_I2C; Error from INA226_Platform_I2C_Read.
@@ -164,7 +164,7 @@ INA226_Status_t INA226_Set_Bus_Voltage_Conversion_Time(uint8_t addr, INA226_Conv
  * 
  * @param addr : Destination INA226 device Address.
  * @param mode : Selected operation mode for the device. This value must be from macro
- *                    or decimal value of bit combination from dataheet.
+ *                    or decimal value of bit combination from datasheet.
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success.
  *         - 1 : INA226_ERR_I2C; Error from INA226_Platform_I2C_Read.
@@ -176,8 +176,8 @@ INA226_Status_t INA226_Set_Operating_Mode(uint8_t addr, INA226_Mode_t mode);
  * @brief Set averaging mode to destination INA226 device.
  * 
  * @param addr     : Destination INA226 device Address.
- * @param avg_time : Selected averation time option for the device. This value must be from macro
- *                    or decimal value of bit combination from dataheet.
+ * @param avg_time : Selected averaging time option for the device. This value must be from macro
+ *                    or decimal value of bit combination from datasheet.
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success
  *         - 1 : INA226_ERR_I2C; Error from INA226_Platform_I2C_Read.
@@ -186,10 +186,10 @@ INA226_Status_t INA226_Set_Operating_Mode(uint8_t addr, INA226_Mode_t mode);
 INA226_Status_t INA226_Set_Averaging_Mode(uint8_t addr, INA226_Avg_Time_t avg_time);
 
 /**
- * @brief Set current and power measurment resulation by setting the calibration register.
+ * @brief Set current and power measurement resolution by setting the calibration register.
  * 
  * @param addr          : Destination INA226 device Address.
- * @param cal_reg_value : Calibration register value for the device. This value must calculate with equlation 1 from dataheet.
+ * @param cal_reg_value : Calibration register value for the device. This value must calculate with equation 1 from datasheet.
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success
  *         - 1 : INA226_ERR_I2C; Error from INA226_Platform_I2C_Read.
@@ -198,11 +198,11 @@ INA226_Status_t INA226_Set_Averaging_Mode(uint8_t addr, INA226_Avg_Time_t avg_ti
 INA226_Status_t INA226_Set_Calibration_Reg(uint8_t addr, uint16_t cal_reg_value);
 
 /**
- * @brief Set alert pin function to destinaion INA226 device.
+ * @brief Set alert pin function to destination INA226 device.
  * 
  * @param addr       : Destination INA226 device Address.
  * @param alert_func : Selected alert pin function for the device. This value must be from macro
- *                    or decimal value of bit combination from dataheet.
+ *                    or decimal value of bit combination from datasheet.
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success
  *         - 1 : INA226_ERR_I2C; Error from INA226_Platform_I2C_Read.
@@ -223,7 +223,7 @@ INA226_Status_t INA226_Set_Alert_Pin_Function(uint8_t addr, INA226_Alert_Func_t 
 INA226_Status_t INA226_Set_Alert_Limit(uint8_t addr, uint16_t limit_value);
 
 /**
- * @brief Get alert pin status to destiantion INA226 device.
+ * @brief Get alert pin status to destination INA226 device.
  * 
  * @param addr         : Destination INA226 device Address.
  * @param alert_status : External INA226_Alert_Status_t type pointer for the destination device alert pin status.
@@ -247,7 +247,7 @@ INA226_Status_t INA226_Get_Alert_Status(uint8_t addr, INA226_Alert_Status_t *ale
 INA226_Status_t INA226_Read_Current(uint8_t addr, int16_t *current);
 
 /**
- * @brief Read shunt voltage from destinaiton INA226 device.
+ * @brief Read shunt voltage from destination INA226 device.
  * 
  * @param addr    : Destination INA226 device Address.
  * @param voltage : Pointer to store the measured shunt voltage in millivolts.
