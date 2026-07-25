@@ -128,8 +128,8 @@ typedef uint8_t INA226_Alert_Func_t;
  * @param addr : Destination INA226 device Address
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success
- *         - 1 : INA226_ERR_I2C; Error from INA226_Platform_I2C_Read.
- *         - 2 : INA226_ERR_INVALID_PARAM; Invalid param for INA226_Read_Reg.
+ *         - 1 : INA226_ERR_I2C; I2C communication error during reset register access.
+ *         - 2 : INA226_ERR_INVALID_PARAM; Invalid internal parameter passed to register access helpers.
  */
 INA226_Status_t INA226_Reset(uint8_t addr);
 
@@ -141,8 +141,8 @@ INA226_Status_t INA226_Reset(uint8_t addr);
  *                    or decimal value of bit combination from datasheet. 
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success
- *         - 1 : INA226_ERR_I2C; Error from INA226_Platform_I2C_Read.
- *         - 2 : INA226_ERR_INVALID_PARAM; Invalid param for INA226_Read_Reg.
+ *         - 1 : INA226_ERR_I2C; I2C communication error while updating the configuration register.
+ *         - 2 : INA226_ERR_INVALID_PARAM; conv_time is outside the supported 3-bit field range.
  */
 INA226_Status_t INA226_Set_Shunt_Voltage_Conversion_Time(uint8_t addr, INA226_Conv_Time_t conv_time);
 
@@ -154,8 +154,8 @@ INA226_Status_t INA226_Set_Shunt_Voltage_Conversion_Time(uint8_t addr, INA226_Co
  *                    or decimal value of bit combination from datasheet.
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success
- *         - 1 : INA226_ERR_I2C; Error from INA226_Platform_I2C_Read.
- *         - 2 : INA226_ERR_INVALID_PARAM; Invalid param for INA226_Read_Reg.
+ *         - 1 : INA226_ERR_I2C; I2C communication error while updating the configuration register.
+ *         - 2 : INA226_ERR_INVALID_PARAM; conv_time is outside the supported 3-bit field range.
  */
 INA226_Status_t INA226_Set_Bus_Voltage_Conversion_Time(uint8_t addr, INA226_Conv_Time_t conv_time);
 
@@ -167,8 +167,8 @@ INA226_Status_t INA226_Set_Bus_Voltage_Conversion_Time(uint8_t addr, INA226_Conv
  *                    or decimal value of bit combination from datasheet.
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success.
- *         - 1 : INA226_ERR_I2C; Error from INA226_Platform_I2C_Read.
- *         - 2 : INA226_ERR_INVALID_PARAM; Invalid param for INA226_Read_Reg.
+ *         - 1 : INA226_ERR_I2C; I2C communication error while updating the configuration register.
+ *         - 2 : INA226_ERR_INVALID_PARAM; mode is outside the supported 3-bit field range.
  */
 INA226_Status_t INA226_Set_Operating_Mode(uint8_t addr, INA226_Mode_t mode);
 
@@ -180,8 +180,8 @@ INA226_Status_t INA226_Set_Operating_Mode(uint8_t addr, INA226_Mode_t mode);
  *                    or decimal value of bit combination from datasheet.
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success
- *         - 1 : INA226_ERR_I2C; Error from INA226_Platform_I2C_Read.
- *         - 2 : INA226_ERR_INVALID_PARAM; Invalid param for INA226_Read_Reg.
+ *         - 1 : INA226_ERR_I2C; I2C communication error while updating the configuration register.
+ *         - 2 : INA226_ERR_INVALID_PARAM; avg_time is outside the supported 3-bit field range.
  */
 INA226_Status_t INA226_Set_Averaging_Mode(uint8_t addr, INA226_Avg_Time_t avg_time);
 
@@ -192,8 +192,8 @@ INA226_Status_t INA226_Set_Averaging_Mode(uint8_t addr, INA226_Avg_Time_t avg_ti
  * @param cal_reg_value : Calibration register value for the device. This value must be calculated using Equation 1 from the datasheet.
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success
- *         - 1 : INA226_ERR_I2C; Error from INA226_Platform_I2C_Read.
- *         - 2 : INA226_ERR_INVALID_PARAM; Invalid param for INA226_Read_Reg.
+ *         - 1 : INA226_ERR_I2C; I2C communication error while writing the calibration register.
+ *         - 2 : INA226_ERR_INVALID_PARAM; cal_reg_value is not valid for the selected measurement scaling.
  */
 INA226_Status_t INA226_Set_Calibration_Reg(uint8_t addr, uint16_t cal_reg_value);
 
@@ -205,8 +205,8 @@ INA226_Status_t INA226_Set_Calibration_Reg(uint8_t addr, uint16_t cal_reg_value)
  *                    or decimal value of bit combination from datasheet.
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success
- *         - 1 : INA226_ERR_I2C; Error from INA226_Platform_I2C_Read.
- *         - 2 : INA226_ERR_INVALID_PARAM; Invalid param for INA226_Read_Reg.
+ *         - 1 : INA226_ERR_I2C; I2C communication error while updating the mask/enable register.
+ *         - 2 : INA226_ERR_INVALID_PARAM; alert_func is outside the supported 5-bit alert selector values.
  */
 INA226_Status_t INA226_Set_Alert_Pin_Function(uint8_t addr, INA226_Alert_Func_t alert_func);
 
@@ -217,8 +217,8 @@ INA226_Status_t INA226_Set_Alert_Pin_Function(uint8_t addr, INA226_Alert_Func_t 
  * @param limit_value : Alert limit value for the device.
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success
- *         - 1 : INA226_ERR_I2C; Error from INA226_Platform_I2C_Read.
- *         - 2 : INA226_ERR_INVALID_PARAM; Invalid param for INA226_Read_Reg.
+ *         - 1 : INA226_ERR_I2C; I2C communication error while writing the alert limit register.
+ *         - 2 : INA226_ERR_INVALID_PARAM; Invalid internal parameter passed to register access helpers.
  */
 INA226_Status_t INA226_Set_Alert_Limit(uint8_t addr, uint16_t limit_value);
 
@@ -229,8 +229,8 @@ INA226_Status_t INA226_Set_Alert_Limit(uint8_t addr, uint16_t limit_value);
  * @param alert_status : External INA226_Alert_Status_t type pointer for the destination device alert pin status.
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success
- *         - 1 : INA226_ERR_I2C; Error from INA226_Platform_I2C_Read.
- *         - 2 : INA226_ERR_INVALID_PARAM; Invalid param for INA226_Read_Reg.
+ *         - 1 : INA226_ERR_I2C; I2C communication error while reading the mask/enable register.
+ *         - 2 : INA226_ERR_INVALID_PARAM; alert_status is NULL.
  */
 INA226_Status_t INA226_Get_Alert_Status(uint8_t addr, INA226_Alert_Status_t *alert_status);
 
@@ -241,8 +241,8 @@ INA226_Status_t INA226_Get_Alert_Status(uint8_t addr, INA226_Alert_Status_t *ale
  * @param current : Pointer to store the measured current in milliamperes.
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success
- *         - 1 : INA226_ERR_I2C; Error from INA226_Platform_I2C_Read.
- *         - 2 : INA226_ERR_INVALID_PARAM; Invalid param for INA226_Read_Reg.
+ *         - 1 : INA226_ERR_I2C; I2C communication error while reading the current register.
+ *         - 2 : INA226_ERR_INVALID_PARAM; current is NULL.
  */
 INA226_Status_t INA226_Read_Current(uint8_t addr, int16_t *current);
 
@@ -253,8 +253,8 @@ INA226_Status_t INA226_Read_Current(uint8_t addr, int16_t *current);
  * @param voltage : Pointer to store the measured shunt voltage in millivolts.
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success
- *         - 1 : INA226_ERR_I2C; Error from INA226_Platform_I2C_Read.
- *         - 2 : INA226_ERR_INVALID_PARAM; Invalid param for INA226_Read_Reg.
+ *         - 1 : INA226_ERR_I2C; I2C communication error while reading the shunt voltage register.
+ *         - 2 : INA226_ERR_INVALID_PARAM; voltage is NULL.
  */
 INA226_Status_t INA226_Read_Shunt_Voltage(uint8_t addr, int16_t *voltage);
 
@@ -265,8 +265,8 @@ INA226_Status_t INA226_Read_Shunt_Voltage(uint8_t addr, int16_t *voltage);
  * @param voltage : Pointer to store the measured bus voltage in millivolts.
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success
- *         - 1 : INA226_ERR_I2C; Error from INA226_Platform_I2C_Read.
- *         - 2 : INA226_ERR_INVALID_PARAM; Invalid param for INA226_Read_Reg.
+ *         - 1 : INA226_ERR_I2C; I2C communication error while reading the bus voltage register.
+ *         - 2 : INA226_ERR_INVALID_PARAM; voltage is NULL.
  */
 INA226_Status_t INA226_Read_Bus_Voltage(uint8_t addr, uint16_t *voltage);
 
@@ -277,8 +277,8 @@ INA226_Status_t INA226_Read_Bus_Voltage(uint8_t addr, uint16_t *voltage);
  * @param power : Pointer to store the measured power in milliwatts.
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success
- *         - 1 : INA226_ERR_I2C; Error from INA226_Platform_I2C_Read.
- *         - 2 : INA226_ERR_INVALID_PARAM; Invalid param for INA226_Read_Reg.
+ *         - 1 : INA226_ERR_I2C; I2C communication error while reading the power register.
+ *         - 2 : INA226_ERR_INVALID_PARAM; power is NULL.
  */
 INA226_Status_t INA226_Read_Power(uint8_t addr, uint16_t *power);
 
