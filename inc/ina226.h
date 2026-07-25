@@ -68,54 +68,76 @@ typedef uint8_t INA226_Alert_Status_t;
  * 
  */
 typedef uint8_t INA226_Conv_Time_t;
-#define INA226_CT_140_US            ((INA226_Conv_Time_t)0U)
-#define INA226_CT_204_US            ((INA226_Conv_Time_t)1U)
-#define INA226_CT_332_US            ((INA226_Conv_Time_t)2U)
-#define INA226_CT_588_US            ((INA226_Conv_Time_t)3U)
-#define INA226_CT_1100_US           ((INA226_Conv_Time_t)4U)
-#define INA226_CT_2116_US           ((INA226_Conv_Time_t)5U)
-#define INA226_CT_4156_US           ((INA226_Conv_Time_t)6U)
-#define INA226_CT_8244_US           ((INA226_Conv_Time_t)7U)
+#define INA226_CT_140_US            ((INA226_Conv_Time_t)0x00U)
+#define INA226_CT_204_US            ((INA226_Conv_Time_t)0x01U)
+#define INA226_CT_332_US            ((INA226_Conv_Time_t)0x02U)
+#define INA226_CT_588_US            ((INA226_Conv_Time_t)0x03U)
+#define INA226_CT_1100_US           ((INA226_Conv_Time_t)0x04U)
+#define INA226_CT_2116_US           ((INA226_Conv_Time_t)0x05U)
+#define INA226_CT_4156_US           ((INA226_Conv_Time_t)0x06U)
+#define INA226_CT_8244_US           ((INA226_Conv_Time_t)0x07U)
 
 /**
  * @brief INA226 Averaging time option macros.
  * 
  */
 typedef uint8_t INA226_Avg_Time_t;
-#define INA226_AVG_1                ((INA226_Avg_Time_t)0U)
-#define INA226_AVG_4                ((INA226_Avg_Time_t)1U)
-#define INA226_AVG_16               ((INA226_Avg_Time_t)2U)
-#define INA226_AVG_64               ((INA226_Avg_Time_t)3U)
-#define INA226_AVG_128              ((INA226_Avg_Time_t)4U)
-#define INA226_AVG_256              ((INA226_Avg_Time_t)5U)
-#define INA226_AVG_512              ((INA226_Avg_Time_t)6U)
-#define INA226_AVG_1024             ((INA226_Avg_Time_t)7U)
+#define INA226_AVG_1                ((INA226_Avg_Time_t)0x00U)
+#define INA226_AVG_4                ((INA226_Avg_Time_t)0x01U)
+#define INA226_AVG_16               ((INA226_Avg_Time_t)0x02U)
+#define INA226_AVG_64               ((INA226_Avg_Time_t)0x03U)
+#define INA226_AVG_128              ((INA226_Avg_Time_t)0x04U)
+#define INA226_AVG_256              ((INA226_Avg_Time_t)0x05U)
+#define INA226_AVG_512              ((INA226_Avg_Time_t)0x06U)
+#define INA226_AVG_1024             ((INA226_Avg_Time_t)0x07U)
 
 /**
  * @brief INA226 Operation mode option macros.
  * 
  */
 typedef uint8_t INA226_Mode_t;
-#define INA226_SHUT_DOWN                        ((INA226_Mode_t)0U)
-#define INA226_TRIGGERED_SHUNT_VOLTAGE          ((INA226_Mode_t)1U)
-#define INA226_TRIGGERED_BUS_VOLTAGE            ((INA226_Mode_t)2U)
-#define INA226_TRIGGERED_BUS_AND_SHUNT_VOLTAGE  ((INA226_Mode_t)3U)
-#define INA226_SHUT_DOWN_ALT                     ((INA226_Mode_t)4U)
-#define INA226_CONTINUOUS_SHUNT_VOLTAGE         ((INA226_Mode_t)5U)
-#define INA226_CONTINUOUS_BUS_VOLTAGE           ((INA226_Mode_t)6U)
-#define INA226_CONTINUOUS_BUS_AND_SHUNT_VOLTAGE ((INA226_Mode_t)7U)
+#define INA226_SHUT_DOWN                        ((INA226_Mode_t)0x00U)
+#define INA226_TRIGGERED_SHUNT_VOLTAGE          ((INA226_Mode_t)0x01U)
+#define INA226_TRIGGERED_BUS_VOLTAGE            ((INA226_Mode_t)0x02U)
+#define INA226_TRIGGERED_BUS_AND_SHUNT_VOLTAGE  ((INA226_Mode_t)0x03U)
+#define INA226_SHUT_DOWN_ALT                    ((INA226_Mode_t)0x04U)
+#define INA226_CONTINUOUS_SHUNT_VOLTAGE         ((INA226_Mode_t)0x05U)
+#define INA226_CONTINUOUS_BUS_VOLTAGE           ((INA226_Mode_t)0x06U)
+#define INA226_CONTINUOUS_BUS_AND_SHUNT_VOLTAGE ((INA226_Mode_t)0x07U)
 
 /**
  * @brief INA226 Alert function option macros.
  * 
  */
-typedef uint8_t INA226_Alert_Func_t;
-#define INA226_ALERT_FUNC_SHUNT_VOLTAGE_OVER_LIMIT  ((INA226_Alert_Func_t)15U)
-#define INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT ((INA226_Alert_Func_t)14U)
-#define INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT    ((INA226_Alert_Func_t)13U)
-#define INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT   ((INA226_Alert_Func_t)12U)
-#define INA226_ALERT_FUNC_POWER_OVER_LIMIT          ((INA226_Alert_Func_t)11U)
-#define INA226_ALERT_FUNC_CONVERSION_READY          ((INA226_Alert_Func_t)10U)
+typedef uint16_t INA226_Alert_Func_t;
+#define INA226_ALERT_FUNC_SHUNT_VOLTAGE_OVER_LIMIT  ((INA226_Alert_Func_t)0x8000U)
+#define INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT ((INA226_Alert_Func_t)0x4000U)
+#define INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT    ((INA226_Alert_Func_t)0x2000U)
+#define INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT   ((INA226_Alert_Func_t)0x1000U)
+#define INA226_ALERT_FUNC_POWER_OVER_LIMIT          ((INA226_Alert_Func_t)0x0800U)
+#define INA226_ALERT_FUNC_CONVERSION_READY          ((INA226_Alert_Func_t)0x0400U)
+
+/**
+ * @brief INA226 register field masks and positions based on the datasheet.
+ *
+ *        These masks are used when packing field values into the 16-bit registers.
+ */
+#define INA226_CFG_RESET_MASK          (0x8000U)
+#define INA226_CFG_RESET_POS           (15U)
+
+#define INA226_CFG_AVG_MASK            (0x0E00U) // Bits 11-9 (0000 1110 0000 0000)
+#define INA226_CFG_AVG_POS             (9U)
+
+#define INA226_CFG_BUS_CT_MASK         (0x01C0U) // Bits 8-6 (0000 0001 1100 0000)
+#define INA226_CFG_BUS_CT_POS          (6U)
+
+#define INA226_CFG_SHUNT_CT_MASK       (0x0038U) // Bits 5-3 (0000 0000 0011 1000)
+#define INA226_CFG_SHUNT_CT_POS        (3U)
+
+#define INA226_CFG_MODE_MASK           (0x0007U) // Bits 2-0 (0000 0000 0000 0111)
+#define INA226_CFG_MODE_POS            (0U)
+
+#define INA226_MASK_ENABLE_ALERT_FUNC_MASK   (0xFC00U) // Bits 15-10
 
 
 /* ========================================================================= */
