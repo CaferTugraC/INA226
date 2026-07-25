@@ -31,7 +31,7 @@ extern uint8_t INA226_Platform_I2C_Write(uint8_t dev_addr, uint8_t reg_addr, con
  * 
  * @param dev_addr : Destination INA226 device address.
  * @param reg_addr : Destination register address of INA226.
- * @param data     : Data to be read to register.
+ * @param data     : Data to be read from the register.
  * @param len      : Byte length for the data.
  * @return uint8_t 
  */
@@ -137,7 +137,7 @@ INA226_Status_t INA226_Reset(uint8_t addr);
  * @brief Set shunt voltage conversion time options to destination INA226 device.
  * 
  * @param addr      : Destination INA226 device Address
- * @param conv_time : Selected conversion time option for the device. This value must be from macro
+ * @param conv_time : Selected conversion time option for the device. This value must be a macro
  *                    or decimal value of bit combination from datasheet. 
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success
@@ -150,7 +150,7 @@ INA226_Status_t INA226_Set_Shunt_Voltage_Conversion_Time(uint8_t addr, INA226_Co
  * @brief Set bus voltage conversion time option to destination INA226 device.
  * 
  * @param addr      : Destination INA226 device Address
- * @param conv_time : Selected conversion time option for the device. This value must be from macro
+ * @param conv_time : Selected conversion time option for the device. This value must be a macro
  *                    or decimal value of bit combination from datasheet.
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success
@@ -163,7 +163,7 @@ INA226_Status_t INA226_Set_Bus_Voltage_Conversion_Time(uint8_t addr, INA226_Conv
  * @brief Set operation mode to destination INA226 device.
  * 
  * @param addr : Destination INA226 device Address.
- * @param mode : Selected operation mode for the device. This value must be from macro
+ * @param mode : Selected operation mode for the device. This value must be a macro
  *                    or decimal value of bit combination from datasheet.
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success.
@@ -176,7 +176,7 @@ INA226_Status_t INA226_Set_Operating_Mode(uint8_t addr, INA226_Mode_t mode);
  * @brief Set averaging mode to destination INA226 device.
  * 
  * @param addr     : Destination INA226 device Address.
- * @param avg_time : Selected averaging time option for the device. This value must be from macro
+ * @param avg_time : Selected averaging time option for the device. This value must be a macro
  *                    or decimal value of bit combination from datasheet.
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success
@@ -189,7 +189,7 @@ INA226_Status_t INA226_Set_Averaging_Mode(uint8_t addr, INA226_Avg_Time_t avg_ti
  * @brief Set current and power measurement resolution by setting the calibration register.
  * 
  * @param addr          : Destination INA226 device Address.
- * @param cal_reg_value : Calibration register value for the device. This value must calculate with equation 1 from datasheet.
+ * @param cal_reg_value : Calibration register value for the device. This value must be calculated using Equation 1 from the datasheet.
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success
  *         - 1 : INA226_ERR_I2C; Error from INA226_Platform_I2C_Read.
@@ -201,7 +201,7 @@ INA226_Status_t INA226_Set_Calibration_Reg(uint8_t addr, uint16_t cal_reg_value)
  * @brief Set alert pin function to destination INA226 device.
  * 
  * @param addr       : Destination INA226 device Address.
- * @param alert_func : Selected alert pin function for the device. This value must be from macro
+ * @param alert_func : Selected alert pin function for the device. This value must be a macro
  *                    or decimal value of bit combination from datasheet.
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success
@@ -223,7 +223,7 @@ INA226_Status_t INA226_Set_Alert_Pin_Function(uint8_t addr, INA226_Alert_Func_t 
 INA226_Status_t INA226_Set_Alert_Limit(uint8_t addr, uint16_t limit_value);
 
 /**
- * @brief Get alert pin status to destination INA226 device.
+ * @brief Get alert pin status for the destination INA226 device.
  * 
  * @param addr         : Destination INA226 device Address.
  * @param alert_status : External INA226_Alert_Status_t type pointer for the destination device alert pin status.
