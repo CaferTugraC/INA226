@@ -39,7 +39,73 @@
 
 
 /* ========================================================================= */
-/*                                 FUNCTIONES                                */
+/*                              PRIVATE FUNCTIONES                           */
 /* ========================================================================= */
 
+/**
+ * @brief read 16-bit data from INA226.
+ * 
+ * @param dev_addr : I2C address of destination INA226
+ * @param reg_addr : Address of register to be read. 
+ * @param value    : An external pointer for the value read from the register.
+ * @return INA226_Status_t
+ *         - 0 : INA226_OK; Success
+ *         - 1 : INA226_ERR_I2C; Error from INA226_Platform_I2C_Read.
+ *         - 2 : INA226_ERR_INVALID_PARAM; Invalid param for INA226_Read_Reg.
+ * @details The INA226 transmits data in Big-Endian format. To avoid hardware
+ *           architecture discrepancies, the data is fetched into a byte buffer and then
+ *           safely shifted into the destination pointer in the correct MSB-first order.
+ */
+static INA226_Status_t INA226_Read_Reg(uint8_t dev_addr, uint8_t reg_addr, uint16_t *value) {
+    if (value == NULL) {
+        return INA226_ERR_INVALID_PARAM;
+    }
+
+    uint8_t buffer[2] = {0, 0};
+    uint8_t i2c_status;
+
+    i2c_status = INA226_Platform_I2C_Read(dev_addr, reg_addr, buffer, 2);
+
+    if (i2c_status != 0) {
+        return INA226_ERR_I2C; 
+    }
+
+    (*value) = (uint16_t)((buffer[0] << 8U) | buffer[1]);
+
+    return INA226_OK;
+}
+
+/**
+ * @brief write 16-bit data to INA226.
+ * 
+ * @param dev_addr : I2C address of destination IN226.
+ * @param reg_addr : Address of register to be write. 
+ * @param value    : value to be written to register.
+ * @return INA226_Status_t
+ *         - 0 : INA226_OK; Success
+ *         - 1 : INA226_ERR_I2C; Error from INA226_Platform_I2C_Read.
+ *         - 2 : INA226_ERR_INVALID_PARAM; Invalid param for INA226_Read_Reg.
+ * @details The INA226 expects data in Big-Endian format. To avoid hardware
+ *          architecture discrepancies, the 16-bit value is split and formatted 
+ *          into a byte buffer (MSB first) before being sent over I2C.
+ */
+static INA226_Status_t INA226_Write_Reg(uint8_t dev_addr, uint8_t reg_addr, uint16_t value) {
+    if (value == NULL) {
+        return INA226_ERR_INVALID_PARAM;
+    }
+
+    uint8_t buffer[2] = {0, 0};
+    uint8_t i2c_status;
+
+    buffer[0] = (uint8_t)(value >> 8U);
+    buffer[1] = (uint8_t)(value & 0xFFU);
+
+    i2c_status = INA226_Platform_I2C_Write(dev_addr, reg_addr, buffer, 2);
+
+      if (i2c_status != 0) {
+        return INA226_ERR_I2C; 
+    }
+
+    return INA226_OK;
+}
 
