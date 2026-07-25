@@ -83,8 +83,8 @@ static INA226_Status_t INA226_Read_Reg(uint8_t dev_addr, uint8_t reg_addr, uint1
  * @param value    : value to be written to register.
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success
- *         - 1 : INA226_ERR_I2C; Error from INA226_Platform_I2C_Read.
- *         - 2 : INA226_ERR_INVALID_PARAM; Invalid param for INA226_Read_Reg.
+ *         - 1 : INA226_ERR_I2C; Error from INA226_Platform_I2C_Write.
+ *         - 2 : INA226_ERR_INVALID_PARAM; Invalid param for INA226_Write_Reg.
  * @details The INA226 expects data in Big-Endian format. To avoid hardware
  *          architecture discrepancies, the 16-bit value is split and formatted 
  *          into a byte buffer (MSB first) before being sent over I2C.
