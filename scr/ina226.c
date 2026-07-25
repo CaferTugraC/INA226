@@ -57,6 +57,7 @@
  *           safely shifted into the destination pointer in the correct MSB-first order.
  */
 static INA226_Status_t INA226_Read_Reg(uint8_t dev_addr, uint8_t reg_addr, uint16_t *value) {
+
     if (value == NULL) {
         return INA226_ERR_INVALID_PARAM;
     }
@@ -90,6 +91,7 @@ static INA226_Status_t INA226_Read_Reg(uint8_t dev_addr, uint8_t reg_addr, uint1
  *          into a byte buffer (MSB first) before being sent over I2C.
  */
 static INA226_Status_t INA226_Write_Reg(uint8_t dev_addr, uint8_t reg_addr, uint16_t value) {
+
     if (value == NULL) {
         return INA226_ERR_INVALID_PARAM;
     }
@@ -107,5 +109,18 @@ static INA226_Status_t INA226_Write_Reg(uint8_t dev_addr, uint8_t reg_addr, uint
     }
 
     return INA226_OK;
+}
+
+/* ========================================================================= */
+/*                              PUBLIC FUNCTIONES                            */
+/* ========================================================================= */
+
+INA226_Status_t INA226_Reset(uint8_t addr) {
+   
+    uint16_t config_reg_val = INA226_CONFIG_RESET_MASK;
+    
+    // Setting the reset bit (15) is resets all register to default values. And this bit its self-clears.
+    // There is ne need the read current value of register, write reset mask directly to register. 
+    return INA226_Write_Reg(addr, INA226_CONFIG_REG, config_reg_val);
 }
 
