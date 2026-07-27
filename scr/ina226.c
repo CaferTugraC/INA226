@@ -111,12 +111,12 @@ static INA226_Status_t INA226_Write_Reg(uint8_t dev_addr, uint8_t reg_addr, uint
     return INA226_OK;
 }
 
-static INA226_Status_t safe_set_option(uint8_t addr, uint16_t reg_addr, INA226_Option_t option, uint16_t mask, uint8_t pos) {
+static INA226_Status_t set_config_option(uint8_t addr, INA226_Config_Option_t option, uint16_t mask, uint8_t pos) {
 
     uint16_t reg_value = 0;
 
     // Read the register value of destination device.
-    INA226_Status_t op_status = INA226_Read_Reg(addr, reg_addr, &reg_value);
+    INA226_Status_t op_status = INA226_Read_Reg(addr, INA226_CONFIG_REG, &reg_value);
 
     // check the I2C operation result.
     if (op_status != INA226_OK) {
@@ -129,7 +129,7 @@ static INA226_Status_t safe_set_option(uint8_t addr, uint16_t reg_addr, INA226_O
     reg_value |= (option << pos);
 
     // Write the interested register of destination device.
-    return INA226_Write_Reg(addr, reg_addr, reg_value);
+    return INA226_Write_Reg(addr, INA226_CONFIG_REG, reg_value);
 }
 
 /* ========================================================================= */
@@ -153,7 +153,7 @@ INA226_Status_t INA226_Set_Shunt_Voltage_Conversion_Time(uint8_t addr, INA226_Co
     }
 
     // Set with Read Modify Write.
-    return safe_set_option(addr, reg_addr, conv_time, INA226_CONFIG_SHUNT_CT_MASK, INA226_CONFIG_SHUNT_CT_POS);
+    return set_config_option(addr, conv_time, INA226_CONFIG_SHUNT_CT_MASK, INA226_CONFIG_SHUNT_CT_POS);
 }
 
 INA226_Status_t INA226_Set_Bus_Voltage_Conversion_Time(uint8_t addr, INA226_Conv_Time_t conv_time) {
@@ -164,7 +164,7 @@ INA226_Status_t INA226_Set_Bus_Voltage_Conversion_Time(uint8_t addr, INA226_Conv
     }
 
     // Set with Read Modify Write.
-    return safe_set_option(addr, reg_addr, conv_time, INA226_CONFIG_BUS_CT_MASK, INA226_CONFIG_BUS_CT_POS);
+    return set_config_option(addr, conv_time, INA226_CONFIG_BUS_CT_MASK, INA226_CONFIG_BUS_CT_POS);
 }
 
 INA226_Status_t INA226_Set_Operating_Mode(uint8_t addr, INA226_Mode_t mode) {
@@ -175,7 +175,7 @@ INA226_Status_t INA226_Set_Operating_Mode(uint8_t addr, INA226_Mode_t mode) {
     }
 
     // Set with Read Modify Write.
-    return safe_set_option(addr, INA226_CONFIG_REG, mode, INA226_CONFIG_MODE_MASK, INA226_CONFIG_MODE_POS);
+    return set_config_option(addr, mode, INA226_CONFIG_MODE_MASK, INA226_CONFIG_MODE_POS);
 }
 
 INA226_Status_t INA226_Set_Averaging_Mode(uint8_t addr, INA226_Avg_Time_t avg_time) {

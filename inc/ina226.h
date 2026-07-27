@@ -41,13 +41,13 @@ extern uint8_t INA226_Platform_I2C_Read(uint8_t dev_addr, uint8_t reg_addr, uint
 /*                              TYPES & DEFINES                              */
 /* ========================================================================= */
 
-typedef uint8_t INA226_Option_t
+typedef uint8_t INA226_Config_Option_t
 
 /**
  * @brief Return value macros of the driver functions.
  * 
  */
-typedef INA226_Option_t INA226_Status_t;
+typedef INA226_Config_Option_t INA226_Status_t;
 #define INA226_OK                   ((INA226_Status_t)0U)
 #define INA226_ERR_I2C              ((INA226_Status_t)1U)
 #define INA226_ERR_INVALID_PARAM    ((INA226_Status_t)2U)
@@ -56,7 +56,7 @@ typedef INA226_Option_t INA226_Status_t;
  * @brief INA226 Alert pin status macros.
  * 
  */
-typedef INA226_Option_t INA226_Alert_Status_t;
+typedef INA226_Config_Option_t INA226_Alert_Status_t;
 #define INA226_ALERT_NO_ALERT                   ((INA226_Alert_Status_t)0U)
 #define INA226_ALERT_SHUNT_VOLTAGE_OVER_LIMIT   ((INA226_Alert_Status_t)1U)
 #define INA226_ALERT_SHUNT_VOLTAGE_UNDER_LIMIT  ((INA226_Alert_Status_t)2U)
@@ -69,7 +69,7 @@ typedef INA226_Option_t INA226_Alert_Status_t;
  * @brief INA226 Conversion time option macros.
  * 
  */
-typedef INA226_Option_t INA226_Conv_Time_t;
+typedef INA226_Config_Option_t INA226_Conv_Time_t;
 #define INA226_CT_140_US            ((INA226_Conv_Time_t)0x00U)
 #define INA226_CT_204_US            ((INA226_Conv_Time_t)0x01U)
 #define INA226_CT_332_US            ((INA226_Conv_Time_t)0x02U)
@@ -83,7 +83,7 @@ typedef INA226_Option_t INA226_Conv_Time_t;
  * @brief INA226 Averaging time option macros.
  * 
  */
-typedef INA226_Option_t INA226_Avg_Time_t;
+typedef INA226_Config_Option_t INA226_Avg_Time_t;
 #define INA226_AVG_1                ((INA226_Avg_Time_t)0x00U)
 #define INA226_AVG_4                ((INA226_Avg_Time_t)0x01U)
 #define INA226_AVG_16               ((INA226_Avg_Time_t)0x02U)
@@ -97,7 +97,7 @@ typedef INA226_Option_t INA226_Avg_Time_t;
  * @brief INA226 Operation mode option macros.
  * 
  */
-typedef INA226_Option_t INA226_Mode_t;
+typedef INA226_Config_Option_t INA226_Mode_t;
 #define INA226_SHUT_DOWN                        ((INA226_Mode_t)0x00U)
 #define INA226_TRIGGERED_SHUNT_VOLTAGE          ((INA226_Mode_t)0x01U)
 #define INA226_TRIGGERED_BUS_VOLTAGE            ((INA226_Mode_t)0x02U)
@@ -111,7 +111,7 @@ typedef INA226_Option_t INA226_Mode_t;
  * @brief INA226 Alert function option macros.
  * 
  */
-typedef INA226_Option_t INA226_Alert_Func_t;
+typedef uint16_t INA226_Alert_Func_t;
 #define INA226_ALERT_FUNC_SHUNT_VOLTAGE_OVER_LIMIT  ((INA226_Alert_Func_t)0x8000U)
 #define INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT ((INA226_Alert_Func_t)0x4000U)
 #define INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT    ((INA226_Alert_Func_t)0x2000U)
