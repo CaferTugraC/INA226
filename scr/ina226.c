@@ -111,17 +111,6 @@ static INA226_Status_t INA226_Write_Reg(uint8_t dev_addr, uint8_t reg_addr, uint
     return INA226_OK;
 }
 
-static INA226_Status_t set_conversion_time_internal(uint8_t addr, INA226_Conv_Time_t conv_time, uint16_t mask, uint8_t pos) {
-        
-    // Validate the conv_time parameter
-    if (conv_time > INA226_CT_8244_US) {
-        return INA226_ERR_INVALID_PARAM;
-    }
-
-    // Set with Read Modify Write.
-    return safe_set_option(addr, reg_addr, conv_time, mask, pos);
-}
-
 static INA226_Status_t safe_set_option(uint8_t addr, uint16_t reg_addr, INA226_Option_t option, uint16_t mask, uint8_t pos) {
 
     uint16_t reg_value = 0;
@@ -157,11 +146,25 @@ INA226_Status_t INA226_Reset(uint8_t addr) {
 }
 
 INA226_Status_t INA226_Set_Shunt_Voltage_Conversion_Time(uint8_t addr, INA226_Conv_Time_t conv_time) {
-    set_conversion_time_internal(addr, conv_time, INA226_CONFIG_SHUNT_CT_MASK, INA226_CONFIG_SHUNT_CT_POS);
+
+    // Validate the conv_time parameter
+    if (conv_time > INA226_CT_8244_US) {
+        return INA226_ERR_INVALID_PARAM;
+    }
+
+    // Set with Read Modify Write.
+    return safe_set_option(addr, reg_addr, conv_time, INA226_CONFIG_SHUNT_CT_MASK, INA226_CONFIG_SHUNT_CT_POS);
 }
 
 INA226_Status_t INA226_Set_Bus_Voltage_Conversion_Time(uint8_t addr, INA226_Conv_Time_t conv_time) {
-    set_conversion_time_internal(addr, conv_time, INA226_CONFIG_BUS_CT_MASK, INA226_CONFIG_BUS_CT_POS);
+
+    // Validate the conv_time parameter
+    if (conv_time > INA226_CT_8244_US) {
+        return INA226_ERR_INVALID_PARAM;
+    }
+
+    // Set with Read Modify Write.
+    return safe_set_option(addr, reg_addr, conv_time, INA226_CONFIG_BUS_CT_MASK, INA226_CONFIG_BUS_CT_POS);
 }
 
 INA226_Status_t INA226_Set_Operating_Mode(uint8_t addr, INA226_Mode_t mode) {
