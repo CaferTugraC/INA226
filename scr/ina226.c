@@ -177,3 +177,14 @@ INA226_Status_t INA226_Set_Operating_Mode(uint8_t addr, INA226_Mode_t mode) {
     // Set with Read Modify Write.
     return safe_set_option(addr, INA226_CONFIG_REG, mode, INA226_CONFIG_MODE_MASK, INA226_CONFIG_MODE_POS);
 }
+
+INA226_Status_t INA226_Set_Averaging_Mode(uint8_t addr, INA226_Avg_Time_t avg_time) {
+
+    // Validate the avg_time paramtere.
+    if (avg_time > INA226_AVG_1024) {
+        return INA226_ERR_INVALID_PARAM;
+    }
+    
+    // Set with Read Modify Write.
+    return safe_set_option(addr, INA226_CONFIG_REG, avg_time, INA226_CONFIG_AVG_MASK, INA226_CONFIG_AVG_POS);
+}
