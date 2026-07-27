@@ -14,8 +14,8 @@
 /*                                  INCLUDES                                 */
 /* ========================================================================= */
 
-#include "ina226.h"
-
+#include "../inc/ina226.h"
+#include <stddef.h>
 
 /* ========================================================================= */
 /*                              MACRO DEFINATIONS                            */
@@ -92,10 +92,7 @@ static INA226_Status_t INA226_Read_Reg(uint8_t dev_addr, uint8_t reg_addr, uint1
  */
 static INA226_Status_t INA226_Write_Reg(uint8_t dev_addr, uint8_t reg_addr, uint16_t value) {
 
-    if (value == NULL) {
-        return INA226_ERR_INVALID_PARAM;
-    }
-
+    
     uint8_t buffer[2] = {0, 0};
     uint8_t i2c_status;
 
@@ -186,7 +183,7 @@ INA226_Status_t INA226_Set_Averaging_Mode(uint8_t addr, INA226_Avg_Time_t avg_ti
     }
     
     // Set with Read Modify Write.
-    return safe_set_option(addr, INA226_CONFIG_REG, avg_time, INA226_CONFIG_AVG_MASK, INA226_CONFIG_AVG_POS);
+    return set_config_option(addr, avg_time, INA226_CONFIG_AVG_MASK, INA226_CONFIG_AVG_POS);
 }
 
 INA226_Status_t INA226_Set_Alert_Pin_Function(uint8_t addr, INA226_Alert_Func_t alert_func) {

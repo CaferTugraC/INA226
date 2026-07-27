@@ -41,7 +41,7 @@ extern uint8_t INA226_Platform_I2C_Read(uint8_t dev_addr, uint8_t reg_addr, uint
 /*                              TYPES & DEFINES                              */
 /* ========================================================================= */
 
-typedef uint8_t INA226_Config_Option_t
+typedef uint8_t INA226_Config_Option_t;
 
 /**
  * @brief Return value macros of the driver functions.
