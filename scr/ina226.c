@@ -157,3 +157,28 @@ INA226_Status_t INA226_Set_Shunt_Voltage_Conversion_Time(uint8_t addr, INA226_Co
 INA226_Status_t INA226_Set_Bus_Voltage_Conversion_Time(uint8_t addr, INA226_Conv_Time_t conv_time) {
     set_conversion_time_internal(addr, conv_time, INA226_CONFIG_BUS_CT_MASK, INA226_CONFIG_BUS_CT_POS);
 }
+
+INA226_Status_t INA226_Set_Operating_Mode(uint8_t addr, INA226_Mode_t mode) {
+    
+    // Validate the mode paramtere.
+    if (mode > INA226_CONTINUOUS_BUS_AND_SHUNT_VOLTAGE) { // Continuous bus and shunt voltage is highest value mode can be.
+        return INA226_ERR_INVALID_PARAM;
+    }
+
+    uint16_t config_reg_val = 0;
+
+    // Read the configuration register from destiation device.
+    INA226_Status_t op_status = INA226_Read_Reg(addr, INA226_CONFIG_REG, &config_reg_val);
+
+    // check the I2C operation result.
+    if (op_status != INA226_OK) {
+        return op_status;
+    }
+
+    // Modfiy the interested bitfeld of the congfiguration register.
+    config_reg_val &= ~(INA226_CONFIG_MODE_MASK);
+    config_reg_val |= ((uint16_t)mode << INA226_CONFIG_MODE_POS);
+
+    // Write to the configuration register of destiantion device.
+    return INA226_Write_Reg(addr, INA226_CONFIG_REG, config_reg_val);
+}
