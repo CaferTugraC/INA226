@@ -188,3 +188,23 @@ INA226_Status_t INA226_Set_Averaging_Mode(uint8_t addr, INA226_Avg_Time_t avg_ti
     // Set with Read Modify Write.
     return safe_set_option(addr, INA226_CONFIG_REG, avg_time, INA226_CONFIG_AVG_MASK, INA226_CONFIG_AVG_POS);
 }
+
+INA226_Status_t INA226_Set_Alert_Pin_Function(uint8_t addr, INA226_Alert_Func_t alert_func) {
+
+    // Validate the alert_function parameter.
+    if (alert_func != INA226_ALERT_FUNC_SHUNT_VOLTAGE_OVER_LIMIT ||
+        alert_func != INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT ||
+        alert_func != INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT ||
+        alert_func != INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT ||
+        alert_func != INA226_ALERT_FUNC_POWER_OVER_LIMIT ||
+        alert_func != INA226_ALERT_FUNC_CONVERSION_READY
+        alert_func != INA226_ALERT_FUNC_SHUNT_VOLTAGE_OVER_LIMIT_CVR ||
+        alert_func != INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT_CON_READY_CVR ||
+        alert_func != INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT_CON_READY_CVR ||
+        alert_func != INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT_CON_READY_CVR ||
+        alert_func != INA226_ALERT_FUNC_POWER_OVER_LIMIT_CON_READY_CVR) {
+            return INA226_ERR_INVALID_PARAM;
+    }
+
+    return INA226_Write_Reg(addr, INA226_MASK_EN_REG, alert_func);
+}
