@@ -205,3 +205,31 @@ INA226_Status_t INA226_Set_Alert_Pin_Function(uint8_t addr, INA226_Alert_Func_t 
 
     return INA226_Write_Reg(addr, INA226_MASK_EN_REG, alert_func);
 }
+
+INA226_Status_t INA226_Set_Alert_Limit(uint8_t addr, uint16_t limit_value) {
+
+}
+
+INA226_Status_t INA226_Get_Alert_Status(uint8_t addr, INA226_Alert_Status_t *alert_status) {
+
+}
+
+INA226_Status_t INA226_Set_Calibration_Reg(uint8_t addr, uint16_t cal_reg_value) {
+
+}
+
+INA226_Status_t INA226_Read_Current(uint8_t addr, int16_t *current) {
+
+}
+
+INA226_Status_t INA226_Read_Shunt_Voltage(uint8_t addr, int16_t *voltage) {
+
+}
+
+INA226_Status_t INA226_Read_Bus_Voltage(uint8_t addr, uint16_t *voltage) {
+
+}
+
+INA226_Status_t INA226_Read_Power(uint8_t addr, uint16_t *power) {
+
+}
