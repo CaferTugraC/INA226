@@ -14,8 +14,8 @@
 /*                                  INCLUDES                                 */
 /* ========================================================================= */
 
-#include "ina226.h"
-
+#include "../inc/ina226.h"
+#include <stddef.h>
 
 /* ========================================================================= */
 /*                              MACRO DEFINATIONS                            */
@@ -62,7 +62,7 @@ static INA226_Status_t INA226_Read_Reg(uint8_t dev_addr, uint8_t reg_addr, uint1
         return INA226_ERR_INVALID_PARAM;
     }
 
-    uint8_t buffer[2] = {0, 0};
+    uint8_t buffer[2] = {0, 0}; // buffer[0] = MSB, buffer[1] = LSB
     uint8_t i2c_status;
 
     i2c_status = INA226_Platform_I2C_Read(dev_addr, reg_addr, buffer, 2);
@@ -92,10 +92,7 @@ static INA226_Status_t INA226_Read_Reg(uint8_t dev_addr, uint8_t reg_addr, uint1
  */
 static INA226_Status_t INA226_Write_Reg(uint8_t dev_addr, uint8_t reg_addr, uint16_t value) {
 
-    if (value == NULL) {
-        return INA226_ERR_INVALID_PARAM;
-    }
-
+    
     uint8_t buffer[2] = {0, 0};
     uint8_t i2c_status;
 
@@ -111,6 +108,27 @@ static INA226_Status_t INA226_Write_Reg(uint8_t dev_addr, uint8_t reg_addr, uint
     return INA226_OK;
 }
 
+static INA226_Status_t set_config_option(uint8_t addr, INA226_Config_Option_t option, uint16_t mask, uint8_t pos) {
+
+    uint16_t reg_value = 0;
+
+    // Read the register value of destination device.
+    INA226_Status_t op_status = INA226_Read_Reg(addr, INA226_CONFIG_REG, &reg_value);
+
+    // check the I2C operation result.
+    if (op_status != INA226_OK) {
+        return op_status;
+    }
+
+    // Modify the interested bitfield of register: First clear the interested bitfield by using mask variable,
+    // followed by setting the interested bitfield with the option.
+    reg_value &= ~(mask);
+    reg_value |= (option << pos);
+
+    // Write the interested register of destination device.
+    return INA226_Write_Reg(addr, INA226_CONFIG_REG, reg_value);
+}
+
 /* ========================================================================= */
 /*                              PUBLIC FUNCTIONES                            */
 /* ========================================================================= */
@@ -124,3 +142,66 @@ INA226_Status_t INA226_Reset(uint8_t addr) {
     return INA226_Write_Reg(addr, INA226_CONFIG_REG, config_reg_val);
 }
 
+INA226_Status_t INA226_Set_Shunt_Voltage_Conversion_Time(uint8_t addr, INA226_Conv_Time_t conv_time) {
+
+    // Validate the conv_time parameter
+    if (conv_time > INA226_CT_8244_US) {
+        return INA226_ERR_INVALID_PARAM;
+    }
+
+    // Set with Read Modify Write.
+    return set_config_option(addr, conv_time, INA226_CONFIG_SHUNT_CT_MASK, INA226_CONFIG_SHUNT_CT_POS);
+}
+
+INA226_Status_t INA226_Set_Bus_Voltage_Conversion_Time(uint8_t addr, INA226_Conv_Time_t conv_time) {
+
+    // Validate the conv_time parameter
+    if (conv_time > INA226_CT_8244_US) {
+        return INA226_ERR_INVALID_PARAM;
+    }
+
+    // Set with Read Modify Write.
+    return set_config_option(addr, conv_time, INA226_CONFIG_BUS_CT_MASK, INA226_CONFIG_BUS_CT_POS);
+}
+
+INA226_Status_t INA226_Set_Operating_Mode(uint8_t addr, INA226_Mode_t mode) {
+    
+    // Validate the mode paramtere.
+    if (mode > INA226_CONTINUOUS_BUS_AND_SHUNT_VOLTAGE) { // Continuous bus and shunt voltage is highest value mode can be.
+        return INA226_ERR_INVALID_PARAM;
+    }
+
+    // Set with Read Modify Write.
+    return set_config_option(addr, mode, INA226_CONFIG_MODE_MASK, INA226_CONFIG_MODE_POS);
+}
+
+INA226_Status_t INA226_Set_Averaging_Mode(uint8_t addr, INA226_Avg_Time_t avg_time) {
+
+    // Validate the avg_time paramtere.
+    if (avg_time > INA226_AVG_1024) {
+        return INA226_ERR_INVALID_PARAM;
+    }
+    
+    // Set with Read Modify Write.
+    return set_config_option(addr, avg_time, INA226_CONFIG_AVG_MASK, INA226_CONFIG_AVG_POS);
+}
+
+INA226_Status_t INA226_Set_Alert_Pin_Function(uint8_t addr, INA226_Alert_Func_t alert_func) {
+
+    // Validate the alert_function parameter.
+    if (alert_func != INA226_ALERT_FUNC_SHUNT_VOLTAGE_OVER_LIMIT &&
+        alert_func != INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT &&
+        alert_func != INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT &&
+        alert_func != INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT &&
+        alert_func != INA226_ALERT_FUNC_POWER_OVER_LIMIT &&
+        alert_func != INA226_ALERT_FUNC_CONVERSION_READY &&
+        alert_func != INA226_ALERT_FUNC_SHUNT_VOLTAGE_OVER_LIMIT_CVR &&
+        alert_func != INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT_CON_READY_CVR &&
+        alert_func != INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT_CON_READY_CVR &&
+        alert_func != INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT_CON_READY_CVR &&
+        alert_func != INA226_ALERT_FUNC_POWER_OVER_LIMIT_CON_READY_CVR) {
+            return INA226_ERR_INVALID_PARAM;
+    }
+
+    return INA226_Write_Reg(addr, INA226_MASK_EN_REG, alert_func);
+}
