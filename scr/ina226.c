@@ -62,7 +62,7 @@ static INA226_Status_t INA226_Read_Reg(uint8_t dev_addr, uint8_t reg_addr, uint1
         return INA226_ERR_INVALID_PARAM;
     }
 
-    uint8_t buffer[2] = {0, 0};
+    uint8_t buffer[2] = {0, 0}; // buffer[0] = MSB, buffer[1] = LSB
     uint8_t i2c_status;
 
     i2c_status = INA226_Platform_I2C_Read(dev_addr, reg_addr, buffer, 2);
