@@ -1,0 +1,207 @@
+/**
+ * @file ina226.c
+ * @author Cafer Tura Çetin
+ * @brief INA226 sensor driver source file
+ * @version 0.1
+ * @date 2026-07-25
+ * 
+ * @copyright Copyright (c) 2026 Cafer Tura Çetin
+ * SPDX-License-Identifier: MIT
+ * 
+ */
+
+/* ========================================================================= */
+/*                                  INCLUDES                                 */
+/* ========================================================================= */
+
+#include "../inc/ina226.h"
+#include <stddef.h>
+
+/* ========================================================================= */
+/*                              MACRO DEFINATIONS                            */
+/* ========================================================================= */
+
+/**
+ * @brief Register address macros for INA226.
+ * 
+ */
+#define INA226_CONFIG_REG                   (0x00)
+#define INA226_SH_VOLTAGE_REG               (0x01)
+#define INA226_BUS_VOLTAGE_REG              (0x02)
+#define INA226_POWER_REG                    (0x03)
+#define INA226_CURRENT_REG                  (0x04)
+#define INA226_CALIBRATION_REG              (0x05)
+#define INA226_MASK_EN_REG                  (0x06)
+#define INA226_ALERT_LIM_REG                (0x07)
+#define INA226_MANCUFACTURE_ID_REG          (0xFE)
+#define INA226_DIE_ID_REG                   (0xFF)
+
+
+
+/* ========================================================================= */
+/*                              PRIVATE FUNCTIONES                           */
+/* ========================================================================= */
+
+/**
+ * @brief read 16-bit data from INA226.
+ * 
+ * @param dev_addr : I2C address of destination INA226
+ * @param reg_addr : Address of register to be read. 
+ * @param value    : An external pointer for the value read from the register.
+ * @return INA226_Status_t
+ *         - 0 : INA226_OK; Success
+ *         - 1 : INA226_ERR_I2C; Error from INA226_Platform_I2C_Read.
+ *         - 2 : INA226_ERR_INVALID_PARAM; Invalid param for INA226_Read_Reg.
+ * @details The INA226 transmits data in Big-Endian format. To avoid hardware
+ *           architecture discrepancies, the data is fetched into a byte buffer and then
+ *           safely shifted into the destination pointer in the correct MSB-first order.
+ */
+static INA226_Status_t INA226_Read_Reg(uint8_t dev_addr, uint8_t reg_addr, uint16_t *value) {
+
+    if (value == NULL) {
+        return INA226_ERR_INVALID_PARAM;
+    }
+
+    uint8_t buffer[2] = {0, 0}; // buffer[0] = MSB, buffer[1] = LSB
+    uint8_t i2c_status;
+
+    i2c_status = INA226_Platform_I2C_Read(dev_addr, reg_addr, buffer, 2);
+
+    if (i2c_status != 0) {
+        return INA226_ERR_I2C; 
+    }
+
+    (*value) = (uint16_t)((buffer[0] << 8U) | buffer[1]);
+
+    return INA226_OK;
+}
+
+/**
+ * @brief write 16-bit data to INA226.
+ * 
+ * @param dev_addr : I2C address of destination IN226.
+ * @param reg_addr : Address of register to be write. 
+ * @param value    : value to be written to register.
+ * @return INA226_Status_t
+ *         - 0 : INA226_OK; Success
+ *         - 1 : INA226_ERR_I2C; Error from INA226_Platform_I2C_Write.
+ *         - 2 : INA226_ERR_INVALID_PARAM; Invalid param for INA226_Write_Reg.
+ * @details The INA226 expects data in Big-Endian format. To avoid hardware
+ *          architecture discrepancies, the 16-bit value is split and formatted 
+ *          into a byte buffer (MSB first) before being sent over I2C.
+ */
+static INA226_Status_t INA226_Write_Reg(uint8_t dev_addr, uint8_t reg_addr, uint16_t value) {
+
+    
+    uint8_t buffer[2] = {0, 0};
+    uint8_t i2c_status;
+
+    buffer[0] = (uint8_t)(value >> 8U);
+    buffer[1] = (uint8_t)(value & 0xFFU);
+
+    i2c_status = INA226_Platform_I2C_Write(dev_addr, reg_addr, buffer, 2);
+
+      if (i2c_status != 0) {
+        return INA226_ERR_I2C; 
+    }
+
+    return INA226_OK;
+}
+
+static INA226_Status_t set_config_option(uint8_t addr, INA226_Config_Option_t option, uint16_t mask, uint8_t pos) {
+
+    uint16_t reg_value = 0;
+
+    // Read the register value of destination device.
+    INA226_Status_t op_status = INA226_Read_Reg(addr, INA226_CONFIG_REG, &reg_value);
+
+    // check the I2C operation result.
+    if (op_status != INA226_OK) {
+        return op_status;
+    }
+
+    // Modify the interested bitfield of register: First clear the interested bitfield by using mask variable,
+    // followed by setting the interested bitfield with the option.
+    reg_value &= ~(mask);
+    reg_value |= (option << pos);
+
+    // Write the interested register of destination device.
+    return INA226_Write_Reg(addr, INA226_CONFIG_REG, reg_value);
+}
+
+/* ========================================================================= */
+/*                              PUBLIC FUNCTIONES                            */
+/* ========================================================================= */
+
+INA226_Status_t INA226_Reset(uint8_t addr) {
+   
+    uint16_t config_reg_val = INA226_CONFIG_RESET_MASK;
+    
+    // Setting the reset bit (15) is resets all register to default values. And this bit its self-clears.
+    // There is ne need the read current value of register, write reset mask directly to register. 
+    return INA226_Write_Reg(addr, INA226_CONFIG_REG, config_reg_val);
+}
+
+INA226_Status_t INA226_Set_Shunt_Voltage_Conversion_Time(uint8_t addr, INA226_Conv_Time_t conv_time) {
+
+    // Validate the conv_time parameter
+    if (conv_time > INA226_CT_8244_US) {
+        return INA226_ERR_INVALID_PARAM;
+    }
+
+    // Set with Read Modify Write.
+    return set_config_option(addr, conv_time, INA226_CONFIG_SHUNT_CT_MASK, INA226_CONFIG_SHUNT_CT_POS);
+}
+
+INA226_Status_t INA226_Set_Bus_Voltage_Conversion_Time(uint8_t addr, INA226_Conv_Time_t conv_time) {
+
+    // Validate the conv_time parameter
+    if (conv_time > INA226_CT_8244_US) {
+        return INA226_ERR_INVALID_PARAM;
+    }
+
+    // Set with Read Modify Write.
+    return set_config_option(addr, conv_time, INA226_CONFIG_BUS_CT_MASK, INA226_CONFIG_BUS_CT_POS);
+}
+
+INA226_Status_t INA226_Set_Operating_Mode(uint8_t addr, INA226_Mode_t mode) {
+    
+    // Validate the mode paramtere.
+    if (mode > INA226_CONTINUOUS_BUS_AND_SHUNT_VOLTAGE) { // Continuous bus and shunt voltage is highest value mode can be.
+        return INA226_ERR_INVALID_PARAM;
+    }
+
+    // Set with Read Modify Write.
+    return set_config_option(addr, mode, INA226_CONFIG_MODE_MASK, INA226_CONFIG_MODE_POS);
+}
+
+INA226_Status_t INA226_Set_Averaging_Mode(uint8_t addr, INA226_Avg_Time_t avg_time) {
+
+    // Validate the avg_time paramtere.
+    if (avg_time > INA226_AVG_1024) {
+        return INA226_ERR_INVALID_PARAM;
+    }
+    
+    // Set with Read Modify Write.
+    return set_config_option(addr, avg_time, INA226_CONFIG_AVG_MASK, INA226_CONFIG_AVG_POS);
+}
+
+INA226_Status_t INA226_Set_Alert_Pin_Function(uint8_t addr, INA226_Alert_Func_t alert_func) {
+
+    // Validate the alert_function parameter.
+    if (alert_func != INA226_ALERT_FUNC_SHUNT_VOLTAGE_OVER_LIMIT &&
+        alert_func != INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT &&
+        alert_func != INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT &&
+        alert_func != INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT &&
+        alert_func != INA226_ALERT_FUNC_POWER_OVER_LIMIT &&
+        alert_func != INA226_ALERT_FUNC_CONVERSION_READY &&
+        alert_func != INA226_ALERT_FUNC_SHUNT_VOLTAGE_OVER_LIMIT_CVR &&
+        alert_func != INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT_CON_READY_CVR &&
+        alert_func != INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT_CON_READY_CVR &&
+        alert_func != INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT_CON_READY_CVR &&
+        alert_func != INA226_ALERT_FUNC_POWER_OVER_LIMIT_CON_READY_CVR) {
+            return INA226_ERR_INVALID_PARAM;
+    }
+
+    return INA226_Write_Reg(addr, INA226_MASK_EN_REG, alert_func);
+}
