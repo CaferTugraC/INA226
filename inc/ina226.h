@@ -146,6 +146,15 @@ typedef uint16_t INA226_Alert_Func_t;
 
 #define INA226_MASK_ENABLE_ALERT_FUNC_MASK   (0xFC00U) // Bits 15-10
 
+/**
+ * @brief INA226 sensor handle structure containing hardware details and calibration parameters.
+ * 
+ */
+typedef struct {
+    uint8_t ina226_i2c_addr;
+    uint16_t shunt_resistor_uOhm;
+    uint16_t current_resolution_uA;
+} ina226_handle_t;
 
 /* ========================================================================= */
 /*                            FUNCTION PROTOTYPES                            */
@@ -224,7 +233,7 @@ INA226_Status_t INA226_Set_Averaging_Mode(uint8_t addr, INA226_Avg_Time_t avg_ti
  *         - 1 : INA226_ERR_I2C; I2C communication error while writing the calibration register.
  *         - 2 : INA226_ERR_INVALID_PARAM; cal_reg_value is not valid for the selected measurement scaling.
  */
-INA226_Status_t INA226_Set_Calibration_Reg(uint8_t addr, uint16_t cal_reg_value);
+INA226_Status_t INA226_Calibrate(ina226_handle_t *sensor);
 
 /**
  * @brief Set alert pin function to destination INA226 device.
