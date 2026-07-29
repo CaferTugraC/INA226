@@ -154,7 +154,7 @@ typedef struct {
     uint8_t ina226_i2c_addr;
     uint16_t shunt_resistor_uOhm;
     uint16_t current_resolution_uA;
-    int16_t current_resolution_err_diff_uA;
+    int8_t current_resolution_err_diff_uA;
 } ina226_handle_t;
 
 /* ========================================================================= */
