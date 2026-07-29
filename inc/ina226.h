@@ -295,7 +295,7 @@ INA226_Status_t INA226_Read_Current(ina226_handle_t *sensor, int32_t *current);
  *         - 1 : INA226_ERR_I2C; I2C communication error while reading the shunt voltage register.
  *         - 2 : INA226_ERR_INVALID_PARAM; voltage is NULL.
  */
-INA226_Status_t INA226_Read_Shunt_Voltage(ina226_handle_t *sensor, int16_t *voltage);
+INA226_Status_t INA226_Read_Shunt_Voltage(ina226_handle_t *sensor, int32_t *voltage);
 
 /**
  * @brief  Read bus voltage from destination INA226 device.
@@ -307,7 +307,7 @@ INA226_Status_t INA226_Read_Shunt_Voltage(ina226_handle_t *sensor, int16_t *volt
  *         - 1 : INA226_ERR_I2C; I2C communication error while reading the bus voltage register.
  *         - 2 : INA226_ERR_INVALID_PARAM; voltage is NULL.
  */
-INA226_Status_t INA226_Read_Bus_Voltage(ina226_handle_t *sensor, uint16_t *voltage);
+INA226_Status_t INA226_Read_Bus_Voltage(ina226_handle_t *sensor, uint32_t *voltage);
 
 /**
  * @brief Read power from destination INA226 device.
@@ -319,6 +319,6 @@ INA226_Status_t INA226_Read_Bus_Voltage(ina226_handle_t *sensor, uint16_t *volta
  *         - 1 : INA226_ERR_I2C; I2C communication error while reading the power register.
  *         - 2 : INA226_ERR_INVALID_PARAM; power is NULL.
  */
-INA226_Status_t INA226_Read_Power(ina226_handle_t *sensor, uint16_t *power);
+INA226_Status_t INA226_Read_Power(ina226_handle_t *sensor, uint32_t *power);
 
 #endif /* INA226_H_ */

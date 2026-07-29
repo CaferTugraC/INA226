@@ -274,17 +274,20 @@ INA226_Status_t INA226_Read_Current(ina226_handle_t *sensor, int32_t *current) {
     return INA226_OK;
 }
 
-INA226_Status_t INA226_Read_Shunt_Voltage(ina226_handle_t *sensor, int16_t *voltage) {
+INA226_Status_t INA226_Read_Shunt_Voltage(ina226_handle_t *sensor, int32_t *voltage) {
+
+    if (sensor == NULL || voltage == NULL) return INA226_ERR_INVALID_PARAM;
+
+
+    return INA226_OK;
+}
+
+INA226_Status_t INA226_Read_Bus_Voltage(ina226_handle_t *sensor, uint32_t *voltage) {
     if (sensor == NULL || voltage == NULL) return INA226_ERR_INVALID_PARAM;
     return INA226_OK;
 }
 
-INA226_Status_t INA226_Read_Bus_Voltage(ina226_handle_t *sensor, uint16_t *voltage) {
-    if (sensor == NULL || voltage == NULL) return INA226_ERR_INVALID_PARAM;
-    return INA226_OK;
-}
-
-INA226_Status_t INA226_Read_Power(ina226_handle_t *sensor, uint16_t *power) {
+INA226_Status_t INA226_Read_Power(ina226_handle_t *sensor, uint32_t *power) {
     if (sensor == NULL || power == NULL) return INA226_ERR_INVALID_PARAM;
     return INA226_OK;
 }
