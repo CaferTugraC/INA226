@@ -36,6 +36,7 @@
 #define INA226_MANCUFACTURE_ID_REG          (0xFE)
 #define INA226_DIE_ID_REG                   (0xFF)
 
+#define INA226_SH_VOLTAGE_LSB_NV            (2500U)
 
 
 /* ========================================================================= */
@@ -278,6 +279,20 @@ INA226_Status_t INA226_Read_Shunt_Voltage(ina226_handle_t *sensor, int32_t *volt
 
     if (sensor == NULL || voltage == NULL) return INA226_ERR_INVALID_PARAM;
 
+    uint16_t shunt_voltage_reg = 0;
+
+    INA226_Status_t op_status = INA226_Read_Reg(sensor->ina226_i2c_addr, INA226_SH_VOLTAGE_REG, &shunt_voltage_reg);
+
+    if (op_status != INA226_OK) {
+        return op_status;
+    }
+
+    int32_t raw = (int32_t)(int16_t)shunt_voltage_reg;
+
+    int64_t scaled = (int64_t)raw * 5;
+    int32_t voltage_uV = (int32_t)((scaled + (scaled >= 0 ? 1 : -1)) / 2); // round-to-nearest
+
+    (*voltage) = voltage_uV;
 
     return INA226_OK;
 }
