@@ -317,6 +317,21 @@ INA226_Status_t INA226_Read_Bus_Voltage(ina226_handle_t *sensor, uint32_t *volta
 }
 
 INA226_Status_t INA226_Read_Power(ina226_handle_t *sensor, uint32_t *power) {
+
     if (sensor == NULL || power == NULL) return INA226_ERR_INVALID_PARAM;
+
+    uint16_t power_reg = 0;
+    
+    INA226_Status_t op_status = INA226_Read_Reg(sensor->ina226_i2c_addr, INA226_POWER_REG, &power_reg);
+
+    if (op_status != INA226_OK) {
+        return op_status;
+    }
+
+    uint32_t power_lsb = (uint32_t)((int32_t)sensor->current_resolution_uA + current_resolution_err_diff_uA);
+
+    // Power [uW] = Power Register Value * Power LSB [uW]
+    (*power) = ((uint32_t)power_reg * power_lsb);
+
     return INA226_OK;
 }
