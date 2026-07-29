@@ -214,8 +214,32 @@ INA226_Status_t INA226_Get_Alert_Status(uint8_t addr, INA226_Alert_Status_t *ale
 
 }
 
-INA226_Status_t INA226_Set_Calibration_Reg(uint8_t addr, uint16_t cal_reg_value) {
+INA226_Status_t INA226_Calibrate(ina226_handle_t *sensor) {
+    
+    if (sensor == NULL) {
+        return INA226_ERR_INVALID_PARAM;
+    }
 
+    if (sensor->shunt_resistor_uOhm == 0 || sensor->current_resolution_uA == 0) {
+        return INA226_ERR_INVALID_PARAM;
+    }
+
+    // CAL = 0.00512 / (Current_LSB[A] * Rshunt[Ohm])
+    // CAL = 5.12e9 / (current_resolution_uA * shunt_resistor_uOhm)
+    const uint64_t numerator = 5120000000ULL;
+    const uint64_t denominator = (uint64_t)sensor->current_resolution_uA * 
+                                 (uint64_t)sensor->shunt_resistor_uOhm;
+
+    // round-to-nearest
+    uint64_t cal = (numerator + (denominator / 2ULL)) / denominator;
+
+    if (cal > 0xFFFFULL) {
+        return INA226_ERR_INVALID_PARAM;
+    }
+
+    uint16_t calibration_reg_val = (uint16_t)cal;
+    
+    return INA226_Write_Reg(sensor->ina226_i2c_add, INA226_CALIBRATION_REG, calibration_reg_val);
 }
 
 INA226_Status_t INA226_Read_Current(uint8_t addr, int16_t *current) {
