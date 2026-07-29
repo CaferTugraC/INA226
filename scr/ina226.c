@@ -241,10 +241,16 @@ INA226_Status_t INA226_Calibrate(ina226_handle_t *sensor) {
     // round-to-nearest
     uint64_t cal = (numerator + (denominator / 2ULL)) / denominator;
 
-    if (cal > 0xFFFFULL) {
+    if (cal == 0ULL || cal > 0xFFFFULL) {
         return INA226_ERR_INVALID_PARAM;
     }
 
+    const uint64_t actual_denominator = cal * (uint64_t)sensor->shunt_resistor_uOhm;
+    const uint64_t actual_current_lsb_uA = numerator / actual_denominator;
+
+    sensor->current_resolution_err_diff_uA =
+        (int32_t)((int64_t)sensor->current_resolution_uA - (int64_t)actual_current_lsb_uA);
+    
     uint16_t calibration_reg_val = (uint16_t)cal;
     
     return INA226_Write_Reg(sensor->ina226_i2c_addr, INA226_CALIBRATION_REG, calibration_reg_val);
