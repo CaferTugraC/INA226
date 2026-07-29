@@ -250,8 +250,21 @@ INA226_Status_t INA226_Calibrate(ina226_handle_t *sensor) {
     return INA226_Write_Reg(sensor->ina226_i2c_addr, INA226_CALIBRATION_REG, calibration_reg_val);
 }
 
-INA226_Status_t INA226_Read_Current(ina226_handle_t *sensor, int16_t *current) {
+INA226_Status_t INA226_Read_Current(ina226_handle_t *sensor, int32_t *current) {
+
     if (sensor == NULL || current == NULL) return INA226_ERR_INVALID_PARAM;
+
+    uint16_t current_reg = 0;
+    
+    INA226_Status_t op_status = INA226_Read_Reg(sensor->ina226_i2c_addr, INA226_CURRENT_REG, &current_reg);
+
+    if (op_status != INA226_OK) {
+        return op_status;
+    }
+
+    // current_reg * current_lsb = current;
+    (*current) = (int32_t)((int16_t)current_reg) * ((int32_t)sensor->current_resolution_uA + (int32_t)sensor->current_resolution_err_diff_uA);
+
     return INA226_OK;
 }
 

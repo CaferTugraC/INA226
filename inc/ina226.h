@@ -154,6 +154,7 @@ typedef struct {
     uint8_t ina226_i2c_addr;
     uint16_t shunt_resistor_uOhm;
     uint16_t current_resolution_uA;
+    int16_t current_resolution_err_diff_uA;
 } ina226_handle_t;
 
 /* ========================================================================= */
@@ -276,19 +277,19 @@ INA226_Status_t INA226_Get_Alert_Status(ina226_handle_t *sensor, INA226_Alert_St
  * @brief Read current value from destination INA226 device.
  * 
  * @param addr    : Destination INA226 device Address.
- * @param current : Pointer to store the measured current in milliamperes.
+ * @param current : Pointer to store the measured current in microamperes.
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success
  *         - 1 : INA226_ERR_I2C; I2C communication error while reading the current register.
  *         - 2 : INA226_ERR_INVALID_PARAM; current is NULL.
  */
-INA226_Status_t INA226_Read_Current(ina226_handle_t *sensor, int16_t *current);
+INA226_Status_t INA226_Read_Current(ina226_handle_t *sensor, int32_t *current);
 
 /**
  * @brief Read shunt voltage from destination INA226 device.
  * 
  * @param addr    : Destination INA226 device Address.
- * @param voltage : Pointer to store the measured shunt voltage in millivolts.
+ * @param voltage : Pointer to store the measured shunt voltage in microvolts.
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success
  *         - 1 : INA226_ERR_I2C; I2C communication error while reading the shunt voltage register.
@@ -300,7 +301,7 @@ INA226_Status_t INA226_Read_Shunt_Voltage(ina226_handle_t *sensor, int16_t *volt
  * @brief  Read bus voltage from destination INA226 device.
  * 
  * @param addr    : Destination INA226 device Address.
- * @param voltage : Pointer to store the measured bus voltage in millivolts.
+ * @param voltage : Pointer to store the measured bus voltage in microvolts.
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success
  *         - 1 : INA226_ERR_I2C; I2C communication error while reading the bus voltage register.
@@ -312,7 +313,7 @@ INA226_Status_t INA226_Read_Bus_Voltage(ina226_handle_t *sensor, uint16_t *volta
  * @brief Read power from destination INA226 device.
  * 
  * @param addr  : Destination INA226 device Address.
- * @param power : Pointer to store the measured power in milliwatts.
+ * @param power : Pointer to store the measured power in microwatts.
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success
  *         - 1 : INA226_ERR_I2C; I2C communication error while reading the power register.
