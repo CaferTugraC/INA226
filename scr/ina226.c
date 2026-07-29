@@ -37,6 +37,7 @@
 #define INA226_DIE_ID_REG                   (0xFF)
 
 #define INA226_SH_VOLTAGE_LSB_NV            (2500U)
+#define INA226_BUS_VOLTAGE_LSB_UV           (1250U)
 
 
 /* ========================================================================= */
@@ -298,7 +299,20 @@ INA226_Status_t INA226_Read_Shunt_Voltage(ina226_handle_t *sensor, int32_t *volt
 }
 
 INA226_Status_t INA226_Read_Bus_Voltage(ina226_handle_t *sensor, uint32_t *voltage) {
+
     if (sensor == NULL || voltage == NULL) return INA226_ERR_INVALID_PARAM;
+
+    uint16_t bus_voltage_reg = 0;
+    
+    INA226_Status_t op_status = INA226_Read_Reg(sensor->ina226_i2c_addr, INA226_BUS_VOLTAGE_REG, &bus_voltage_reg);
+
+    if (op_status != INA226_OK) {
+        return op_status;
+    }
+
+    // Bus Voltage [uV] = Bus Voltage Register Value * Bus Voltage LSB [uV]
+    (*voltage) = (uint32_t)(bus_voltage_reg * INA226_BUS_VOLTAGE_LSB_UV);
+
     return INA226_OK;
 }
 
