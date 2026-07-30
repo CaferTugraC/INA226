@@ -39,6 +39,27 @@
 #define INA226_SH_VOLTAGE_LSB_NV            (2500U)
 #define INA226_BUS_VOLTAGE_LSB_UV           (1250U)
 
+/**
+ * @brief INA226 register field masks and positions based on the datasheet.
+ *
+ *        These masks are used when packing field values into the 16-bit registers.
+ */
+#define INA226_CONFIG_RESET_MASK          (0x8000U)
+#define INA226_CONFIG_RESET_POS           (15U)
+
+#define INA226_CONFIG_AVG_MASK            (0x0E00U) // Bits 11-9 (0000 1110 0000 0000)
+#define INA226_CONFIG_AVG_POS             (9U)
+
+#define INA226_CONFIG_BUS_CT_MASK         (0x01C0U) // Bits 8-6 (0000 0001 1100 0000)
+#define INA226_CONFIG_BUS_CT_POS          (6U)
+
+#define INA226_CONFIG_SHUNT_CT_MASK       (0x0038U) // Bits 5-3 (0000 0000 0011 1000)
+#define INA226_CONFIG_SHUNT_CT_POS        (3U)
+
+#define INA226_CONFIG_MODE_MASK           (0x0007U) // Bits 2-0 (0000 0000 0000 0111)
+#define INA226_CONFIG_MODE_POS            (0U)
+
+#define INA226_MASK_ENABLE_ALERT_FUNC_MASK   (0xFC00U) // Bits 15-10
 
 /* ========================================================================= */
 /*                              PRIVATE FUNCTIONES                           */
@@ -211,11 +232,24 @@ INA226_Status_t INA226_Set_Alert_Pin_Function(const ina226_handle_t *sensor, INA
             return INA226_ERR_INVALID_PARAM;
     }
 
+    uint16_t mask_en_reg = 0;
+
+    INA226_Status_t op_status = INA226_Read_Reg(sensor->ina226_i2c_addr, INA226_MASK_EN_REG, &mask_en_reg);
+
+    if (op_status != INA226_OK) {
+        return op_status;
+    }
+
+    mask_en_reg &= ~((uint16_t)INA226_MASK_ENABLE_ALERT_FUNC_MASK);
+    mask_en_reg |= (uint16_t)alert_func;
+
     return INA226_Write_Reg(sensor->ina226_i2c_addr, INA226_MASK_EN_REG, alert_func);
 }
 
 INA226_Status_t INA226_Set_Alert_Limit(const ina226_handle_t *sensor, uint16_t limit_value) {
+
     if (sensor == NULL) return INA226_ERR_INVALID_PARAM;
+
     return INA226_OK;
 }
 
