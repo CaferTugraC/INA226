@@ -60,6 +60,7 @@
 #define INA226_CONFIG_MODE_POS            (0U)
 
 #define INA226_MASK_ENABLE_ALERT_FUNC_MASK   (0xFC00U) // Bits 15-10
+#define INA226_MASK_ENABLE_ALERT_FUNC_POS    (10U)
 
 /* ========================================================================= */
 /*                              PRIVATE FUNCTIONES                           */
@@ -241,12 +242,12 @@ INA226_Status_t INA226_Set_Alert_Pin_Function(const ina226_handle_t *sensor, INA
     }
 
     mask_en_reg &= ~((uint16_t)INA226_MASK_ENABLE_ALERT_FUNC_MASK);
-    mask_en_reg |= (uint16_t)alert_func;
+    mask_en_reg |= ((uint16_t)alert_func << (uint16_t)INA226_MASK_ENABLE_ALERT_FUNC_POS);
 
     return INA226_Write_Reg(sensor->ina226_i2c_addr, INA226_MASK_EN_REG, alert_func);
 }
 
-INA226_Status_t INA226_Set_Alert_Limit(const ina226_handle_t *sensor, uint16_t limit_value) {
+INA226_Status_t INA226_Set_Alert_Limit(const ina226_handle_t *sensor, int32_t limit_value) {
 
     if (sensor == NULL) return INA226_ERR_INVALID_PARAM;
 
@@ -254,7 +255,10 @@ INA226_Status_t INA226_Set_Alert_Limit(const ina226_handle_t *sensor, uint16_t l
 }
 
 INA226_Status_t INA226_Get_Alert_Status(const ina226_handle_t *sensor, INA226_Alert_Status_t *alert_status) {
+
     if (sensor == NULL || alert_status == NULL) return INA226_ERR_INVALID_PARAM;
+
+    
     return INA226_OK;
 }
 
