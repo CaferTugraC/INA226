@@ -132,7 +132,6 @@ typedef struct {
     uint8_t ina226_i2c_addr;
     uint16_t shunt_resistor_uOhm;
     uint32_t current_resolution_uA;
-    int32_t current_resolution_err_diff_uA;
 } ina226_handle_t;
 
 /* ========================================================================= */
@@ -202,8 +201,11 @@ INA226_Status_t INA226_Set_Operating_Mode(const ina226_handle_t *sensor, INA226_
  */
 INA226_Status_t INA226_Set_Averaging_Mode(const ina226_handle_t *sensor, INA226_Avg_Time_t avg_time);
 
-/**
  * @brief Set current and power measurement resolution by setting the calibration register.
+ * 
+ * @note The physical INA226 calibration register is an integer. Setting it introduces a minor 
+ *       quantization (rounding) error. Thus, the hardware's actual Current LSB might slightly 
+ *       differ (usually sub-microampere) from the requested current_resolution_uA.
  * 
  * @param addr          : Destination INA226 device Address.
  * @param cal_reg_value : Calibration register value for the device. This value must be calculated using Equation 1 from the datasheet.
