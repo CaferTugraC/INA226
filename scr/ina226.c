@@ -244,13 +244,96 @@ INA226_Status_t INA226_Set_Alert_Pin_Function(const ina226_handle_t *sensor, INA
     mask_en_reg &= ~((uint16_t)INA226_MASK_ENABLE_ALERT_FUNC_MASK);
     mask_en_reg |= ((uint16_t)alert_func << (uint16_t)INA226_MASK_ENABLE_ALERT_FUNC_POS);
 
-    return INA226_Write_Reg(sensor->ina226_i2c_addr, INA226_MASK_EN_REG, alert_func);
+    return INA226_Write_Reg(sensor->ina226_i2c_addr, INA226_MASK_EN_REG, mask_en_reg);
 }
 
 INA226_Status_t INA226_Set_Alert_Limit(const ina226_handle_t *sensor, int32_t limit_value) {
 
     if (sensor == NULL) return INA226_ERR_INVALID_PARAM;
 
+    int16_t alert_limit_reg_val = 0;
+    INA226_Alert_Func_t alert_func;
+
+    INA226_Status_t op_status = INA226_Get_Alert_Pin_Function(sensor, &alert_func);
+    if (op_status != INA226_OK) {
+        return op_status;
+    }
+
+    if (alert_func == INA226_ALERT_FUNC_SHUNT_VOLTAGE_OVER_LIMIT ||
+        alert_func == INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT ||
+        alert_func == INA226_ALERT_FUNC_SHUNT_VOLTAGE_OVER_LIMIT_CVR ||
+        alert_func == INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT_CON_READY_CVR) {
+
+        // shunt
+        int32_t reg_val = (2LL * limit_value + (limit_value >= 0 ? -1LL : 1LL)) / 5LL;
+
+        if (reg_val > INT16_MAX) {
+            return INA226_ERR_MATH_OVERFLOW;
+        }
+        if (reg_val < INT16_MIN) {
+            return INA226_ERR_MATH_OVERFLOW;
+        }
+
+        alert_limit_reg_val = (int16_t)reg_val;
+
+    }
+    else if (alert_func == INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT ||
+             alert_func == INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT ||
+             alert_func == INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT_CON_READY_CVR ||
+             alert_func == INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT_CON_READY_CVR) {
+
+        // bus
+        int32_t reg_val = limit_value / (int32_t)INA226_BUS_VOLTAGE_LSB_UV;
+
+        if (reg_val > INT16_MAX) {
+            return INA226_ERR_MATH_OVERFLOW;
+        }
+        if (reg_val < INT16_MIN) {
+            return INA226_ERR_MATH_OVERFLOW;
+        }
+
+        alert_limit_reg_val = (int16_t)reg_val;
+        
+    }
+    else if (alert_func == INA226_ALERT_FUNC_POWER_OVER_LIMIT ||
+             alert_func == INA226_ALERT_FUNC_POWER_OVER_LIMIT_CON_READY_CVR) {
+        
+        // pwr
+        int64_t power_lsb = 25U * (int64_t)sensor->current_resolution_uA + (int64_t)sensor->current_resolution_err_diff_uA;
+
+        int64_t reg_val_64 = (int64_t)limit_value / power_lsb;
+
+        if (reg_val_64 > INT16_MAX) {
+            return INA226_ERR_MATH_OVERFLOW;
+        }
+        if (reg_val_64 < INT16_MIN) {
+            return INA226_ERR_MATH_OVERFLOW;
+        }
+
+        alert_limit_reg_val = (int16_t)reg_val_64;
+
+    }
+    else {
+        // conversion ready or unknown
+        return INA226_ERR_INVALID_PARAM;
+    }
+
+    return INA226_Write_Reg(sensor->ina226_i2c_addr, INA226_ALERT_LIM_REG, (uint16_t)alert_limit_reg_val);
+}
+
+INA226_Status_t INA226_Get_Alert_Pin_Function(const ina226_handle_t *sensor, INA226_Alert_Func_t *alert_func) {
+
+    if (sensor == NULL || alert_func == NULL) return INA226_ERR_INVALID_PARAM;
+
+    uint16_t mask_en_reg = 0;
+    INA226_Status_t op_status = INA226_Read_Reg(sensor->ina226_i2c_addr, INA226_MASK_EN_REG, &mask_en_reg);
+
+    if (op_status != INA226_OK) {
+        return op_status;
+    }
+
+    *alert_func = (INA226_Alert_Func_t)((mask_en_reg & INA226_MASK_ENABLE_ALERT_FUNC_MASK) >> INA226_MASK_ENABLE_ALERT_FUNC_POS);
+    
     return INA226_OK;
 }
 

@@ -230,6 +230,18 @@ INA226_Status_t INA226_Calibrate(ina226_handle_t *sensor);
 INA226_Status_t INA226_Set_Alert_Pin_Function(const ina226_handle_t *sensor, INA226_Alert_Func_t alert_func);
 
 /**
+ * @brief Get alert pin function from destination INA226 device.
+ * 
+ * @param sensor     : Destination INA226 device Handle.
+ * @param alert_func : Pointer to store the configured alert function.
+ * @return INA226_Status_t
+ *         - 0 : INA226_OK; Success
+ *         - 1 : INA226_ERR_I2C; I2C communication error while reading the mask/enable register.
+ *         - 2 : INA226_ERR_INVALID_PARAM; alert_func is NULL.
+ */
+INA226_Status_t INA226_Get_Alert_Pin_Function(const ina226_handle_t *sensor, INA226_Alert_Func_t *alert_func);
+
+/**
  * @brief Set alert limit value to destination INA226 device by setting the alert limit register.
  * 
  * @param addr        : Destination INA226 device Address.
