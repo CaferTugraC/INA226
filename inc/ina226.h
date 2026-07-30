@@ -52,6 +52,7 @@ typedef INA226_Config_Option_t INA226_Status_t;
 #define INA226_ERR_I2C              ((INA226_Status_t)1U)
 #define INA226_ERR_INVALID_PARAM    ((INA226_Status_t)2U)
 #define INA226_ERR_MATH_OVERFLOW    ((INA226_Status_t)3U)
+#define INA226_ERR_INVALID_STATE    ((INA226_Status_t)4U)
 
 /**
  * @brief INA226 Alert pin status macros.

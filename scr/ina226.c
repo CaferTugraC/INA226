@@ -62,6 +62,27 @@
 #define INA226_MASK_ENABLE_ALERT_FUNC_MASK   (0xFC00U) // Bits 15-10
 #define INA226_MASK_ENABLE_ALERT_FUNC_POS    (10U)
 
+/**
+ * @brief Alert function category bitmasks for validating and classifying alert_func values.
+ *
+ *        The INA226 alert function field (Mask/Enable Register bits [15:10]) uses the following
+ *        bit layout when represented as a 6-bit value:
+ *
+ *          Bit 5: Shunt Voltage Over-Limit   (SOL)
+ *          Bit 4: Shunt Voltage Under-Limit  (SUL)
+ *          Bit 3: Bus Voltage Over-Limit     (BOL)
+ *          Bit 2: Bus Voltage Under-Limit    (BUL)
+ *          Bit 1: Power Over-Limit           (POL)
+ *          Bit 0: Conversion Ready           (CVR)
+ *
+ *        Bits [5:1] are the main alert sources (mutually exclusive).
+ *        Bit 0 (CVR) can be combined with any main source as an optional overlay.
+ */
+#define INA226_ALERT_FUNC_MAIN_BITS_MASK      (0x3EU)  // Bits 5-1: All main alert source bits
+#define INA226_ALERT_FUNC_SHUNT_CATEGORY_MASK (0x30U)  // Bits 5-4: Shunt voltage alert sources
+#define INA226_ALERT_FUNC_BUS_CATEGORY_MASK   (0x0CU)  // Bits 3-2: Bus voltage alert sources
+#define INA226_ALERT_FUNC_POWER_CATEGORY_MASK (0x02U)  // Bit 1:    Power over-limit alert source
+
 /* ========================================================================= */
 /*                              PRIVATE FUNCTIONES                           */
 /* ========================================================================= */
@@ -216,21 +237,31 @@ INA226_Status_t INA226_Set_Averaging_Mode(const ina226_handle_t *sensor, INA226_
 }
 
 INA226_Status_t INA226_Set_Alert_Pin_Function(const ina226_handle_t *sensor, INA226_Alert_Func_t alert_func) {
+    
     if (sensor == NULL) return INA226_ERR_INVALID_PARAM;
 
-    // Validate the alert_function parameter.
-    if (alert_func != INA226_ALERT_FUNC_SHUNT_VOLTAGE_OVER_LIMIT &&
-        alert_func != INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT &&
-        alert_func != INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT &&
-        alert_func != INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT &&
-        alert_func != INA226_ALERT_FUNC_POWER_OVER_LIMIT &&
-        alert_func != INA226_ALERT_FUNC_CONVERSION_READY &&
-        alert_func != INA226_ALERT_FUNC_SHUNT_VOLTAGE_OVER_LIMIT_CVR &&
-        alert_func != INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT_CON_READY_CVR &&
-        alert_func != INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT_CON_READY_CVR &&
-        alert_func != INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT_CON_READY_CVR &&
-        alert_func != INA226_ALERT_FUNC_POWER_OVER_LIMIT_CON_READY_CVR) {
+    // Validate the alert_func parameter using the bit-field structure of the alert function.
+    // Extract the main alert source bits (bits [5:1]), excluding the Conversion Ready bit (bit 0).
+    uint16_t main_bits = alert_func & INA226_ALERT_FUNC_MAIN_BITS_MASK;
+
+    if (main_bits == 0U) {
+        // No main alert source is selected. The only valid option in this case
+        // is pure Conversion Ready (bit 0 only). Any other value is invalid.
+        if (alert_func != INA226_ALERT_FUNC_CONVERSION_READY) {
             return INA226_ERR_INVALID_PARAM;
+        }
+    }
+    else {
+        // A main alert source is selected. Exactly one main bit must be set.
+        // Power-of-two check: (x & (x - 1)) == 0 is true only when x has a single bit set.
+        if ((main_bits & (main_bits - 1U)) != 0U) {
+            return INA226_ERR_INVALID_PARAM;
+        }
+        // Remaining bits (after removing the main source and CVR bit) must be zero.
+        // This rejects values with undefined or reserved bits set.
+        if ((alert_func & ~(main_bits | INA226_ALERT_FUNC_CONVERSION_READY)) != 0U) {
+            return INA226_ERR_INVALID_PARAM;
+        }
     }
 
     uint16_t mask_en_reg = 0;
@@ -271,16 +302,16 @@ INA226_Status_t INA226_Set_Alert_Limit(const ina226_handle_t *sensor, int32_t li
     INA226_Alert_Func_t alert_func;
 
     INA226_Status_t op_status = INA226_Get_Alert_Pin_Function(sensor, &alert_func);
+
     if (op_status != INA226_OK) {
         return op_status;
     }
 
-    if (alert_func == INA226_ALERT_FUNC_SHUNT_VOLTAGE_OVER_LIMIT ||
-        alert_func == INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT ||
-        alert_func == INA226_ALERT_FUNC_SHUNT_VOLTAGE_OVER_LIMIT_CVR ||
-        alert_func == INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT_CON_READY_CVR) {
+    if (alert_func & INA226_ALERT_FUNC_SHUNT_CATEGORY_MASK) {
 
-        // shunt
+        // Shunt voltage alert: Convert limit from nanovolts to register value.
+        // Shunt Voltage LSB = 2.5 uV = 2500 nV. Register = limit_value_nV / 2500.
+        // Integer round-to-nearest: (2 * x + bias) / 5, where bias corrects rounding direction.
         int32_t reg_val = (2LL * limit_value + (limit_value >= 0 ? -1LL : 1LL)) / 5LL;
 
         if (reg_val > INT16_MAX) {
@@ -293,12 +324,11 @@ INA226_Status_t INA226_Set_Alert_Limit(const ina226_handle_t *sensor, int32_t li
         alert_limit_reg_val = (int16_t)reg_val;
 
     }
-    else if (alert_func == INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT ||
-             alert_func == INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT ||
-             alert_func == INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT_CON_READY_CVR ||
-             alert_func == INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT_CON_READY_CVR) {
 
-        // bus
+    else if (alert_func & INA226_ALERT_FUNC_BUS_CATEGORY_MASK) {
+
+        // Bus voltage alert: Convert limit from microvolts to register value.
+        // Bus Voltage LSB = 1.25 mV = 1250 uV. Register = limit_value_uV / 1250.
         int32_t reg_val = limit_value / (int32_t)INA226_BUS_VOLTAGE_LSB_UV;
 
         if (reg_val > INT16_MAX) {
@@ -309,12 +339,13 @@ INA226_Status_t INA226_Set_Alert_Limit(const ina226_handle_t *sensor, int32_t li
         }
 
         alert_limit_reg_val = (int16_t)reg_val;
-        
+
     }
-    else if (alert_func == INA226_ALERT_FUNC_POWER_OVER_LIMIT ||
-             alert_func == INA226_ALERT_FUNC_POWER_OVER_LIMIT_CON_READY_CVR) {
-        
-        // pwr
+
+    else if (alert_func & INA226_ALERT_FUNC_POWER_CATEGORY_MASK) {
+
+        // Power alert: Convert limit from microwatts to register value.
+        // Power LSB = 25 * Current_LSB (per datasheet). Register = limit_value_uW / power_lsb.
         int64_t power_lsb = 25U * (int64_t)sensor->current_resolution_uA + (int64_t)sensor->current_resolution_err_diff_uA;
 
         int64_t reg_val_64 = (int64_t)limit_value / power_lsb;
@@ -329,9 +360,15 @@ INA226_Status_t INA226_Set_Alert_Limit(const ina226_handle_t *sensor, int32_t li
         alert_limit_reg_val = (int16_t)reg_val_64;
 
     }
+
     else {
-        // conversion ready or unknown
-        return INA226_ERR_INVALID_PARAM;
+
+        // No recognized alert category bit is set. This means either:
+        //  - The alert pin is configured as Conversion Ready (no limit needed), or
+        //  - The Mask/Enable register contains a corrupted/unexpected value.
+        // In both cases, writing to the alert limit register is not meaningful.
+        return INA226_ERR_INVALID_STATE;
+
     }
 
     return INA226_Write_Reg(sensor->ina226_i2c_addr, INA226_ALERT_LIM_REG, (uint16_t)alert_limit_reg_val);
