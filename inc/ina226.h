@@ -242,12 +242,19 @@ INA226_Status_t INA226_Get_Alert_Pin_Function(const ina226_handle_t *sensor, INA
 /**
  * @brief Set alert limit value to destination INA226 device by setting the alert limit register.
  * 
- * @param addr        : Destination INA226 device Address.
- * @param limit_value : Alert limit value for the device.
+ * @note The unit of limit_value depends on the currently configured alert function:
+ *       - Shunt Voltage Over/Under Limit : limit_value in microvolts  [µV]
+ *       - Bus Voltage Over/Under Limit   : limit_value in microvolts  [µV]
+ *       - Power Over Limit               : limit_value in microwatts  [µW]
+ * 
+ * @param sensor      : Destination INA226 device handle.
+ * @param limit_value : Alert limit value in micro units (µV or µW, see @note).
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success
- *         - 1 : INA226_ERR_I2C; I2C communication error while writing the alert limit register.
- *         - 2 : INA226_ERR_INVALID_PARAM; Invalid internal parameter passed to register access helpers.
+ *         - 1 : INA226_ERR_I2C; I2C communication error while reading/writing alert registers.
+ *         - 2 : INA226_ERR_INVALID_PARAM; sensor is NULL.
+ *         - 3 : INA226_ERR_MATH_OVERFLOW; Converted register value exceeds 16-bit signed range.
+ *         - 4 : INA226_ERR_INVALID_STATE; No limit-based alert function is configured.
  */
 INA226_Status_t INA226_Set_Alert_Limit(const ina226_handle_t *sensor, int32_t limit_value);
 

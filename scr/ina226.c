@@ -312,7 +312,7 @@ INA226_Status_t INA226_Set_Alert_Limit(const ina226_handle_t *sensor, int32_t li
         // Shunt voltage alert: Convert limit from nanovolts to register value.
         // Shunt Voltage LSB = 2.5 uV = 2500 nV. Register = limit_value_nV / 2500.
         // Integer round-to-nearest: (2 * x + bias) / 5, where bias corrects rounding direction.
-        int32_t reg_val = (2LL * limit_value + (limit_value >= 0 ? -1LL : 1LL)) / 5LL;
+        int32_t reg_val = (2LL * limit_value + (limit_value >= 0 ? 2LL : -2LL)) / 5LL;
 
         if (reg_val > INT16_MAX) {
             return INA226_ERR_MATH_OVERFLOW;
@@ -346,7 +346,7 @@ INA226_Status_t INA226_Set_Alert_Limit(const ina226_handle_t *sensor, int32_t li
 
         // Power alert: Convert limit from microwatts to register value.
         // Power LSB = 25 * Current_LSB (per datasheet). Register = limit_value_uW / power_lsb.
-        int64_t power_lsb = 25U * (int64_t)sensor->current_resolution_uA + (int64_t)sensor->current_resolution_err_diff_uA;
+        int64_t power_lsb = 25U * ((int64_t)sensor->current_resolution_uA + (int64_t)sensor->current_resolution_err_diff_uA);
 
         int64_t reg_val_64 = (int64_t)limit_value / power_lsb;
 
@@ -528,7 +528,7 @@ INA226_Status_t INA226_Read_Power(const ina226_handle_t *sensor, uint32_t *power
     }
 
 
-    int64_t power_lsb = 25U * (int64_t)sensor->current_resolution_uA + (int64_t)sensor->current_resolution_err_diff_uA;
+    int64_t power_lsb = 25U * ((int64_t)sensor->current_resolution_uA + (int64_t)sensor->current_resolution_err_diff_uA);
 
     // Power [uW] = Power Register Value * Power LSB [uW]
     int64_t pwr64_uW = ((int64_t)power_reg * power_lsb);
@@ -536,7 +536,7 @@ INA226_Status_t INA226_Read_Power(const ina226_handle_t *sensor, uint32_t *power
     if (pwr64_uW > (int64_t)UINT32_MAX) {
         return INA226_ERR_MATH_OVERFLOW;
     }
-    else if (pwr64_uW < (int64_t)UINT32_MIN) {
+    else if (pwr64_uW < 0) {
         return INA226_ERR_MATH_OVERFLOW;
     }
     else {
