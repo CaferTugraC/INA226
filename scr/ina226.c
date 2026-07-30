@@ -341,6 +341,31 @@ INA226_Status_t INA226_Get_Alert_Status(const ina226_handle_t *sensor, INA226_Al
 
     if (sensor == NULL || alert_status == NULL) return INA226_ERR_INVALID_PARAM;
 
+    uint16_t mask_en_reg = 0;
+
+    INA226_Status_t op_status = INA226_Read_Reg(sensor->ina226_i2c_addr, INA226_MASK_EN_REG, &mask_en_reg);
+
+    if (op_status != INA226_OK) {
+        return op_status;
+    }
+
+    INA226_Alert_Func_t alert_pin_func;
+
+    op_status = INA226_Get_Alert_Pin_Function(sensor, &alert_pin_func);
+
+    if (op_status != INA226_OK) {
+        return op_status;
+    }
+
+    if ((mask_en_reg & 0x0018U) == 0U) { // 3 and 4. bit of mask enable register.
+        (*alert_status) = INA226_ALERT_NO_ALERT;
+    }
+    else if ((mask_en_reg & 0x0010U) != 0U) { // 4. Bit of mask enable register.
+        (*alert_status) = INA226_ALERT_DETECTED;
+    }
+    else {
+        (*alert_status) = INA226_ALERT_CONVERSION_READY;
+    }
     
     return INA226_OK;
 }

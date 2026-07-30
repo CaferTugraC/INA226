@@ -59,12 +59,9 @@ typedef INA226_Config_Option_t INA226_Status_t;
  */
 typedef INA226_Config_Option_t INA226_Alert_Status_t;
 #define INA226_ALERT_NO_ALERT                   ((INA226_Alert_Status_t)0U)
-#define INA226_ALERT_SHUNT_VOLTAGE_OVER_LIMIT   ((INA226_Alert_Status_t)1U)
-#define INA226_ALERT_SHUNT_VOLTAGE_UNDER_LIMIT  ((INA226_Alert_Status_t)2U)
-#define INA226_ALERT_BUS_VOLTAGE_OVER_LIMIT     ((INA226_Alert_Status_t)3U)
-#define INA226_ALERT_BUS_VOLTAGE_UNDER_LIMIT    ((INA226_Alert_Status_t)4U)
-#define INA226_ALERT_POWER_OVER_LIMIT           ((INA226_Alert_Status_t)5U)
-#define INA226_ALERT_CONVERSION_READY           ((INA226_Alert_Status_t)6U)
+#define INA226_ALERT_DETECTED                   ((INA226_Alert_Status_t)1U)
+#define INA226_ALERT_CONVERSION_READY           ((INA226_Alert_Status_t)2U)
+
 
 /**
  * @brief INA226 Conversion time option macros.
