@@ -386,10 +386,6 @@ INA226_Status_t INA226_Get_Alert_Status(const ina226_handle_t *sensor, INA226_Al
         return op_status;
     }
 
-    if (op_status != INA226_OK) {
-        return op_status;
-    }
-
     // Check Bit 4 (AFF: Alert Function Flag, 0x0010) and Bit 3 (CVRF: Conversion Ready Flag, 0x0008)
     // 0x0018U = AFF | CVRF
     if ((mask_en_reg & 0x0018U) == 0U) {
