@@ -52,6 +52,7 @@ typedef INA226_Config_Option_t INA226_Status_t;
 #define INA226_ERR_I2C              ((INA226_Status_t)1U)
 #define INA226_ERR_INVALID_PARAM    ((INA226_Status_t)2U)
 #define INA226_ERR_MATH_OVERFLOW    ((INA226_Status_t)3U)
+#define INA226_ERR_INVALID_STATE    ((INA226_Status_t)4U)
 
 /**
  * @brief INA226 Alert pin status macros.
@@ -59,12 +60,9 @@ typedef INA226_Config_Option_t INA226_Status_t;
  */
 typedef INA226_Config_Option_t INA226_Alert_Status_t;
 #define INA226_ALERT_NO_ALERT                   ((INA226_Alert_Status_t)0U)
-#define INA226_ALERT_SHUNT_VOLTAGE_OVER_LIMIT   ((INA226_Alert_Status_t)1U)
-#define INA226_ALERT_SHUNT_VOLTAGE_UNDER_LIMIT  ((INA226_Alert_Status_t)2U)
-#define INA226_ALERT_BUS_VOLTAGE_OVER_LIMIT     ((INA226_Alert_Status_t)3U)
-#define INA226_ALERT_BUS_VOLTAGE_UNDER_LIMIT    ((INA226_Alert_Status_t)4U)
-#define INA226_ALERT_POWER_OVER_LIMIT           ((INA226_Alert_Status_t)5U)
-#define INA226_ALERT_CONVERSION_READY           ((INA226_Alert_Status_t)6U)
+#define INA226_ALERT_DETECTED                   ((INA226_Alert_Status_t)1U)
+#define INA226_ALERT_CONVERSION_READY           ((INA226_Alert_Status_t)2U)
+
 
 /**
  * @brief INA226 Conversion time option macros.
@@ -113,39 +111,18 @@ typedef INA226_Config_Option_t INA226_Mode_t;
  * 
  */
 typedef uint16_t INA226_Alert_Func_t;
-#define INA226_ALERT_FUNC_SHUNT_VOLTAGE_OVER_LIMIT                  ((INA226_Alert_Func_t)0x8000U)
-#define INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT                 ((INA226_Alert_Func_t)0x4000U)
-#define INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT                    ((INA226_Alert_Func_t)0x2000U)
-#define INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT                   ((INA226_Alert_Func_t)0x1000U)
-#define INA226_ALERT_FUNC_POWER_OVER_LIMIT                          ((INA226_Alert_Func_t)0x0800U)
-#define INA226_ALERT_FUNC_CONVERSION_READY                          ((INA226_Alert_Func_t)0x0400U)
-#define INA226_ALERT_FUNC_SHUNT_VOLTAGE_OVER_LIMIT_CVR              ((INA226_Alert_Func_t)0x8400U)
-#define INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT_CON_READY_CVR   ((INA226_Alert_Func_t)0x4400U)
-#define INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT_CON_READY_CVR      ((INA226_Alert_Func_t)0x2400U)
-#define INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT_CON_READY_CVR     ((INA226_Alert_Func_t)0x1400U)
-#define INA226_ALERT_FUNC_POWER_OVER_LIMIT_CON_READY_CVR            ((INA226_Alert_Func_t)0xC000U)
+#define INA226_ALERT_FUNC_SHUNT_VOLTAGE_OVER_LIMIT                  ((INA226_Alert_Func_t)0x20U)
+#define INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT                 ((INA226_Alert_Func_t)0x10U)
+#define INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT                    ((INA226_Alert_Func_t)0x08U)
+#define INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT                   ((INA226_Alert_Func_t)0x04U)
+#define INA226_ALERT_FUNC_POWER_OVER_LIMIT                          ((INA226_Alert_Func_t)0x02U)
+#define INA226_ALERT_FUNC_CONVERSION_READY                          ((INA226_Alert_Func_t)0x01U)
+#define INA226_ALERT_FUNC_SHUNT_VOLTAGE_OVER_LIMIT_CVR              ((INA226_Alert_Func_t)0x21U)
+#define INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT_CON_READY_CVR   ((INA226_Alert_Func_t)0x11U)
+#define INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT_CON_READY_CVR      ((INA226_Alert_Func_t)0x09U)
+#define INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT_CON_READY_CVR     ((INA226_Alert_Func_t)0x05U)
+#define INA226_ALERT_FUNC_POWER_OVER_LIMIT_CON_READY_CVR            ((INA226_Alert_Func_t)0x03U)
 
-/**
- * @brief INA226 register field masks and positions based on the datasheet.
- *
- *        These masks are used when packing field values into the 16-bit registers.
- */
-#define INA226_CONFIG_RESET_MASK          (0x8000U)
-#define INA226_CONFIG_RESET_POS           (15U)
-
-#define INA226_CONFIG_AVG_MASK            (0x0E00U) // Bits 11-9 (0000 1110 0000 0000)
-#define INA226_CONFIG_AVG_POS             (9U)
-
-#define INA226_CONFIG_BUS_CT_MASK         (0x01C0U) // Bits 8-6 (0000 0001 1100 0000)
-#define INA226_CONFIG_BUS_CT_POS          (6U)
-
-#define INA226_CONFIG_SHUNT_CT_MASK       (0x0038U) // Bits 5-3 (0000 0000 0011 1000)
-#define INA226_CONFIG_SHUNT_CT_POS        (3U)
-
-#define INA226_CONFIG_MODE_MASK           (0x0007U) // Bits 2-0 (0000 0000 0000 0111)
-#define INA226_CONFIG_MODE_POS            (0U)
-
-#define INA226_MASK_ENABLE_ALERT_FUNC_MASK   (0xFC00U) // Bits 15-10
 
 /**
  * @brief INA226 sensor handle structure containing hardware details and calibration parameters.
@@ -251,6 +228,18 @@ INA226_Status_t INA226_Calibrate(ina226_handle_t *sensor);
 INA226_Status_t INA226_Set_Alert_Pin_Function(const ina226_handle_t *sensor, INA226_Alert_Func_t alert_func);
 
 /**
+ * @brief Get alert pin function from destination INA226 device.
+ * 
+ * @param sensor     : Destination INA226 device Handle.
+ * @param alert_func : Pointer to store the configured alert function.
+ * @return INA226_Status_t
+ *         - 0 : INA226_OK; Success
+ *         - 1 : INA226_ERR_I2C; I2C communication error while reading the mask/enable register.
+ *         - 2 : INA226_ERR_INVALID_PARAM; alert_func is NULL.
+ */
+INA226_Status_t INA226_Get_Alert_Pin_Function(const ina226_handle_t *sensor, INA226_Alert_Func_t *alert_func);
+
+/**
  * @brief Set alert limit value to destination INA226 device by setting the alert limit register.
  * 
  * @param addr        : Destination INA226 device Address.
@@ -260,7 +249,7 @@ INA226_Status_t INA226_Set_Alert_Pin_Function(const ina226_handle_t *sensor, INA
  *         - 1 : INA226_ERR_I2C; I2C communication error while writing the alert limit register.
  *         - 2 : INA226_ERR_INVALID_PARAM; Invalid internal parameter passed to register access helpers.
  */
-INA226_Status_t INA226_Set_Alert_Limit(const ina226_handle_t *sensor, uint16_t limit_value);
+INA226_Status_t INA226_Set_Alert_Limit(const ina226_handle_t *sensor, int32_t limit_value);
 
 /**
  * @brief Get alert pin status for the destination INA226 device.
