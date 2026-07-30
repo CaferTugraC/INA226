@@ -394,13 +394,18 @@ INA226_Status_t INA226_Get_Alert_Status(const ina226_handle_t *sensor, INA226_Al
         return op_status;
     }
 
-    if ((mask_en_reg & 0x0018U) == 0U) { // 3 and 4. bit of mask enable register.
+    // Check Bit 4 (AFF: Alert Function Flag, 0x0010) and Bit 3 (CVRF: Conversion Ready Flag, 0x0008)
+    // 0x0018U = AFF | CVRF
+    if ((mask_en_reg & 0x0018U) == 0U) {
+        // Neither AFF nor CVRF flag is set; no alert condition has occurred.
         (*alert_status) = INA226_ALERT_NO_ALERT;
     }
-    else if ((mask_en_reg & 0x0010U) != 0U) { // 4. Bit of mask enable register.
+    else if ((mask_en_reg & 0x0010U) != 0U) {
+        // Bit 4 (AFF) is set; configured alert function (e.g. over/under limit) was triggered.
         (*alert_status) = INA226_ALERT_DETECTED;
     }
     else {
+        // Bit 3 (CVRF) is set; alert was triggered due to Conversion Ready.
         (*alert_status) = INA226_ALERT_CONVERSION_READY;
     }
     
