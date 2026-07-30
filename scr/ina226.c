@@ -168,7 +168,7 @@ static INA226_Status_t set_config_option(uint8_t addr, INA226_Config_Option_t op
     // Modify the interested bitfield of register: First clear the interested bitfield by using mask variable,
     // followed by setting the interested bitfield with the option.
     reg_value &= (uint16_t)(~mask);
-    reg_value |= (option << pos);
+    reg_value |= (uint16_t)((uint16_t)option << pos);
 
     // Write the interested register of destination device.
     return INA226_Write_Reg(addr, INA226_CONFIG_REG, reg_value);
