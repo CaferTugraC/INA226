@@ -386,10 +386,6 @@ INA226_Status_t INA226_Get_Alert_Status(const ina226_handle_t *sensor, INA226_Al
         return op_status;
     }
 
-    INA226_Alert_Func_t alert_pin_func;
-
-    op_status = INA226_Get_Alert_Pin_Function(sensor, &alert_pin_func);
-
     if (op_status != INA226_OK) {
         return op_status;
     }
