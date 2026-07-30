@@ -312,7 +312,7 @@ INA226_Status_t INA226_Set_Alert_Limit(const ina226_handle_t *sensor, int32_t li
         // Shunt voltage alert: Convert limit from nanovolts to register value.
         // Shunt Voltage LSB = 2.5 uV = 2500 nV. Register = limit_value_nV / 2500.
         // Integer round-to-nearest: (2 * x + bias) / 5, where bias corrects rounding direction.
-        int32_t reg_val = (2LL * limit_value + (limit_value >= 0 ? -1LL : 1LL)) / 5LL;
+        int32_t reg_val = (2LL * limit_value + (limit_value >= 0 ? 2LL : -2LL)) / 5LL;
 
         if (reg_val > INT16_MAX) {
             return INA226_ERR_MATH_OVERFLOW;
