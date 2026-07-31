@@ -83,6 +83,13 @@
 #define INA226_ALERT_FUNC_BUS_CATEGORY_MASK   (0x0CU)  // Bits 3-2: Bus voltage alert sources
 #define INA226_ALERT_FUNC_POWER_CATEGORY_MASK (0x02U)  // Bit 1:    Power over-limit alert source
 
+/**
+ * @brief Mask Enable Register bit macros.
+ * 
+ */
+#define INA226_MASK_EN_AFF_BIT                  (0x0010U)
+#define INA226_MASK_EN_CVRF_BIT                 (0x0008U)
+
 /* ========================================================================= */
 /*                              PRIVATE FUNCTIONES                           */
 /* ========================================================================= */
@@ -388,11 +395,11 @@ INA226_Status_t INA226_Get_Alert_Status(const ina226_handle_t *sensor, INA226_Al
 
     // Check Bit 4 (AFF: Alert Function Flag, 0x0010) and Bit 3 (CVRF: Conversion Ready Flag, 0x0008)
     // 0x0018U = AFF | CVRF
-    if ((mask_en_reg & 0x0018U) == 0U) {
+    if ((mask_en_reg & (INA226_MASK_EN_AFF_BIT | INA226_MASK_EN_CVRF_BIT)) == 0U) {
         // Neither AFF nor CVRF flag is set; no alert condition has occurred.
         (*alert_status) = INA226_ALERT_NO_ALERT;
     }
-    else if ((mask_en_reg & 0x0010U) != 0U) {
+    else if ((mask_en_reg & INA226_MASK_EN_AFF_BIT) != 0U) {
         // Bit 4 (AFF) is set; configured alert function (e.g. over/under limit) was triggered.
         (*alert_status) = INA226_ALERT_DETECTED;
     }
