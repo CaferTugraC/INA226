@@ -24,7 +24,7 @@ void Mock_I2C_Reset(void) {
     mock_ina226_registers[INA226_CALIBRATION_REG] = 0;
     mock_ina226_registers[INA226_MASK_EN_REG] = 0;
     mock_ina226_registers[INA226_ALERT_LIM_REG] = 0;
-    mock_ina226_registers[INA226_MANCUFACTURE_ID_REG] = 5449;
+    mock_ina226_registers[INA226_MANCUFACTURE_ID_REG] = 0x5449;
     mock_ina226_registers[INA226_DIE_ID_REG] = 0x2260;
 }
 
@@ -179,3 +179,27 @@ void test_INA226_Read_Power_Should_Calculate_Correct_Values(void) {
     TEST_ASSERT_EQUAL(INA226_OK, INA226_Read_Power(&sensor, &power_val));
     TEST_ASSERT_EQUAL_UINT32(0U, power_val);
 }
+
+// Tests for INA226_Read_Shunt_Voltage
+
+// Tests for INA226_Read_Bus_Voltage
+
+// Tests for INA226_Set_Alert_Pin_Function
+
+// Tests for INA226_Get_Alert_Pin_Function
+
+// Tests for INA226_Set_Alert_Limit
+
+// Tests for INA226_Get_Alert_Status
+
+// Tests for INA226_Calibrate
+
+// Tests for INA226_Set_Averaging_Mode
+
+// Tests for INA226_Set_Operating_Mode
+
+// Test for INA226_Set_Bus_Voltage_Conversion_Time
+
+// Tests for INA226_Set_Shunt_Voltage_Conversion_Time
+
+// Tests for INA226_Reset
