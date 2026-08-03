@@ -186,3 +186,52 @@ void test_INA226_Read_Current_Should_Calculate_Correct_Values(void) {
     TEST_ASSERT_EQUAL(INA226_OK, INA226_Read_Current(&sensor, &current_val));
     TEST_ASSERT_EQUAL_INT32(0, current_val);
 }
+
+void test_INA226_Read_Power_Should_Return_Error_On_Invalid_Params(void) {
+
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40, .current_resolution_uA = 100 };
+    uint32_t power_val = 0;
+
+    // Sensor pointer is NULL.
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Read_Power(NULL, &power_val));
+
+    // Output pointer is NULL.
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Read_Power(&sensor, NULL));
+
+    // Both parameters are NULL.
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Read_Power(NULL, NULL));
+
+    // Valid input.
+    mock_ina226_registers[INA226_POWER_REG] = 0x0000;
+    TEST_ASSERT_EQUAL(INA226_OK, INA226_Read_Power(&sensor, &power_val));
+}
+
+void test_INA226_Read_Power_Should_Detect_Math_Overflow(void) {
+
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40, .current_resolution_uA = 100000 };
+    uint32_t power_val = 0;
+
+    // 1. Positive overflow case (> UINT32_MAX).
+    // Power register = 0xFFFF, power LSB = 2,500,000 uW.
+    // 65535 * 2,500,000 = 163,837,500,000, which exceeds UINT32_MAX.
+    mock_ina226_registers[INA226_POWER_REG] = 0xFFFF;
+    TEST_ASSERT_EQUAL(INA226_ERR_MATH_OVERFLOW, INA226_Read_Power(&sensor, &power_val));
+}
+
+void test_INA226_Read_Power_Should_Calculate_Correct_Values(void) {
+
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40, .current_resolution_uA = 500 };
+    uint32_t power_val = 0;
+
+    // 1. Positive value read.
+    // Register = 100 (0x0064) -> Expected: 100 * (25 * 500) = 1,250,000 uW.
+    mock_ina226_registers[INA226_POWER_REG] = 100;
+    TEST_ASSERT_EQUAL(INA226_OK, INA226_Read_Power(&sensor, &power_val));
+    TEST_ASSERT_EQUAL_UINT32(1250000U, power_val);
+
+    // 2. Zero value read.
+    // Register = 0 -> Expected: 0 uW.
+    mock_ina226_registers[INA226_POWER_REG] = 0;
+    TEST_ASSERT_EQUAL(INA226_OK, INA226_Read_Power(&sensor, &power_val));
+    TEST_ASSERT_EQUAL_UINT32(0U, power_val);
+}
