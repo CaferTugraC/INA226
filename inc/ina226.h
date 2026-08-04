@@ -202,6 +202,7 @@ INA226_Status_t INA226_Set_Operating_Mode(const ina226_handle_t *sensor, INA226_
  */
 INA226_Status_t INA226_Set_Averaging_Mode(const ina226_handle_t *sensor, INA226_Avg_Time_t avg_time);
 
+/**
  * @brief Set current and power measurement resolution by setting the calibration register.
  * 
  * @note The physical INA226 calibration register is an integer. Setting it introduces a minor 
