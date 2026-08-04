@@ -512,6 +512,140 @@ void test_INA226_Set_Alert_Limit_Should_Return_Error_Math_Overflow_For_Invalid_P
     }
 }
 
+void test_INA226_Set_Alert_Limit_Should_Write_Correct_Limit_Value_To_Register_For_Shunt(void) {
+    
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40 };
+
+    // shunt
+    TEST_ASSERT_EQUAL_MESSAGE(
+        INA226_OK,
+        INA226_Set_Alert_Pin_Function(&sensor, INA226_ALERT_FUNC_SHUNT_VOLTAGE_OVER_LIMIT),
+        "INA226_Set_Alert_Pin_Function not return INA226_OK."
+    );
+
+    // max
+    TEST_ASSERT_EQUAL_MESSAGE(
+        INA226_OK,
+        INA226_Set_Alert_Limit(&sensor, 81917), // (81917 * 2) / 5 = 32766.8 -> 32767 (INT16_MAX)
+        "INA226_Set_Alert_Limit not return INA226_OK."
+    );
+    TEST_ASSERT_EQUAL_HEX16(INT16_MAX, mock_ina226_registers[INA226_ALERT_LIM_REG]);
+
+    // min
+    TEST_ASSERT_EQUAL_MESSAGE(
+        INA226_OK,
+        INA226_Set_Alert_Limit(&sensor, -81920), // -81920 uV -> (-81920 * 2) / 5 = -32768 (INT16_MIN)
+        "INA226_Set_Alert_Limit not return INA226_OK."
+    );
+    // 0x8000 (two's complement)
+    TEST_ASSERT_EQUAL_HEX16((uint16_t)INT16_MIN, mock_ina226_registers[INA226_ALERT_LIM_REG]);
+
+    // midle
+     TEST_ASSERT_EQUAL_MESSAGE(
+        INA226_OK,
+        INA226_Set_Alert_Limit(&sensor, 2500), // 2500 uV -> (2500 * 2) / 5 = 1000 to register
+        "INA226_Set_Alert_Limit not return INA226_OK."
+    );
+    TEST_ASSERT_EQUAL_HEX16(1000, mock_ina226_registers[INA226_ALERT_LIM_REG]);
+
+    // round to nearest    
+     TEST_ASSERT_EQUAL_MESSAGE(
+        INA226_OK,
+        INA226_Set_Alert_Limit(&sensor, 12), // (12 * 2 + 2) / 5 = 5.2 -> 5 to register.
+        "INA226_Set_Alert_Limit not return INA226_OK."
+    );
+    TEST_ASSERT_EQUAL_HEX16(5, mock_ina226_registers[INA226_ALERT_LIM_REG]);
+}
+
+void test_INA226_Set_Alert_Limit_Should_Write_Correct_Limit_Value_To_Register_For_Bus(void) {
+
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40 };
+
+    // Bus
+    TEST_ASSERT_EQUAL_MESSAGE(
+        INA226_OK,
+        INA226_Set_Alert_Pin_Function(&sensor, INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT),
+        "INA226_Set_Alert_Pin_Function not return INA226_OK."
+    );
+
+    // max
+    TEST_ASSERT_EQUAL_MESSAGE(
+        INA226_OK,
+        INA226_Set_Alert_Limit(&sensor, 40958750), // 32767 (INT16_MAX) * 1250 uV = 40,958,750 uV
+        "INA226_Set_Alert_Limit not return INA226_OK."
+    );
+    TEST_ASSERT_EQUAL_HEX16(INT16_MAX, mock_ina226_registers[INA226_ALERT_LIM_REG]);
+
+    // min
+    TEST_ASSERT_EQUAL_MESSAGE(
+        INA226_OK,
+        INA226_Set_Alert_Limit(&sensor, 0), // 0 uV -> 0 * 1250 uV = 0
+        "INA226_Set_Alert_Limit not return INA226_OK."
+    );
+    TEST_ASSERT_EQUAL_HEX16(0, mock_ina226_registers[INA226_ALERT_LIM_REG]);
+
+    // midle
+     TEST_ASSERT_EQUAL_MESSAGE(
+        INA226_OK,
+        INA226_Set_Alert_Limit(&sensor, 5000000), // 5000000 uV ->  5000000 / 1250 uV = 4000 to register
+        "INA226_Set_Alert_Limit not return INA226_OK."
+    );
+    TEST_ASSERT_EQUAL_HEX16(4000, mock_ina226_registers[INA226_ALERT_LIM_REG]);
+
+    // round to nearest    
+     TEST_ASSERT_EQUAL_MESSAGE(
+        INA226_OK,
+        INA226_Set_Alert_Limit(&sensor, 2000), // // 2000 uV / 1250 = 1.6 -> 2 to register.
+        "INA226_Set_Alert_Limit not return INA226_OK."
+    );
+    TEST_ASSERT_EQUAL_HEX16(2, mock_ina226_registers[INA226_ALERT_LIM_REG]);
+}
+
+void test_INA226_Set_Alert_Limit_Should_Write_Correct_Limit_Value_To_Register_For_Power(void) {
+
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40, .current_resolution_uA = 100 };
+
+    // Power
+    TEST_ASSERT_EQUAL_MESSAGE(
+        INA226_OK,
+        INA226_Set_Alert_Pin_Function(&sensor, INA226_ALERT_FUNC_POWER_OVER_LIMIT),
+        "INA226_Set_Alert_Pin_Function not return INA226_OK."
+    );
+
+    // max
+    
+    TEST_ASSERT_EQUAL_MESSAGE(
+        INA226_OK,
+        INA226_Set_Alert_Limit(&sensor, 163837500), // 65535 (UINT16_MAX) * (25 * 100 (current_resolution_uA)) = 163.837.500 uW
+        "INA226_Set_Alert_Limit not return INA226_OK."
+    );
+    TEST_ASSERT_EQUAL_HEX16(UINT16_MAX, mock_ina226_registers[INA226_ALERT_LIM_REG]);
+
+    // min
+    TEST_ASSERT_EQUAL_MESSAGE(
+        INA226_OK,
+        INA226_Set_Alert_Limit(&sensor, 0),
+        "INA226_Set_Alert_Limit not return INA226_OK."
+    );
+    TEST_ASSERT_EQUAL_HEX16(0, mock_ina226_registers[INA226_ALERT_LIM_REG]);
+
+    // midle
+     TEST_ASSERT_EQUAL_MESSAGE(
+        INA226_OK,
+        INA226_Set_Alert_Limit(&sensor, 2500000), // 1000 * (25 * 100 (current_resolution_uA)) = 2.500.000 uW
+        "INA226_Set_Alert_Limit not return INA226_OK."
+    );
+    TEST_ASSERT_EQUAL_HEX16(1000, mock_ina226_registers[INA226_ALERT_LIM_REG]);
+
+    // round to nearest    
+     TEST_ASSERT_EQUAL_MESSAGE(
+        INA226_OK,
+        INA226_Set_Alert_Limit(&sensor, 4000), // 1.6 * (25 * 100 (current_resolution_uA)) = 4.000 uW -> 2 to register.
+        "INA226_Set_Alert_Limit not return INA226_OK."
+    );
+    TEST_ASSERT_EQUAL_HEX16(2, mock_ina226_registers[INA226_ALERT_LIM_REG]);
+}
+
 
 // Tests for INA226_Get_Alert_Status
 
