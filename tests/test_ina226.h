@@ -1,6 +1,8 @@
 #ifndef TEST_INA226_H_
 #define TEST_INA226_H_
 
+#include <stdint.h>
+
 #define INA226_CONFIG_REG                   (0x00)
 #define INA226_SH_VOLTAGE_REG               (0x01)
 #define INA226_BUS_VOLTAGE_REG              (0x02)
