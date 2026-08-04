@@ -181,8 +181,64 @@ void test_INA226_Read_Power_Should_Calculate_Correct_Values(void) {
 }
 
 // Tests for INA226_Read_Shunt_Voltage
+void test_INA226_Read_Shunt_Voltage_Should_Return_Error_On_Invalid_Params(void) {
+
+    ina226_handle_t sensor { .ina226_i2c_addr = 0x40 };
+    int32_t sh_voltage = 0;
+
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Read_Shunt_Voltage(NULL, NULL));
+
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Read_Shunt_Voltage(NULL, &sh_voltage));
+
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Read_Shunt_Voltage(&sensor, NULL));
+
+}
+
+void test_INA226_Read_Shunt_Voltage_Should_Calculate_Correct_Values(void) {
+
+    ina226_handle_t sensor { .ina226_i2c_addr = 0x40 };
+    int32_t sh_voltage = 0;
+
+    mock_ina226_registers[INA226_SHUNT_VOLTAGE_REG] = -1;
+    INA226_Read_Shunt_Voltage(&sensor, &sh_voltage);
+    TEST_ASSERT_EQUAL_INT32(-3, sh_voltage);
+
+    mock_ina226_registers[INA226_SHUNT_VOLTAGE_REG] = 1;
+    INA226_Read_Shunt_Voltage(&sensor, &sh_voltage);
+    TEST_ASSERT_EQUAL_INT32(3, sh_voltage);
+
+    mock_ina226_registers[INA226_SHUNT_VOLTAGE_REG] = 2;
+    INA226_Read_Shunt_Voltage(&sensor, &sh_voltage);
+    TEST_ASSERT_EQUAL_INT32(5, sh_voltage);
+}
 
 // Tests for INA226_Read_Bus_Voltage
+void test_INA226_Read_Bus_Voltage_Should_Return_Error_On_Invalid_Params(void) {
+
+    ina226_handle_t sensor { .ina226_i2c_addr = 0x40 };
+    int32_t bus_voltage = 0;
+
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Read_Bus_Voltage(NULL, NULL));
+
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Read_Bus_Voltage(NULL, &bus_voltage));
+
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Read_Bus_Voltage(&sensor, NULL));
+
+}
+
+void test_INA226_Read_Bus_Voltage_Should_Calculate_Correct_Values(void) {
+
+    ina226_handle_t sensor { .ina226_i2c_addr = 0x40 };
+    int32_t bus_voltage = 0;
+
+    mock_ina226_registers[INA226_BUS_VOLTAGE_REG] = 100;
+    INA226_Read_Shunt_Voltage(&sensor, &bus_voltage);
+    TEST_ASSERT_EQUAL_INT32((100 * 1250), bus_voltage);
+
+    mock_ina226_registers[INA226_BUS_VOLTAGE_REG] = 0;
+    INA226_Read_Shunt_Voltage(&sensor, &bus_voltage);
+    TEST_ASSERT_EQUAL_INT32(0, bus_voltage);
+}
 
 // Tests for INA226_Set_Alert_Pin_Function
 
