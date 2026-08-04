@@ -702,6 +702,73 @@ void test_INA226_Get_Alert_Status_Should_Read_Correct_Alert_Status(void) {
 // Tests for INA226_Calibrate
 
 // Tests for INA226_Set_Averaging_Mode
+void test_INA226_Set_Averaging_Mode_Should_Return_Invalid_Param_Error_On_Null_Pointer(void) {
+
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Set_Averaging_Mode(NULL, INA226_AVG_1));
+}
+
+void test_INA226_Set_Averaging_Mode_Should_Return_Invalid_Param_Error_On_Invalid_Avg_Time_Options(void) {
+
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40 };
+
+    for (uint8_t i = 0; i < UINT8_MAX; i++) {
+
+        bool is_valid = false;
+
+        switch(i) {
+            case INA226_AVG_1:
+            case INA226_AVG_4:
+            case INA226_AVG_16:
+            case INA226_AVG_64:
+            case INA226_AVG_128:
+            case INA226_AVG_256:
+            case INA226_AVG_512:
+            case INA226_AVG_1024:
+                is_valid = true;
+                break;
+            default:
+                is_valid = false;
+                break;
+        }
+
+        if (!is_valid) {
+            TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Set_Averaging_Mode(&sensor, (INA226_Avg_Time_t)i));
+        }
+    }
+}
+
+void test_INA226_Set_Averaging_Mode_Should_Write_Correct_Avg_Time_Option_To_Register(void) {
+    
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40 };
+
+    INA226_Avg_Time_t avg_time_options[] = {
+        INA226_AVG_1,
+        INA226_AVG_4,
+        INA226_AVG_16,
+        INA226_AVG_64,
+        INA226_AVG_128,
+        INA226_AVG_256,
+        INA226_AVG_512,
+        INA226_AVG_1024
+    };
+
+    size_t num_avg_time_options = sizeof(avg_time_options) / sizeof(avg_time_options[0]);
+
+    for (size_t i = 0; i < num_avg_time_options; i++) {
+
+        INA226_Avg_Time_t avg_time = avg_time_options[i];
+
+        TEST_ASSERT_EQUAL_MESSAGE(
+            INA226_OK,
+            INA226_Set_Averaging_Mode(&sensor, avg_time),
+            "INA226_Set_Averaging_Mode not return INA226_OK."
+        );
+
+        uint16_t actual_avg_time = (mock_ina226_registers[INA226_CONFIG_REG] & (INA226_CONFIG_AVG_MASK)) >> INA226_CONFIG_AVG_POS;
+        TEST_ASSERT_EQUAL(avg_time, actual_avg_time);
+    }
+
+}
 
 // Tests for INA226_Set_Operating_Mode
 
@@ -753,6 +820,11 @@ int main(void)
     // INA226_Get_Alert_Status
     RUN_TEST(test_INA226_Get_Alert_Status_Should_Return_Error_On_Invalid_Params);
     RUN_TEST(test_INA226_Get_Alert_Status_Should_Read_Correct_Alert_Status);
+
+    // INA226_Set_Avg_Time
+    RUN_TEST(test_INA226_Set_Averaging_Mode_Should_Return_Invalid_Param_Error_On_Null_Pointer);
+    RUN_TEST(test_INA226_Set_Averaging_Mode_Should_Return_Invalid_Param_Error_On_Invalid_Avg_Time_Options);
+    RUN_TEST(test_INA226_Set_Averaging_Mode_Should_Write_Correct_Avg_Time_Option_To_Register);
 
     return UNITY_END();
 }
