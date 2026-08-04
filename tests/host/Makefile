@@ -2,11 +2,11 @@ CC = gcc
 CFLAGS = -Wall -Wextra -std=c11 -g 			\
 		 -I../../inc						\
 		 -I ..								\
-		 -I ../unity/scr					\
+		 -I ../unity/src					\
 
 SRCS = test_mock_ina226.c					\
-		../../scr/ina226.c					\
-		../unity/scr/unity.c
+		../../src/ina226.c					\
+		../unity/src/unity.c
 
 TARGET = test_ina226_runner
 
