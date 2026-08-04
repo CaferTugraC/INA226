@@ -58,6 +58,11 @@ uint8_t INA226_Platform_I2C_Read(uint8_t dev_addr, uint8_t reg_addr, uint8_t *da
         data[0] = (uint8_t)(val >> 8);
         data[1] = (uint8_t)(val & 0xFF);
 
+        // Hardware behavior: Reading the Mask/Enable register clears the AFF and CVRF flags.
+        if (reg_addr == INA226_MASK_EN_REG) {
+            mock_ina226_registers[reg_addr] &= ~(INA226_MASK_EN_AFF_BIT | INA226_MASK_EN_CVRF_BIT);
+        }
+
         return INA226_OK;
     }
     
