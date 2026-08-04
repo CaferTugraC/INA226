@@ -1,7 +1,8 @@
 #include "test_ina226.h"
 #include "unity.h"
 #include "ina226.h"
-#include <stdeff.h>
+#include <stddef.h>
+#include <stdbool.h>
 
 // Host-side mock register storage for Unity tests.
 static uint16_t mock_ina226_registers[256];
@@ -199,7 +200,7 @@ void test_INA226_Read_Power_Should_Calculate_Correct_Values(void) {
 // Tests for INA226_Read_Shunt_Voltage
 void test_INA226_Read_Shunt_Voltage_Should_Return_Error_On_Invalid_Params(void) {
 
-    ina226_handle_t sensor { .ina226_i2c_addr = 0x40 };
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40 };
     int32_t sh_voltage = 0;
 
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Read_Shunt_Voltage(NULL, NULL));
@@ -212,24 +213,24 @@ void test_INA226_Read_Shunt_Voltage_Should_Return_Error_On_Invalid_Params(void) 
 
 void test_INA226_Read_Shunt_Voltage_Should_Calculate_Correct_Values(void) {
 
-    ina226_handle_t sensor { .ina226_i2c_addr = 0x40 };
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40 };
     int32_t sh_voltage = 0;
 
-    mock_ina226_registers[INA226_SHUNT_VOLTAGE_REG] = -1;
+    mock_ina226_registers[INA226_SH_VOLTAGE_REG] = -1;
     TEST_ASSERT_EQUAL_MESSAGE(INA226_OK,
         INA226_Read_Shunt_Voltage(&sensor, &sh_voltage),
         "INA226_Read_Shunt_Voltage not return INA226_OK."
     );
     TEST_ASSERT_EQUAL_INT32(-3, sh_voltage);
 
-    mock_ina226_registers[INA226_SHUNT_VOLTAGE_REG] = 1;
+    mock_ina226_registers[INA226_SH_VOLTAGE_REG] = 1;
     TEST_ASSERT_EQUAL_MESSAGE(INA226_OK,
         INA226_Read_Shunt_Voltage(&sensor, &sh_voltage),
         "INA226_Read_Shunt_Voltage not return INA226_OK."
     );
     TEST_ASSERT_EQUAL_INT32(3, sh_voltage);
 
-    mock_ina226_registers[INA226_SHUNT_VOLTAGE_REG] = 2;
+    mock_ina226_registers[INA226_SH_VOLTAGE_REG] = 2;
     TEST_ASSERT_EQUAL_MESSAGE(INA226_OK,
         INA226_Read_Shunt_Voltage(&sensor, &sh_voltage),
         "INA226_Read_Shunt_Voltage not return INA226_OK."
@@ -240,7 +241,7 @@ void test_INA226_Read_Shunt_Voltage_Should_Calculate_Correct_Values(void) {
 // Tests for INA226_Read_Bus_Voltage
 void test_INA226_Read_Bus_Voltage_Should_Return_Error_On_Invalid_Params(void) {
 
-    ina226_handle_t sensor { .ina226_i2c_addr = 0x40 };
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40 };
     int32_t bus_voltage = 0;
 
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Read_Bus_Voltage(NULL, NULL));
@@ -253,7 +254,7 @@ void test_INA226_Read_Bus_Voltage_Should_Return_Error_On_Invalid_Params(void) {
 
 void test_INA226_Read_Bus_Voltage_Should_Calculate_Correct_Values(void) {
 
-    ina226_handle_t sensor { .ina226_i2c_addr = 0x40 };
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40 };
     int32_t bus_voltage = 0;
 
     mock_ina226_registers[INA226_BUS_VOLTAGE_REG] = 100;
@@ -275,14 +276,14 @@ void test_INA226_Read_Bus_Voltage_Should_Calculate_Correct_Values(void) {
 // Tests for INA226_Set_Alert_Pin_Function
 void test_INA226_Set_Alert_Pin_Function_Should_Return_Error_On_Invalid_Params(void) {
 
-    ina226_handle_t sensor { .ina226_i2c_addr = 0x40 };
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40 };
     INA226_Alert_Func_t alert_func = INA226_ALERT_FUNC_CONVERSION_READY;
 
     // NULL Test
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Set_Alert_Pin_Function(NULL, alert_func));
 
     // Non-Valid alert pin function test
-    for (uint32_t i = 0; i < 0xFFFF, i++) {
+    for (uint32_t i = 0; i < 0xFFFF; i++) {
 
         bool is_valid = false;
 
@@ -317,7 +318,7 @@ void test_INA226_Set_Alert_Pin_Function_Should_Return_Error_On_Invalid_Params(vo
 
 void test_INA226_Set_Alert_Pin_Function_Should_Do_Correct_Bitwise_Operation(void) {
     
-    ina226_handle_t sensor { .ina226_i2c_addr = 0x40 };
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40 };
 
     INA226_Alert_Func_t valid_functions[] = {
         INA226_ALERT_FUNC_SHUNT_VOLTAGE_OVER_LIMIT,
