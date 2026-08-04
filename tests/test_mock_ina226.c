@@ -241,6 +241,82 @@ void test_INA226_Read_Bus_Voltage_Should_Calculate_Correct_Values(void) {
 }
 
 // Tests for INA226_Set_Alert_Pin_Function
+void test_INA226_Set_Alert_Pin_Function_Should_Return_Error_On_Invalid_Params(void) {
+
+    ina226_handle_t sensor { .ina226_i2c_addr = 0x40 };
+    INA226_Alert_Func_t alert_func = INA226_ALERT_FUNC_CONVERSION_READY;
+
+    // NULL Test
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Set_Alert_Pin_Function(NULL, alert_func));
+
+    // Non-Valid alert pin function test
+    for (uint32_t i = 0; i < 0xFFFF, i++) {
+
+        bool is_valid = false;
+
+        switch (i) {
+            case INA226_ALERT_FUNC_SHUNT_VOLTAGE_OVER_LIMIT:
+            case INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT:
+            case INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT:
+            case INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT:
+            case INA226_ALERT_FUNC_POWER_OVER_LIMIT:
+            case INA226_ALERT_FUNC_CONVERSION_READY:
+            case INA226_ALERT_FUNC_SHUNT_VOLTAGE_OVER_LIMIT_CVR:
+            case INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT_CON_READY_CVR:
+            case INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT_CON_READY_CVR:
+            case INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT_CON_READY_CVR:
+            case INA226_ALERT_FUNC_POWER_OVER_LIMIT_CON_READY_CVR:
+                is_valid = true;
+                break;
+            default:
+                is_valid = false;
+                break;
+        }
+
+        if(!is_valid) {
+            TEST_ASSERT_EQUAL_MESSAGE(
+                INA226_ERR_INVALID_PARAM,
+                INA226_Set_Alert_Pin_Function(&sensor, (INA226_Alert_Func_t)i),
+                "Set alert function return INA226_OK with invalid alert function option!"
+            );
+        }
+    }
+}
+
+void test_INA226_Set_Alert_Pin_Function_Should_Do_Correct_Bitwise_Operation(void) {
+    
+    ina226_handle_t sensor { .ina226_i2c_addr = 0x40 };
+
+    INA226_Alert_Func_t valid_functions[] = {
+        INA226_ALERT_FUNC_SHUNT_VOLTAGE_OVER_LIMIT,
+        INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT,
+        INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT,
+        INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT,
+        INA226_ALERT_FUNC_POWER_OVER_LIMIT,
+        INA226_ALERT_FUNC_CONVERSION_READY,
+        INA226_ALERT_FUNC_SHUNT_VOLTAGE_OVER_LIMIT_CVR,
+        INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT_CON_READY_CVR,
+        INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT_CON_READY_CVR,
+        INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT_CON_READY_CVR,
+        INA226_ALERT_FUNC_POWER_OVER_LIMIT_CON_READY_CVR
+    };
+
+    size_t num_functions = sizeof(valid_functions) / sizeof(valid_functions[0]);
+
+    for (size_t i = 0; i < num_functions; i++) {
+
+        INA226_Alert_Func_t current_func = valid_functions[i];
+
+        INA226_Status_t status = INA226_Set_Alert_Pin_Function(&sensor, current_func);
+        TEST_ASSERT_EQUAL_MESSAGE(INA226_OK, status, "INA226_Set_Alert_Pin_Function not return INA226_OK please check your parameter in test function.");
+
+        uint16_t mask_en_reg = mock_ina226_registers[INA226_MASK_EN_REG];
+        
+        uint16_t extracted_func = (mask_en_reg) >> INA226_MASK_ENABLE_ALERT_FUNC_POS;
+
+        TEST_ASSERT_EQUAL_HEX16(current_func, extracted_func);
+    }
+}
 
 // Tests for INA226_Get_Alert_Pin_Function
 
