@@ -1,8 +1,10 @@
 #include "test_ina226.h"
 #include "unity.h"
 #include "ina226.h"
+#include "unity_internals.h"
 #include <stddef.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 // Host-side mock register storage for Unity tests.
 static uint16_t mock_ina226_registers[256];
@@ -255,22 +257,22 @@ void test_INA226_Read_Bus_Voltage_Should_Return_Error_On_Invalid_Params(void) {
 void test_INA226_Read_Bus_Voltage_Should_Calculate_Correct_Values(void) {
 
     ina226_handle_t sensor = { .ina226_i2c_addr = 0x40 };
-    int32_t bus_voltage = 0;
+    uint32_t bus_voltage = 0;
 
     mock_ina226_registers[INA226_BUS_VOLTAGE_REG] = 100;
     TEST_ASSERT_EQUAL_MESSAGE(
         INA226_OK,
-        INA226_Read_Shunt_Voltage(&sensor, &bus_voltage),
-        "INA226_Read_Shunt_Voltage not return INA226_OK."
+        INA226_Read_Bus_Voltage(&sensor, &bus_voltage),
+        "INA226_Read_Bus_Voltage not return INA226_OK."
     );
-    TEST_ASSERT_EQUAL_INT32((100 * 1250), bus_voltage);
+    TEST_ASSERT_EQUAL_UINT32((100 * 1250), bus_voltage);
 
     mock_ina226_registers[INA226_BUS_VOLTAGE_REG] = 0;
     TEST_ASSERT_EQUAL_MESSAGE(INA226_OK,
-        INA226_Read_Shunt_Voltage(&sensor, &bus_voltage),
-        "INA226_Read_Shunt_Voltage not return INA226_OK."
+        INA226_Read_Bus_Voltage(&sensor, &bus_voltage),
+        "INA226_Read_Bus_Voltage not return INA226_OK."
     );
-    TEST_ASSERT_EQUAL_INT32(0, bus_voltage);
+    TEST_ASSERT_EQUAL_UINT32(0, bus_voltage);
 }
 
 // Tests for INA226_Set_Alert_Pin_Function
