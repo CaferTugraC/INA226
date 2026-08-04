@@ -242,7 +242,7 @@ void test_INA226_Read_Shunt_Voltage_Should_Calculate_Correct_Values(void) {
 void test_INA226_Read_Bus_Voltage_Should_Return_Error_On_Invalid_Params(void) {
 
     ina226_handle_t sensor = { .ina226_i2c_addr = 0x40 };
-    int32_t bus_voltage = 0;
+    uint32_t bus_voltage = 0;
 
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Read_Bus_Voltage(NULL, NULL));
 
@@ -407,7 +407,6 @@ void test_INA226_Get_Alert_Pin_Function_Should_Read_Correct_Alert_Function_Optio
 // Tests for INA226_Set_Alert_Limit
 void test_INA226_Set_Alert_Limit_Should_Return_Error_On_Invalid_Params(void) {
 
-    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40 };
     int32_t limit_value = 0;
 
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Set_Alert_Limit(NULL, limit_value));
