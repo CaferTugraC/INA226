@@ -305,7 +305,7 @@ INA226_Status_t INA226_Set_Alert_Limit(const ina226_handle_t *sensor, int32_t li
 
     if (sensor == NULL) return INA226_ERR_INVALID_PARAM;
 
-    int16_t alert_limit_reg_val = 0;
+    uint16_t alert_limit_reg_val = 0;
     INA226_Alert_Func_t alert_func;
 
     INA226_Status_t op_status = INA226_Get_Alert_Pin_Function(sensor, &alert_func);
@@ -316,8 +316,8 @@ INA226_Status_t INA226_Set_Alert_Limit(const ina226_handle_t *sensor, int32_t li
 
     if (alert_func & INA226_ALERT_FUNC_SHUNT_CATEGORY_MASK) {
 
-        // Shunt voltage alert: Convert limit from nanovolts to register value.
-        // Shunt Voltage LSB = 2.5 uV = 2500 nV. Register = limit_value_nV / 2500.
+        // Shunt voltage alert: Convert limit from microvolts to register value.
+        // Shunt Voltage LSB = 2.5 uV. Register = limit_value_uV / 2.5.
         // Integer round-to-nearest: (2 * x + bias) / 5, where bias corrects rounding direction.
         int32_t reg_val = (2LL * limit_value + (limit_value >= 0 ? 2LL : -2LL)) / 5LL;
 
@@ -328,43 +328,47 @@ INA226_Status_t INA226_Set_Alert_Limit(const ina226_handle_t *sensor, int32_t li
             return INA226_ERR_MATH_OVERFLOW;
         }
 
-        alert_limit_reg_val = (int16_t)reg_val;
+        alert_limit_reg_val = (uint16_t)(int16_t)reg_val;
 
     }
 
     else if (alert_func & INA226_ALERT_FUNC_BUS_CATEGORY_MASK) {
 
+        if (limit_value < 0) {
+            return INA226_ERR_MATH_OVERFLOW;
+        }
+
         // Bus voltage alert: Convert limit from microvolts to register value.
         // Bus Voltage LSB = 1.25 mV = 1250 uV. Register = limit_value_uV / 1250.
-        int32_t reg_val = limit_value / (int32_t)INA226_BUS_VOLTAGE_LSB_UV;
+        // Integer round-to-nearest: (limit_value + half_lsb) / lsb.
+        int32_t reg_val = (limit_value + ((int32_t)INA226_BUS_VOLTAGE_LSB_UV / 2)) / (int32_t)INA226_BUS_VOLTAGE_LSB_UV;
 
         if (reg_val > INT16_MAX) {
             return INA226_ERR_MATH_OVERFLOW;
         }
-        if (reg_val < INT16_MIN) {
-            return INA226_ERR_MATH_OVERFLOW;
-        }
 
-        alert_limit_reg_val = (int16_t)reg_val;
+        alert_limit_reg_val = (uint16_t)reg_val;
 
     }
 
     else if (alert_func & INA226_ALERT_FUNC_POWER_CATEGORY_MASK) {
 
+        if (limit_value < 0) {
+            return INA226_ERR_MATH_OVERFLOW;
+        }
+
         // Power alert: Convert limit from microwatts to register value.
         // Power LSB = 25 * Current_LSB (per datasheet). Register = limit_value_uW / power_lsb.
         int64_t power_lsb = 25U * (int64_t)sensor->current_resolution_uA;
 
-        int64_t reg_val_64 = (int64_t)limit_value / power_lsb;
+        // Integer round-to-nearest: (limit_value + half_lsb) / lsb.
+        int64_t reg_val_64 = ((int64_t)limit_value + (power_lsb / 2LL)) / power_lsb;
 
-        if (reg_val_64 > INT16_MAX) {
-            return INA226_ERR_MATH_OVERFLOW;
-        }
-        if (reg_val_64 < INT16_MIN) {
+        if (reg_val_64 > (int64_t)UINT16_MAX) {
             return INA226_ERR_MATH_OVERFLOW;
         }
 
-        alert_limit_reg_val = (int16_t)reg_val_64;
+        alert_limit_reg_val = (uint16_t)reg_val_64;
 
     }
 
@@ -378,7 +382,7 @@ INA226_Status_t INA226_Set_Alert_Limit(const ina226_handle_t *sensor, int32_t li
 
     }
 
-    return INA226_Write_Reg(sensor->ina226_i2c_addr, INA226_ALERT_LIM_REG, (uint16_t)alert_limit_reg_val);
+    return INA226_Write_Reg(sensor->ina226_i2c_addr, INA226_ALERT_LIM_REG, alert_limit_reg_val);
 }
 
 INA226_Status_t INA226_Get_Alert_Status(const ina226_handle_t *sensor, INA226_Alert_Status_t *alert_status) {
@@ -399,17 +403,17 @@ INA226_Status_t INA226_Get_Alert_Status(const ina226_handle_t *sensor, INA226_Al
         // Neither AFF nor CVRF flag is set; no alert condition has occurred.
         (*alert_status) = INA226_ALERT_STATUS_NONE;
     }
+    else if ((mask_en_reg & (INA226_MASK_EN_AFF_BIT | INA226_MASK_EN_CVRF_BIT)) == (INA226_MASK_EN_AFF_BIT | INA226_MASK_EN_CVRF_BIT)) {
+        // Bit 3 (CVRF) and Bit 4 (AFF) are both set; alert was triggered due to Conversion Ready and configured alert function (e.g. over/under limit) was triggered.
+        (*alert_status) = INA226_ALERT_STATUS_BOTH;
+    }
     else if ((mask_en_reg & INA226_MASK_EN_AFF_BIT) != 0U) {
         // Bit 4 (AFF) is set; configured alert function (e.g. over/under limit) was triggered.
         (*alert_status) = INA226_ALERT_STATUS_LIMIT_EXCEEDED;
     }
-    else if ((mask_en_reg & INA226_MASK_EN_CVRF_BIT)) {
+    else {
         // Bit 3 (CVRF) is set; alert was triggered due to Conversion Ready.
         (*alert_status) = INA226_ALERT_STATUS_CONVERSION_READY;
-    }
-    else {
-        // Bit 3 (CVRF) and Bit 4 is set; alert was triggered due to Conversion Ready and configured alert function (e.g. over/under limit) was triggered.
-        (*alert_status) = INA226_ALERT_STATUS_BOTH;
     }
     return INA226_OK;
 }
