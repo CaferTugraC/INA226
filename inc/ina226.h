@@ -59,9 +59,10 @@ typedef INA226_Config_Option_t INA226_Status_t;
  * 
  */
 typedef INA226_Config_Option_t INA226_Alert_Status_t;
-#define INA226_ALERT_NO_ALERT                   ((INA226_Alert_Status_t)0U)
-#define INA226_ALERT_DETECTED                   ((INA226_Alert_Status_t)1U)
-#define INA226_ALERT_CONVERSION_READY           ((INA226_Alert_Status_t)2U)
+#define INA226_ALERT_STATUS_NONE                    ((INA226_Alert_Status_t)0U)
+#define INA226_ALERT_STATUS_LIMIT_EXCEEDED          ((INA226_Alert_Status_t)1U)
+#define INA226_ALERT_STATUS_CONVERSION_READY        ((INA226_Alert_Status_t)2U)
+#define INA226_ALERT_STATUS_BOTH                    ((INA226_Alert_Status_t)3U)
 
 
 /**
@@ -201,6 +202,7 @@ INA226_Status_t INA226_Set_Operating_Mode(const ina226_handle_t *sensor, INA226_
  */
 INA226_Status_t INA226_Set_Averaging_Mode(const ina226_handle_t *sensor, INA226_Avg_Time_t avg_time);
 
+/**
  * @brief Set current and power measurement resolution by setting the calibration register.
  * 
  * @note The physical INA226 calibration register is an integer. Setting it introduces a minor 
