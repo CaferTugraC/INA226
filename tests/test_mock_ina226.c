@@ -403,6 +403,49 @@ void test_INA226_Get_Alert_Pin_Function_Should_Read_Correct_Alert_Function_Optio
 }
 
 // Tests for INA226_Set_Alert_Limit
+void test_INA226_Set_Alert_Limit_Should_Return_Error_On_Invalid_Params(void) {
+
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40 };
+    int32_t limit_value = 0;
+
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Set_Alert_Limit(NULL, limit_value));
+}
+
+void test_INA226_Set_Alert_Limit_Should_Return_Error_Math_Overflow_For_Invalid_Shunt_Limit_Values(void) {
+    
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40 };
+    int32_t invalid_limit_value;
+
+    // Shunt category limit value tests
+    INA226_Alert_Func_t shunt_category_alert_functions[] = {
+        INA226_ALERT_FUNC_SHUNT_VOLTAGE_OVER_LIMIT,
+        INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT,
+        INA226_ALERT_FUNC_SHUNT_VOLTAGE_OVER_LIMIT_CVR,
+        INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT_CON_READY_CVR
+    };
+
+    size_t num_category_alert_functions = sizeof(shunt_category_alert_functions) / sizeof(shunt_category_alert_functions[0]);
+
+    for (size_t i = 0; i < num_category_alert_functions; i++) {
+
+        INA226_Alert_Func_t alert_func = shunt_category_alert_functions[i];
+
+        TEST_ASSERT_EQUAL_MESSAGE(
+            INA226_OK,
+            INA226_Set_Alert_Pin_Function(&sensor, alert_func),
+            "INA226_Set_Alert_Pin_Function not return INA226_OK."
+        );
+
+        invalid_limit_value = (5 * (INT16_MAX + 1) + 1) / 2; // Maximum value of the shunt voltage register + 1.
+        TEST_ASSERT_EQUAL(INA226_ERR_MATH_OVERFLOW, INA226_Set_Alert_Limit(&sensor, invalid_limit_value));
+
+        invalid_limit_value = (5 * (INT16_MIN - 1) - 1) / 2; // Minimum value of the shunt voltage register - 1.
+        TEST_ASSERT_EQUAL(INA226_ERR_MATH_OVERFLOW, INA226_Set_Alert_Limit(&sensor, invalid_limit_value));
+    }
+}
+
+
+
 
 // Tests for INA226_Get_Alert_Status
 
