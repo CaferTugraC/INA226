@@ -112,20 +112,29 @@ void test_INA226_Read_Current_Should_Calculate_Correct_Values(void) {
     // 1. Positive value read.
     // Register = 100 (0x0064) -> Expected: 100 * 500 = 50,000 uA.
     mock_ina226_registers[INA226_CURRENT_REG] = 100;
-    TEST_ASSERT_EQUAL(INA226_OK, INA226_Read_Current(&sensor, &current_val));
+    TEST_ASSERT_EQUAL_MESSAGE(INA226_OK,
+        INA226_Read_Current(&sensor, &current_val),
+        "INA226_Read_Current not return INA226_OK."
+    );
     TEST_ASSERT_EQUAL_INT32(50000, current_val);
 
     // 2. Negative value read (sign extension test).
     // Register = 0xFFFE (-2) -> Expected: -2 * 500 = -1000 uA.
     // This verifies the int16_t cast used for sign extension.
     mock_ina226_registers[INA226_CURRENT_REG] = (uint16_t)((int16_t)-2);
-    TEST_ASSERT_EQUAL(INA226_OK, INA226_Read_Current(&sensor, &current_val));
+    TEST_ASSERT_EQUAL_MESSAGE(INA226_OK,
+        INA226_Read_Current(&sensor, &current_val),
+        "INA226_Read_Current not return INA226_OK."
+    );
     TEST_ASSERT_EQUAL_INT32(-1000, current_val);
 
     // 3. Zero value read.
     // Register = 0 -> Expected: 0 uA.
     mock_ina226_registers[INA226_CURRENT_REG] = 0;
-    TEST_ASSERT_EQUAL(INA226_OK, INA226_Read_Current(&sensor, &current_val));
+    TEST_ASSERT_EQUAL_MESSAGE(INA226_OK,
+        INA226_Read_Current(&sensor, &current_val),
+        "INA226_Read_Current not return INA226_OK."
+    );
     TEST_ASSERT_EQUAL_INT32(0, current_val);
 }
 
@@ -170,13 +179,19 @@ void test_INA226_Read_Power_Should_Calculate_Correct_Values(void) {
     // 1. Positive value read.
     // Register = 100 (0x0064) -> Expected: 100 * (25 * 500) = 1,250,000 uW.
     mock_ina226_registers[INA226_POWER_REG] = 100;
-    TEST_ASSERT_EQUAL(INA226_OK, INA226_Read_Power(&sensor, &power_val));
+    TEST_ASSERT_EQUAL_MESSAGE(INA226_OK,
+        INA226_Read_Power(&sensor, &power_val),
+        "INA226_Read_Power not return INA226_OK."
+    );
     TEST_ASSERT_EQUAL_UINT32(1250000U, power_val);
 
     // 2. Zero value read.
     // Register = 0 -> Expected: 0 uW.
     mock_ina226_registers[INA226_POWER_REG] = 0;
-    TEST_ASSERT_EQUAL(INA226_OK, INA226_Read_Power(&sensor, &power_val));
+    TEST_ASSERT_EQUAL_MESSAGE(INA226_OK,
+        INA226_Read_Power(&sensor, &power_val),
+        "INA226_Read_Power not return INA226_OK."
+    );
     TEST_ASSERT_EQUAL_UINT32(0U, power_val);
 }
 
@@ -200,15 +215,24 @@ void test_INA226_Read_Shunt_Voltage_Should_Calculate_Correct_Values(void) {
     int32_t sh_voltage = 0;
 
     mock_ina226_registers[INA226_SHUNT_VOLTAGE_REG] = -1;
-    INA226_Read_Shunt_Voltage(&sensor, &sh_voltage);
+    TEST_ASSERT_EQUAL_MESSAGE(INA226_OK,
+        INA226_Read_Shunt_Voltage(&sensor, &sh_voltage),
+        "INA226_Read_Shunt_Voltage not return INA226_OK."
+    );
     TEST_ASSERT_EQUAL_INT32(-3, sh_voltage);
 
     mock_ina226_registers[INA226_SHUNT_VOLTAGE_REG] = 1;
-    INA226_Read_Shunt_Voltage(&sensor, &sh_voltage);
+    TEST_ASSERT_EQUAL_MESSAGE(INA226_OK,
+        INA226_Read_Shunt_Voltage(&sensor, &sh_voltage),
+        "INA226_Read_Shunt_Voltage not return INA226_OK."
+    );
     TEST_ASSERT_EQUAL_INT32(3, sh_voltage);
 
     mock_ina226_registers[INA226_SHUNT_VOLTAGE_REG] = 2;
-    INA226_Read_Shunt_Voltage(&sensor, &sh_voltage);
+    TEST_ASSERT_EQUAL_MESSAGE(INA226_OK,
+        INA226_Read_Shunt_Voltage(&sensor, &sh_voltage),
+        "INA226_Read_Shunt_Voltage not return INA226_OK."
+    );
     TEST_ASSERT_EQUAL_INT32(5, sh_voltage);
 }
 
@@ -232,11 +256,18 @@ void test_INA226_Read_Bus_Voltage_Should_Calculate_Correct_Values(void) {
     int32_t bus_voltage = 0;
 
     mock_ina226_registers[INA226_BUS_VOLTAGE_REG] = 100;
-    INA226_Read_Shunt_Voltage(&sensor, &bus_voltage);
+    TEST_ASSERT_EQUAL_MESSAGE(
+        INA226_OK,
+        INA226_Read_Shunt_Voltage(&sensor, &bus_voltage),
+        "INA226_Read_Shunt_Voltage not return INA226_OK."
+    );
     TEST_ASSERT_EQUAL_INT32((100 * 1250), bus_voltage);
 
     mock_ina226_registers[INA226_BUS_VOLTAGE_REG] = 0;
-    INA226_Read_Shunt_Voltage(&sensor, &bus_voltage);
+    TEST_ASSERT_EQUAL_MESSAGE(INA226_OK,
+        INA226_Read_Shunt_Voltage(&sensor, &bus_voltage),
+        "INA226_Read_Shunt_Voltage not return INA226_OK."
+    );
     TEST_ASSERT_EQUAL_INT32(0, bus_voltage);
 }
 
