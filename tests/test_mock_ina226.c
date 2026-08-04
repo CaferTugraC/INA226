@@ -444,7 +444,73 @@ void test_INA226_Set_Alert_Limit_Should_Return_Error_Math_Overflow_For_Invalid_S
     }
 }
 
+void test_INA226_Set_Alert_Limit_Should_Return_Error_Math_Overflow_For_Invalid_Bus_Limit_Values(void) {
 
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40 };
+    int32_t invalid_limit_value;
+
+    // Bus category limit value tests
+    INA226_Alert_Func_t bus_category_alert_functions[] = {
+        INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT,
+        INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT,
+        INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT_CON_READY_CVR,
+        INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT_CON_READY_CVR
+    };
+
+    size_t num_category_alert_functions = sizeof(bus_category_alert_functions) / sizeof(bus_category_alert_functions[0]);
+
+    for (size_t i = 0; i < num_category_alert_functions; i++){
+
+        INA226_Alert_Func_t alert_func = bus_category_alert_functions[i];
+        
+        TEST_ASSERT_EQUAL_MESSAGE(
+            INA226_OK,
+            INA226_Set_Alert_Pin_Function(&sensor, alert_func),
+            "INA226_Set_Alert_Pin_Function not return INA226_OK."
+        );
+
+        invalid_limit_value = (INT16_MAX + 1) * INA226_BUS_VOLTAGE_LSB_UV; // Maximum value of the bus voltage register + 1.
+        TEST_ASSERT_EQUAL(INA226_ERR_MATH_OVERFLOW, INA226_Set_Alert_Limit(&sensor, invalid_limit_value));
+
+        invalid_limit_value = -1 * INA226_BUS_VOLTAGE_LSB_UV; // Minimum value of the bus voltage register - 1.
+        TEST_ASSERT_EQUAL(INA226_ERR_MATH_OVERFLOW, INA226_Set_Alert_Limit(&sensor, invalid_limit_value));
+    }
+}
+
+void test_INA226_Set_Alert_Limit_Should_Return_Error_Math_Overflow_For_Invalid_Power_Limit_Values(void) {
+    
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40 };
+    int32_t invalid_limit_value;
+
+    // Power category limit value tests
+    sensor.current_resolution_uA = 100;
+
+    INA226_Alert_Func_t power_category_alert_functions[] = {
+        INA226_ALERT_FUNC_POWER_OVER_LIMIT,
+        INA226_ALERT_FUNC_POWER_OVER_LIMIT_CON_READY_CVR
+    };
+
+    size_t num_category_alert_functions = sizeof(power_category_alert_functions) / sizeof(power_category_alert_functions[0]);
+
+    for (size_t i = 0; i < num_category_alert_functions; i++) {
+
+        INA226_Alert_Func_t alert_func = power_category_alert_functions[i];
+        
+        TEST_ASSERT_EQUAL_MESSAGE(
+            INA226_OK,
+            INA226_Set_Alert_Pin_Function(&sensor, alert_func),
+            "INA226_Set_Alert_Pin_Function not return INA226_OK."
+        );
+
+        int32_t power_lsb = 25 * sensor.current_resolution_uA;
+
+        invalid_limit_value = (UINT16_MAX + 1) * power_lsb; // Maximum value of the power register + 1.
+        TEST_ASSERT_EQUAL(INA226_ERR_MATH_OVERFLOW, INA226_Set_Alert_Limit(&sensor, invalid_limit_value));
+
+        invalid_limit_value = -1 * power_lsb; // Minimum value of the power register - 1.
+        TEST_ASSERT_EQUAL(INA226_ERR_MATH_OVERFLOW, INA226_Set_Alert_Limit(&sensor, invalid_limit_value));
+    }
+}
 
 
 // Tests for INA226_Get_Alert_Status
