@@ -2,6 +2,7 @@
 #include "unity.h"
 #include "ina226.h"
 #include "unity_internals.h"
+#include <stdarg.h>
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -771,6 +772,70 @@ void test_INA226_Set_Averaging_Mode_Should_Write_Correct_Avg_Time_Option_To_Regi
 }
 
 // Tests for INA226_Set_Operating_Mode
+void test_INA226_Set_Operating_Mode_Should_Return_Invalid_Param_Error_On_Null_Pointer(void) {
+
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Set_Operating_Mode(NULL, INA226_CONTINUOUS_BUS_AND_SHUNT_VOLTAGE));
+}
+
+void test_INA226_Set_Operating_Mode_Should_Return_Invalid_Param_Error_On_Invalid_Mode_Options(void) {
+
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40 };
+
+    for (uint8_t i = 0; i < UINT8_MAX; i++) {
+
+        bool is_valid = false;
+
+        switch(i) {
+            case INA226_SHUT_DOWN:
+            case INA226_TRIGGERED_SHUNT_VOLTAGE:
+            case INA226_TRIGGERED_BUS_VOLTAGE:
+            case INA226_TRIGGERED_BUS_AND_SHUNT_VOLTAGE:
+            case INA226_SHUT_DOWN_ALT:
+            case INA226_CONTINUOUS_SHUNT_VOLTAGE:
+            case INA226_CONTINUOUS_BUS_VOLTAGE:
+            case INA226_CONTINUOUS_BUS_AND_SHUNT_VOLTAGE:
+                is_valid = true;
+                break;
+            default:
+                is_valid = false;
+                break;
+        }
+
+        if (!is_valid) {
+            TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Set_Operating_Mode(&sensor, (INA226_Mode_t)i));
+        }
+    }
+}
+
+void test_INA226_Set_Operating_Mode_Should_Write_Correct_Mode_Option_To_Register(void) {
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40 };
+
+    INA226_Mode_t mode_options[] = {
+        INA226_SHUT_DOWN,
+        INA226_TRIGGERED_SHUNT_VOLTAGE,
+        INA226_TRIGGERED_BUS_VOLTAGE,
+        INA226_TRIGGERED_BUS_AND_SHUNT_VOLTAGE,
+        INA226_SHUT_DOWN_ALT,
+        INA226_CONTINUOUS_SHUNT_VOLTAGE,
+        INA226_CONTINUOUS_BUS_VOLTAGE,
+        INA226_CONTINUOUS_BUS_AND_SHUNT_VOLTAGE
+    };
+
+    size_t num_mode_options = sizeof(mode_options) / sizeof(mode_options[0]);
+
+    for (size_t i = 0; i < num_mode_options; i++) {
+        INA226_Mode_t mode = mode_options[i];
+
+        TEST_ASSERT_EQUAL_MESSAGE(
+            INA226_OK,
+            INA226_Set_Operating_Mode(&sensor, mode),
+            "INA226_Set_Operating_Mode not return INA226_OK."
+        );
+
+        uint16_t actual_mode = (mock_ina226_registers[INA226_CONFIG_REG] & INA226_CONFIG_MODE_MASK) >> INA226_CONFIG_MODE_POS;
+        TEST_ASSERT_EQUAL(mode, actual_mode);
+    }
+}
 
 // Test for INA226_Set_Bus_Voltage_Conversion_Time
 
@@ -825,6 +890,11 @@ int main(void)
     RUN_TEST(test_INA226_Set_Averaging_Mode_Should_Return_Invalid_Param_Error_On_Null_Pointer);
     RUN_TEST(test_INA226_Set_Averaging_Mode_Should_Return_Invalid_Param_Error_On_Invalid_Avg_Time_Options);
     RUN_TEST(test_INA226_Set_Averaging_Mode_Should_Write_Correct_Avg_Time_Option_To_Register);
+
+    // INA226_Set_Operating_Mode
+    RUN_TEST(test_INA226_Set_Operating_Mode_Should_Return_Invalid_Param_Error_On_Null_Pointer);
+    RUN_TEST(test_INA226_Set_Operating_Mode_Should_Return_Invalid_Param_Error_On_Invalid_Mode_Options);
+    RUN_TEST(test_INA226_Set_Operating_Mode_Should_Write_Correct_Mode_Option_To_Register);
 
     return UNITY_END();
 }
