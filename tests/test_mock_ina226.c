@@ -308,7 +308,7 @@ void test_INA226_Set_Alert_Pin_Function_Should_Do_Correct_Bitwise_Operation(void
         INA226_Alert_Func_t current_func = valid_functions[i];
 
         INA226_Status_t status = INA226_Set_Alert_Pin_Function(&sensor, current_func);
-        TEST_ASSERT_EQUAL_MESSAGE(INA226_OK, status, "INA226_Set_Alert_Pin_Function not return INA226_OK please check your parameter in test function.");
+        TEST_ASSERT_EQUAL_MESSAGE(INA226_OK, status, "INA226_Set_Alert_Pin_Function not return INA226_OK.");
 
         uint16_t mask_en_reg = mock_ina226_registers[INA226_MASK_EN_REG];
         
