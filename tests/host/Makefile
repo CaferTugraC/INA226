@@ -8,7 +8,9 @@ SRCS = test_mock_ina226.c					\
 		../../src/ina226.c					\
 		../unity/src/unity.c
 
-TARGET = test_ina226_runner
+BUILD_DIR = build
+
+TARGET = ${BUILD_DIR}/test_ina226_runner
 
 all: ${TARGET}
 	./${TARGET}
