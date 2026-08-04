@@ -964,7 +964,21 @@ void test_INA226_Set_Shunt_Voltage_Conversion_Time_Should_Write_Correct_Conv_Tim
 }
 
 // Tests for INA226_Reset
+void test_INA226_Reset_Should_Return_Invalid_Param_Error_On_Null_Pointer(void) {
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Reset(NULL));
+}
 
+void test_INA226_Reset_Should_Write_Reset_Command_To_Register(void) {
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40 };
+
+    TEST_ASSERT_EQUAL_MESSAGE(
+        INA226_OK,
+        INA226_Reset(&sensor),
+        "INA226_Reset not return INA226_OK."
+    );
+
+    TEST_ASSERT_EQUAL_HEX16(INA226_CONFIG_RESET_MASK, mock_ina226_registers[INA226_CONFIG_REG]);
+}
 int main(void)
 {
     UNITY_BEGIN();
@@ -1027,6 +1041,10 @@ int main(void)
     RUN_TEST(test_INA226_Set_Shunt_Voltage_Conversion_Time_Should_Return_Invalid_Param_Error_On_Null_Pointer);
     RUN_TEST(test_INA226_Set_Shunt_Voltage_Conversion_Time_Should_Return_Invalid_Param_Error_On_Invalid_Conv_Time_Options);
     RUN_TEST(test_INA226_Set_Shunt_Voltage_Conversion_Time_Should_Write_Correct_Conv_Time_Option_To_Register);
+
+    // INA226_Reset
+    RUN_TEST(test_INA226_Reset_Should_Return_Invalid_Param_Error_On_Null_Pointer);
+    RUN_TEST(test_INA226_Reset_Should_Write_Reset_Command_To_Register);
 
     return UNITY_END();
 }
