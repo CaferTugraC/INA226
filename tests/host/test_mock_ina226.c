@@ -838,6 +838,67 @@ void test_INA226_Set_Operating_Mode_Should_Write_Correct_Mode_Option_To_Register
 }
 
 // Test for INA226_Set_Bus_Voltage_Conversion_Time
+void test_INA226_Set_Bus_Voltage_Conversion_Time_Should_Return_Invalid_Param_Error_On_Null_Pointer(void) {
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Set_Bus_Voltage_Conversion_Time(NULL, INA226_CT_140_US));
+}
+
+void test_INA226_Set_Bus_Voltage_Conversion_Time_Should_Return_Invalid_Param_Error_On_Invalid_Conv_Time_Options(void) {
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40 };
+
+    for (uint8_t i = 0; i < UINT8_MAX; i++) {
+        bool is_valid = false;
+
+        switch(i) {
+            case INA226_CT_140_US:
+            case INA226_CT_204_US:
+            case INA226_CT_332_US:
+            case INA226_CT_588_US:
+            case INA226_CT_1100_US:
+            case INA226_CT_2116_US:
+            case INA226_CT_4156_US:
+            case INA226_CT_8244_US:
+                is_valid = true;
+                break;
+            default:
+                is_valid = false;
+                break;
+        }
+
+        if (!is_valid) {
+            TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Set_Bus_Voltage_Conversion_Time(&sensor, (INA226_Conv_Time_t)i));
+        }
+    }
+}
+
+void test_INA226_Set_Bus_Voltage_Conversion_Time_Should_Write_Correct_Conv_Time_Option_To_Register(void) {
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40 };
+
+    INA226_Conv_Time_t conv_time_options[] = {
+        INA226_CT_140_US,
+        INA226_CT_204_US,
+        INA226_CT_332_US,
+        INA226_CT_588_US,
+        INA226_CT_1100_US,
+        INA226_CT_2116_US,
+        INA226_CT_4156_US,
+        INA226_CT_8244_US
+    };
+
+    size_t num_options = sizeof(conv_time_options) / sizeof(conv_time_options[0]);
+
+    for (size_t i = 0; i < num_options; i++) {
+        INA226_Conv_Time_t conv_time = conv_time_options[i];
+
+        TEST_ASSERT_EQUAL_MESSAGE(
+            INA226_OK,
+            INA226_Set_Bus_Voltage_Conversion_Time(&sensor, conv_time),
+            "INA226_Set_Bus_Voltage_Conversion_Time not return INA226_OK."
+        );
+
+        uint16_t actual_conv_time = (mock_ina226_registers[INA226_CONFIG_REG] & INA226_CONFIG_BUS_CT_MASK) >> INA226_CONFIG_BUS_CT_POS;
+        TEST_ASSERT_EQUAL(conv_time, actual_conv_time);
+    }
+}
 
 // Tests for INA226_Set_Shunt_Voltage_Conversion_Time
 
@@ -895,6 +956,11 @@ int main(void)
     RUN_TEST(test_INA226_Set_Operating_Mode_Should_Return_Invalid_Param_Error_On_Null_Pointer);
     RUN_TEST(test_INA226_Set_Operating_Mode_Should_Return_Invalid_Param_Error_On_Invalid_Mode_Options);
     RUN_TEST(test_INA226_Set_Operating_Mode_Should_Write_Correct_Mode_Option_To_Register);
+
+    // INA226_Set_Bus_Voltage_Conversion_Time
+    RUN_TEST(test_INA226_Set_Bus_Voltage_Conversion_Time_Should_Return_Invalid_Param_Error_On_Null_Pointer);
+    RUN_TEST(test_INA226_Set_Bus_Voltage_Conversion_Time_Should_Return_Invalid_Param_Error_On_Invalid_Conv_Time_Options);
+    RUN_TEST(test_INA226_Set_Bus_Voltage_Conversion_Time_Should_Write_Correct_Conv_Time_Option_To_Register);
 
     return UNITY_END();
 }
