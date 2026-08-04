@@ -708,3 +708,49 @@ void test_INA226_Get_Alert_Status_Should_Read_Correct_Alert_Status(void) {
 // Tests for INA226_Set_Shunt_Voltage_Conversion_Time
 
 // Tests for INA226_Reset
+
+int main(void)
+{
+    UNITY_BEGIN();
+
+    // INA226_Read_Current
+    RUN_TEST(test_INA226_Read_Current_Should_Return_Error_On_Invalid_Params);
+    RUN_TEST(test_INA226_Read_Current_Should_Detect_Math_Overflow);
+    RUN_TEST(test_INA226_Read_Current_Should_Calculate_Correct_Values);
+
+    // INA226_Read_Power
+    RUN_TEST(test_INA226_Read_Power_Should_Return_Error_On_Invalid_Params);
+    RUN_TEST(test_INA226_Read_Power_Should_Detect_Math_Overflow);
+    RUN_TEST(test_INA226_Read_Power_Should_Calculate_Correct_Values);
+
+    // INA226_Read_Shunt_Voltage
+    RUN_TEST(test_INA226_Read_Shunt_Voltage_Should_Return_Error_On_Invalid_Params);
+    RUN_TEST(test_INA226_Read_Shunt_Voltage_Should_Calculate_Correct_Values);
+
+    // INA226_Read_Bus_Voltage
+    RUN_TEST(test_INA226_Read_Bus_Voltage_Should_Return_Error_On_Invalid_Params);
+    RUN_TEST(test_INA226_Read_Bus_Voltage_Should_Calculate_Correct_Values);
+
+    // INA226_Set_Alert_Pin_Function
+    RUN_TEST(test_INA226_Set_Alert_Pin_Function_Should_Return_Error_On_Invalid_Params);
+    RUN_TEST(test_INA226_Set_Alert_Pin_Function_Should_Do_Correct_Bitwise_Operation);
+
+    // INA226_Get_Alert_Pin_Function
+    RUN_TEST(test_INA226_Get_Alert_Pin_Function_Should_Return_Error_On_Invalid_Params);
+    RUN_TEST(test_INA226_Get_Alert_Pin_Function_Should_Read_Correct_Alert_Function_Option);
+
+    // INA226_Set_Alert_Limit
+    RUN_TEST(test_INA226_Set_Alert_Limit_Should_Return_Error_On_Invalid_Params);
+    RUN_TEST(test_INA226_Set_Alert_Limit_Should_Return_Error_Math_Overflow_For_Invalid_Shunt_Limit_Values);
+    RUN_TEST(test_INA226_Set_Alert_Limit_Should_Return_Error_Math_Overflow_For_Invalid_Bus_Limit_Values);
+    RUN_TEST(test_INA226_Set_Alert_Limit_Should_Return_Error_Math_Overflow_For_Invalid_Power_Limit_Values);
+    RUN_TEST(test_INA226_Set_Alert_Limit_Should_Write_Correct_Limit_Value_To_Register_For_Shunt);
+    RUN_TEST(test_INA226_Set_Alert_Limit_Should_Write_Correct_Limit_Value_To_Register_For_Bus);
+    RUN_TEST(test_INA226_Set_Alert_Limit_Should_Write_Correct_Limit_Value_To_Register_For_Power);
+
+    // INA226_Get_Alert_Status
+    RUN_TEST(test_INA226_Get_Alert_Status_Should_Return_Error_On_Invalid_Params);
+    RUN_TEST(test_INA226_Get_Alert_Status_Should_Read_Correct_Alert_Status);
+
+    return UNITY_END();
+}
