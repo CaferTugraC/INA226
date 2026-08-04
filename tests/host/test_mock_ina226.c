@@ -476,7 +476,7 @@ void test_INA226_Set_Alert_Limit_Should_Return_Error_Math_Overflow_For_Invalid_B
         invalid_limit_value = (INT16_MAX + 1) * INA226_BUS_VOLTAGE_LSB_UV; // Maximum value of the bus voltage register + 1.
         TEST_ASSERT_EQUAL(INA226_ERR_MATH_OVERFLOW, INA226_Set_Alert_Limit(&sensor, invalid_limit_value));
 
-        invalid_limit_value = -1 * INA226_BUS_VOLTAGE_LSB_UV; // Minimum value of the bus voltage register - 1.
+        invalid_limit_value = -(int32_t)INA226_BUS_VOLTAGE_LSB_UV; // Minimum value of the bus voltage register - 1.
         TEST_ASSERT_EQUAL(INA226_ERR_MATH_OVERFLOW, INA226_Set_Alert_Limit(&sensor, invalid_limit_value));
     }
 }
@@ -508,7 +508,7 @@ void test_INA226_Set_Alert_Limit_Should_Return_Error_Math_Overflow_For_Invalid_P
 
         int32_t power_lsb = 25 * sensor.current_resolution_uA;
 
-        invalid_limit_value = (UINT16_MAX + 1) * power_lsb; // Maximum value of the power register + 1.
+        invalid_limit_value = ((int32_t)UINT16_MAX + 1) * power_lsb; // Maximum value of the power register + 1.
         TEST_ASSERT_EQUAL(INA226_ERR_MATH_OVERFLOW, INA226_Set_Alert_Limit(&sensor, invalid_limit_value));
 
         invalid_limit_value = -1 * power_lsb; // Minimum value of the power register - 1.
