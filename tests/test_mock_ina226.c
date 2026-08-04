@@ -1,6 +1,7 @@
 #include "test_ina226.h"
 #include "unity.h"
 #include "ina226.h"
+#include <stdeff.h>
 
 // Host-side mock register storage for Unity tests.
 static uint16_t mock_ina226_registers[256];
@@ -648,6 +649,53 @@ void test_INA226_Set_Alert_Limit_Should_Write_Correct_Limit_Value_To_Register_Fo
 
 
 // Tests for INA226_Get_Alert_Status
+void test_INA226_Get_Alert_Status_Should_Return_Error_On_Invalid_Params(void) {
+
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40 };
+    INA226_Alert_Status_t alert_status;
+
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Get_Alert_Status(NULL, NULL));
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Get_Alert_Status(NULL, &alert_status));
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Get_Alert_Status(&sensor, NULL));
+}
+
+void test_INA226_Get_Alert_Status_Should_Read_Correct_Alert_Status(void) {
+
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40 };
+    INA226_Alert_Status_t alert_status;
+
+    mock_ina226_registers[INA226_MASK_EN_REG] = (0xFFFF & INA226_MASK_EN_AFF_BIT);
+    TEST_ASSERT_EQUAL_MESSAGE(
+        INA226_OK,
+        INA226_Get_Alert_Status(&sensor, &alert_status),
+        "INA226_Get_Alert_Status not return INA226_OK."
+    );
+    TEST_ASSERT_EQUAL(INA226_ALERT_STATUS_LIMIT_EXCEEDED, alert_status);
+
+    mock_ina226_registers[INA226_MASK_EN_REG] = (0xFFFF & (INA226_MASK_EN_AFF_BIT | INA226_MASK_EN_CVRF_BIT));
+    TEST_ASSERT_EQUAL_MESSAGE(
+        INA226_OK,
+        INA226_Get_Alert_Status(&sensor, &alert_status),
+        "INA226_Get_Alert_Status not return INA226_OK."
+    );
+    TEST_ASSERT_EQUAL(INA226_ALERT_STATUS_BOTH, alert_status);
+
+    mock_ina226_registers[INA226_MASK_EN_REG] = (0xFFFF & INA226_MASK_EN_CVRF_BIT);
+    TEST_ASSERT_EQUAL_MESSAGE(
+        INA226_OK,
+        INA226_Get_Alert_Status(&sensor, &alert_status),
+        "INA226_Get_Alert_Status not return INA226_OK."
+    );
+    TEST_ASSERT_EQUAL(INA226_ALERT_STATUS_CONVERSION_READY, alert_status);
+
+    mock_ina226_registers[INA226_MASK_EN_REG] = (0x0000);
+    TEST_ASSERT_EQUAL_MESSAGE(
+        INA226_OK,
+        INA226_Get_Alert_Status(&sensor, &alert_status),
+        "INA226_Get_Alert_Status not return INA226_OK."
+    );
+    TEST_ASSERT_EQUAL(INA226_ALERT_STATUS_NONE, alert_status);
+}
 
 // Tests for INA226_Calibrate
 
