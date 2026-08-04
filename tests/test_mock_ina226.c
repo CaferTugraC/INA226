@@ -350,6 +350,57 @@ void test_INA226_Set_Alert_Pin_Function_Should_Do_Correct_Bitwise_Operation(void
 }
 
 // Tests for INA226_Get_Alert_Pin_Function
+void test_INA226_Get_Alert_Pin_Function_Should_Return_Error_On_Invalid_Params(void) {
+
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40 };
+    INA226_Alert_Func_t alert_func;
+
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Get_Alert_Pin_Function(NULL, NULL));
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Get_Alert_Pin_Function(NULL, &alert_func));
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Get_Alert_Pin_Function(&sensor, NULL));
+}
+
+void test_INA226_Get_Alert_Pin_Function_Should_Read_Correct_Alert_Function_Option(void) {
+
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40 };
+    INA226_Alert_Func_t read_alert_func;
+
+    INA226_Alert_Func_t valid_functions[] = {
+        INA226_ALERT_FUNC_SHUNT_VOLTAGE_OVER_LIMIT,
+        INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT,
+        INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT,
+        INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT,
+        INA226_ALERT_FUNC_POWER_OVER_LIMIT,
+        INA226_ALERT_FUNC_CONVERSION_READY,
+        INA226_ALERT_FUNC_SHUNT_VOLTAGE_OVER_LIMIT_CVR,
+        INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT_CON_READY_CVR,
+        INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT_CON_READY_CVR,
+        INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT_CON_READY_CVR,
+        INA226_ALERT_FUNC_POWER_OVER_LIMIT_CON_READY_CVR
+    };
+
+    size_t num_functions = sizeof(valid_functions) / sizeof(valid_functions[0]);
+
+    for (size_t i = 0; i < num_functions; i++) {
+
+        INA226_Alert_Func_t actual_alert_func = valid_functions[i];
+
+        uint16_t mask_en_reg = mock_ina226_registers[INA226_MASK_EN_REG];
+
+        mask_en_reg &= ~(INA226_MASK_ENABLE_ALERT_FUNC_MASK);
+        mask_en_reg |= (actual_alert_func << INA226_MASK_ENABLE_ALERT_FUNC_POS);
+        mock_ina226_registers[INA226_MASK_EN_REG] = mask_en_reg;
+    
+        TEST_ASSERT_EQUAL_MESSAGE(
+            INA226_OK,
+            INA226_Get_Alert_Pin_Function(&sensor, &read_alert_func),
+            "INA226_Get_Alert_Pin_Function not return INA226_OK."
+        );
+
+        TEST_ASSERT_EQUAL(actual_alert_func, read_alert_func);
+    }
+    
+}
 
 // Tests for INA226_Set_Alert_Limit
 
