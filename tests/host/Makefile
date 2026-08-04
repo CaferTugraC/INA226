@@ -19,4 +19,4 @@ ${TARGET}: ${SRCS}
 clean:
 	rm -f ${TARGET}
 
-.PHONY
+.PHONY: all clean
