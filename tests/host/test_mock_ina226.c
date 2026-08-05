@@ -984,6 +984,38 @@ void test_INA226_Reset_Should_Write_Reset_Command_To_Register(void) {
 
     TEST_ASSERT_EQUAL_HEX16(INA226_CONFIG_RESET_MASK, mock_ina226_registers[INA226_CONFIG_REG]);
 }
+
+// Tests for INA226_Set_Alert_Latch
+void test_INA226_Set_Alert_Latch_Should_Return_Invalid_Param_Error_On_Null_Pointer(void) {
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Set_Alert_Latch(NULL, INA226_ALERT_LATCH_ENABLE));
+}
+
+void test_INA226_Set_Alert_Latch_Should_Return_Invalid_Param_Error_On_Invalid_Options(void) {
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40 };
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Set_Alert_Latch(&sensor, 2));
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Set_Alert_Latch(&sensor, 255));
+}
+
+void test_INA226_Set_Alert_Latch_Should_Write_Correct_Bit_To_Register(void) {
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40 };
+
+    // Test Enable
+    TEST_ASSERT_EQUAL_MESSAGE(
+        INA226_OK,
+        INA226_Set_Alert_Latch(&sensor, INA226_ALERT_LATCH_ENABLE),
+        "INA226_Set_Alert_Latch not return INA226_OK for Enable."
+    );
+    TEST_ASSERT_EQUAL_HEX16(INA226_MASK_EN_LEN_BIT, mock_ina226_registers[INA226_MASK_EN_REG] & INA226_MASK_EN_LEN_BIT);
+
+    // Test Transparent (Disable)
+    TEST_ASSERT_EQUAL_MESSAGE(
+        INA226_OK,
+        INA226_Set_Alert_Latch(&sensor, INA226_ALERT_LATCH_TRANSPARENT),
+        "INA226_Set_Alert_Latch not return INA226_OK for Transparent."
+    );
+    TEST_ASSERT_EQUAL_HEX16(0, mock_ina226_registers[INA226_MASK_EN_REG] & INA226_MASK_EN_LEN_BIT);
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -1050,6 +1082,11 @@ int main(void)
     // INA226_Reset
     RUN_TEST(test_INA226_Reset_Should_Return_Invalid_Param_Error_On_Null_Pointer);
     RUN_TEST(test_INA226_Reset_Should_Write_Reset_Command_To_Register);
+
+    // INA226_Set_Alert_Latch
+    RUN_TEST(test_INA226_Set_Alert_Latch_Should_Return_Invalid_Param_Error_On_Null_Pointer);
+    RUN_TEST(test_INA226_Set_Alert_Latch_Should_Return_Invalid_Param_Error_On_Invalid_Options);
+    RUN_TEST(test_INA226_Set_Alert_Latch_Should_Write_Correct_Bit_To_Register);
 
     return UNITY_END();
 }
