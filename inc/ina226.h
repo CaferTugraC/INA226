@@ -126,6 +126,15 @@ typedef uint16_t INA226_Alert_Func_t;
 
 
 /**
+ * @brief INA226 Alert latch mode option macros.
+ * 
+ */
+typedef INA226_Config_Option_t INA226_Alert_Latch_t;
+#define INA226_ALERT_LATCH_TRANSPARENT              ((INA226_Alert_Latch_t)0U)
+#define INA226_ALERT_LATCH_ENABLE                   ((INA226_Alert_Latch_t)1U)
+
+
+/**
  * @brief INA226 sensor handle structure containing hardware details and calibration parameters.
  * 
  */
@@ -321,5 +330,17 @@ INA226_Status_t INA226_Read_Bus_Voltage(const ina226_handle_t *sensor, uint32_t 
  *         - 2 : INA226_ERR_INVALID_PARAM; power is NULL.
  */
 INA226_Status_t INA226_Read_Power(const ina226_handle_t *sensor, uint32_t *power);
+
+/**
+ * @brief Set alert latch mode to destination INA226 device.
+ * 
+ * @param sensor : Destination INA226 device Handle.
+ * @param latch  : Selected alert latch mode.
+ * @return INA226_Status_t
+ *         - 0 : INA226_OK; Success
+ *         - 1 : INA226_ERR_I2C; I2C communication error while updating the mask/enable register.
+ *         - 2 : INA226_ERR_INVALID_PARAM; Parameter error.
+ */
+INA226_Status_t INA226_Set_Alert_Latch(const ina226_handle_t *sensor, INA226_Alert_Latch_t latch);
 
 #endif /* INA226_H_ */
