@@ -129,26 +129,6 @@ static INA226_Status_t INA226_Read_Reg(uint8_t dev_addr, uint8_t reg_addr, uint1
     return INA226_OK;
 }
 
-INA226_Status_t INA226_Set_Alert_Latch(const ina226_handle_t *sensor, INA226_Alert_Latch_t latch) {
-    if (sensor == NULL) return INA226_ERR_INVALID_PARAM;
-    if (latch > INA226_ALERT_LATCH_ENABLE) return INA226_ERR_INVALID_PARAM;
-
-    uint16_t mask_en_reg = 0;
-    INA226_Status_t op_status = INA226_Read_Reg(sensor->ina226_i2c_addr, INA226_MASK_EN_REG, &mask_en_reg);
-
-    if (op_status != INA226_OK) {
-        return op_status;
-    }
-
-    if (latch == INA226_ALERT_LATCH_ENABLE) {
-        mask_en_reg |= INA226_MASK_EN_LEN_BIT;
-    } else {
-        mask_en_reg &= (uint16_t)(~INA226_MASK_EN_LEN_BIT);
-    }
-
-    return INA226_Write_Reg(sensor->ina226_i2c_addr, INA226_MASK_EN_REG, mask_en_reg);
-}
-
 /**
  * @brief write 16-bit data to INA226.
  * 
@@ -437,6 +417,26 @@ INA226_Status_t INA226_Get_Alert_Status(const ina226_handle_t *sensor, INA226_Al
         (*alert_status) = INA226_ALERT_STATUS_CONVERSION_READY;
     }
     return INA226_OK;
+}
+
+INA226_Status_t INA226_Set_Alert_Latch(const ina226_handle_t *sensor, INA226_Alert_Latch_t latch) {
+    if (sensor == NULL) return INA226_ERR_INVALID_PARAM;
+    if (latch > INA226_ALERT_LATCH_ENABLE) return INA226_ERR_INVALID_PARAM;
+
+    uint16_t mask_en_reg = 0;
+    INA226_Status_t op_status = INA226_Read_Reg(sensor->ina226_i2c_addr, INA226_MASK_EN_REG, &mask_en_reg);
+
+    if (op_status != INA226_OK) {
+        return op_status;
+    }
+
+    if (latch == INA226_ALERT_LATCH_ENABLE) {
+        mask_en_reg |= INA226_MASK_EN_LEN_BIT;
+    } else {
+        mask_en_reg &= (uint16_t)(~INA226_MASK_EN_LEN_BIT);
+    }
+
+    return INA226_Write_Reg(sensor->ina226_i2c_addr, INA226_MASK_EN_REG, mask_en_reg);
 }
 
 INA226_Status_t INA226_Calibrate(ina226_handle_t *sensor) {
