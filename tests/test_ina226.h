@@ -43,6 +43,7 @@
 
 #define INA226_MASK_EN_AFF_BIT                  (0x0010U)
 #define INA226_MASK_EN_CVRF_BIT                 (0x0008U)
+#define INA226_MASK_EN_LEN_BIT                  (0x0001U)
 
 
 #endif /* TEST_INA226_H_ */
