@@ -1038,6 +1038,27 @@ void test_INA226_Read_Manufacturer_ID_Should_Return_Correct_Reg_Val(void) {
     TEST_ASSERT_EQUAL(mock_ina226_registers[INA226_MANCUFACTURE_ID_REG], manufacturer_id);
 }
 // Test for INA226_Read_Die_ID
+void test_INA226_Read_Die_ID_Should_Return_Invalid_Param_On_Null_Pointer(void) {
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40 };
+    uint16_t die_id = 0;
+
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Read_Die_ID(NULL, NULL));
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Read_Die_ID(&sensor, NULL));
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Read_Die_ID(NULL, &die_id));
+}
+
+void test_INA226_Read_Die_ID_Should_Return_Correct_Reg_Val(void) {
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40 };
+    uint16_t die_id = 0;
+
+    TEST_ASSERT_EQUAL_MESSAGE(
+        INA226_OK,
+        INA226_Read_Die_ID(&sensor, &die_id),
+        "INA226_Read_Die_ID not return INA226_OK."
+    );
+
+    TEST_ASSERT_EQUAL(mock_ina226_registers[INA226_DIE_ID_REG], die_id);
+}
 
 
 int main(void)
@@ -1115,6 +1136,10 @@ int main(void)
     // INA226_Read_Manufacturer_ID
     RUN_TEST(test_INA226_Read_Manufacturer_ID_Should_Return_Invalid_Param_On_Null_Pointer);
     RUN_TEST(test_INA226_Read_Manufacturer_ID_Should_Return_Correct_Reg_Val);
+
+    // INA226_Read_Die_ID
+    RUN_TEST(test_INA226_Read_Die_ID_Should_Return_Invalid_Param_On_Null_Pointer);
+    RUN_TEST(test_INA226_Read_Die_ID_Should_Return_Correct_Reg_Val);
 
     return UNITY_END();
 }
