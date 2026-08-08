@@ -576,7 +576,7 @@ INA226_Status_t INA226_Read_Manufacturer_ID(const ina226_handle_t *sensor, uint1
     return INA226_Read_Reg(sensor->ina226_i2c_addr, INA226_MANCUFACTURE_ID_REG, out_mfg_id);
 }
 
-INA226_Status_t INA226_Read_Die_ID(const ina226_handle_t *sensor, uint16_t, uint16_t *out_die_id) {
+INA226_Status_t INA226_Read_Die_ID(const ina226_handle_t *sensor, uint16_t *out_die_id) {
     
     if (sensor == NULL || out_die_id == NULL) {
         return INA226_ERR_INVALID_PARAM;

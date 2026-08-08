@@ -181,7 +181,7 @@ INA226_Status_t INA226_Read_Manufacturer_ID(const ina226_handle_t *sensor, uint1
  *         - 1 : INA226_ERR_I2C; I2C communication error during reset register access.
  *         - 2 : INA226_ERR_INVALID_PARAM; Invalid internal parameter passed to register access helpers.
  */
-INA226_Status_t INA226_Read_Die_ID(const ina226_handle_t *sensor, uint16_t, uint16_t *out_die_id);
+INA226_Status_t INA226_Read_Die_ID(const ina226_handle_t *sensor, uint16_t *out_die_id);
 
 /**
  * @brief Set shunt voltage conversion time options to destination INA226 device.
