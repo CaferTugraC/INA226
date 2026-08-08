@@ -160,6 +160,30 @@ typedef struct {
 INA226_Status_t INA226_Reset(const ina226_handle_t *sensor);
 
 /**
+ * @brief Read the Manufacturer ID raw data from destination INA226 device. 
+ * 
+ * @param sensor : Destination INA226 devide Handler.
+ * @param out_mfg_id : pointer to store the Manufacturer ID data.
+ * @return INA226_Status_t
+ *         - 0 : INA226_OK; Success
+ *         - 1 : INA226_ERR_I2C; I2C communication error during reset register access.
+ *         - 2 : INA226_ERR_INVALID_PARAM; Invalid internal parameter passed to register access helpers.
+ */
+INA226_Status_t INA226_Read_Manufacturer_ID(const ina226_handle_t *sensor, uint16_t *out_mfg_id);
+
+/**
+ * @brief Read the Die ID raw data from destination INA226 device.
+ * 
+ * @param sensor : Destination INA226 devide Handler.
+ * @param out_die_id : pointer to store the Die ID data.
+ * @return INA226_Status_t 
+ *         - 0 : INA226_OK; Success
+ *         - 1 : INA226_ERR_I2C; I2C communication error during reset register access.
+ *         - 2 : INA226_ERR_INVALID_PARAM; Invalid internal parameter passed to register access helpers.
+ */
+INA226_Status_t INA226_Read_Die_ID(const ina226_handle_t *sensor, uint16_t *out_die_id);
+
+/**
  * @brief Set shunt voltage conversion time options to destination INA226 device.
  * 
  * @param addr      : Destination INA226 device Address
