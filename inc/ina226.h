@@ -2,7 +2,7 @@
  * @file ina226.h
  * @author Cafer Tura Çetin
  * @brief INA226 sensor driver header file
- * @version 0.1
+ * @version 0.2
  * @date 2026-07-25
  * 
  * @copyright Copyright (c) 2026 Cafer Tura Çetin
