@@ -1,6 +1,6 @@
 # INA226 — Bare-Metal C Driver
 
-A lightweight, deterministic, and hardware-agnostic bare-metal C driver for the **Texas Instruments INA226** High/Low-Side Bi-Directional Current and Power Monitor. Designed for resource-constrained embedded systems where every byte and every cycle counts.
+A lightweight and hardware-agnostic bare-metal C driver for the **Texas Instruments INA226** High/Low-Side Bi-Directional Current and Power Monitor. Designed for resource-constrained embedded systems where every byte and every cycle counts.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![Language: C99](https://img.shields.io/badge/Language-C99-green.svg)
@@ -29,15 +29,15 @@ A lightweight, deterministic, and hardware-agnostic bare-metal C driver for the 
 
 This driver was engineered around three core pillars:
 
-### ⚡ Speed — Zero Floating-Point, Pure Integer Arithmetic
+### Zero Floating-Point, Pure Integer Arithmetic
 
 All calculations — voltage, current, power, calibration, and alert limits — use fixed-point integer arithmetic (`int32_t` / `int64_t`). No `float`, no `double`, no soft-float emulation. Datasheet formulas like `CAL = 0.00512 / (Current_LSB × R_shunt)` are rescaled to pure integer equivalents with round-to-nearest biasing. This eliminates FPU dependency entirely and avoids the heavy cycle cost of software floating-point on MCUs without an FPU (e.g., Cortex-M0/M0+).
 
-### 🔒 Determinism — Predictable, Bounded Execution
+### Predictable, Bounded Execution
 
 Every public function follows a fixed path: validate → read register → compute → write register. No loops, no recursion, no dynamic dispatch, no callbacks within the driver. I2C transactions are delegated to user-provided `extern` functions, keeping the driver's own timing fully predictable and WCET-analyzable.
 
-### 📦 Minimal Memory — Zero Heap, Tiny Stack, Small Handle
+### Minimal Memory — Zero Heap, Tiny Stack, Small Handle
 
 No dynamic memory allocation (`malloc` / `free`) anywhere. All state lives in a caller-owned `ina226_handle_t` struct (~8 bytes). No internal global or static variables. Configuration options use `#define` constants instead of enums, ensuring zero additional ROM/RAM overhead.
 
@@ -50,13 +50,10 @@ No dynamic memory allocation (`malloc` / `free`) anywhere. All state lives in a 
 | RAM per sensor | ~8 bytes (`ina226_handle_t`) |
 | Global/static variables | 0 bytes |
 | Heap allocations | None |
-| Peak stack per call | < 32 bytes |
-| Code size (ROM) | ~1.5–2.5 KB (ARM Cortex-M, -Os) |
 | Floating-point operations | None |
 | Loops / recursion in driver | None |
 | Dynamic dispatch | None |
 | Maximum call depth | 3 (API → helper → I2C read/write) |
-| WCET analyzable | Yes — all paths are straight-line |
 | Dependencies | `<stdint.h>`, `<stddef.h>` only |
 
 > **Note:** The actual I2C transaction time depends on your platform's `INA226_Platform_I2C_Read/Write` implementation. The driver itself introduces zero non-determinism beyond those calls.
@@ -282,4 +279,4 @@ INA226/
 
 Distributed under the **MIT License**. See [LICENSE](LICENSE) for details.
 
-Copyright © 2026 Cafer Tuğra Çetin
+Copyright © 2026 Cafer Tura Çetin
