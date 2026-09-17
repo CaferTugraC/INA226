@@ -53,10 +53,12 @@ No dynamic memory allocation (`malloc` / `free`) anywhere. All state lives in a 
 | Floating-point operations | None |
 | Loops / recursion in driver | None |
 | Dynamic dispatch | None |
-| Maximum call depth | 3 (API → helper → I2C read/write) |
+| Maximum call depth | ≤ 4 (typically 3, reaches 4 during configuration helper calls) |
 | Dependencies | `<stdint.h>`, `<stddef.h>` only |
 
 > **Note:** The actual I2C transaction time depends on your platform's `INA226_Platform_I2C_Read/Write` implementation. The driver itself introduces zero non-determinism beyond those calls.
+
+> **Note:** The maximum call depth is reach 4 only for `INA226_Set_Shunt_Voltage_Conversion_Time`, `INA226_Set_Bus_Voltage_Conversion_Time`, `INA226_Set_Operating_Mode` and `INA226_Set_Averaging_Mode` functions. This was chosen to reduce flash memory usage, assuming these functions are called infrequently.
 
 ---
 
