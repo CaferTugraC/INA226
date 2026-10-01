@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A new push to the same branch or pull request cancels the older, still running workflow.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  STRICT_CFLAGS: -std=c99 -pedantic -Wall -Wextra -Wconversion -Wsign-conversion -Werror
+  # Retry and time out stalled package downloads instead of hanging.
+  APT_OPTIONS: -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30
+
+jobs:
+  host-tests:
+    name: Host unit tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout (with Unity submodule)
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Build and run tests
+        run: make -C tests/host
+
+  strict-build:
+    name: Strict build (${{ matrix.cc }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        cc: [gcc, clang]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Compile driver with warnings as errors
+        run: ${{ matrix.cc }} $STRICT_CFLAGS -Isrc -c src/ina226.c -o ina226.o
+
+      - name: Check public header compiles on its own
+        run: |
+          printf '#include "ina226.h"\n#if INA226_VERSION < 0x000300UL\n#error "unexpected INA226_VERSION"\n#endif\nunsigned long ina226_version_check = INA226_VERSION;\n' > header_check.c
+          ${{ matrix.cc }} $STRICT_CFLAGS -Isrc -c header_check.c -o header_check.o
+
+  cross-build:
+    name: Cross build (${{ matrix.target.name }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - name: ARM Cortex-M0
+            # Compiler only: the driver needs no C library, so it is built freestanding.
+            packages: gcc-arm-none-eabi binutils-arm-none-eabi
+            cc: arm-none-eabi-gcc
+            size: arm-none-eabi-size
+            flags: -mcpu=cortex-m0 -mthumb -ffreestanding
+          - name: AVR ATmega328P
+            packages: gcc-avr avr-libc binutils-avr
+            cc: avr-gcc
+            size: avr-size
+            flags: -mmcu=atmega328p
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install toolchain
+        timeout-minutes: 5
+        run: |
+          sudo apt-get $APT_OPTIONS update
+          sudo apt-get $APT_OPTIONS install -y --no-install-recommends ${{ matrix.target.packages }}
+
+      - name: Compile driver (-Os) with warnings as errors
+        run: |
+          ${{ matrix.target.cc }} ${{ matrix.target.flags }} $STRICT_CFLAGS -Os -fstack-usage -Isrc -c src/ina226.c -o ina226.o
+          printf '#include "ina226.h"\nunsigned long ina226_version_check = INA226_VERSION;\n' > header_check.c
+          ${{ matrix.target.cc }} ${{ matrix.target.flags }} $STRICT_CFLAGS -Isrc -c header_check.c -o header_check.o
+
+      - name: Report code size and stack usage
+        run: |
+          {
+            echo "### ${{ matrix.target.name }} (-Os)"
+            echo
+            echo '```'
+            ${{ matrix.target.size }} ina226.o
+            echo '```'
+            echo
+            echo "| Function | Stack frame (bytes) |"
+            echo "|---|---|"
+            sort -t"$(printf '\t')" -k2,2nr ina226.su | awk -F'\t' '{ n = split($1, p, ":"); printf "| `%s` | %s |\n", p[n], $2 }'
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"

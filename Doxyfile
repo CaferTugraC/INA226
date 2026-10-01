@@ -1,0 +1,56 @@
+# Doxygen configuration for the INA226 driver.
+# Only settings that differ from Doxygen's defaults are listed here.
+# Requires Doxygen >= 1.11 (for MARKDOWN_ID_STYLE). CI uses Doxygen 1.18.0.
+# Build locally with:  doxygen Doxyfile   ->  output in docs/html/index.html
+
+#---------------------------------------------------------------------------
+# Project
+#---------------------------------------------------------------------------
+PROJECT_NAME           = "INA226 Driver"
+PROJECT_NUMBER         = 0.3.0
+PROJECT_BRIEF          = "Portable bare-metal C99 driver for the TI INA226 current and power monitor"
+OUTPUT_DIRECTORY       = docs
+OPTIMIZE_OUTPUT_FOR_C  = YES
+
+#---------------------------------------------------------------------------
+# Input: public API header + README as the main page + changelog
+#---------------------------------------------------------------------------
+INPUT                  = README.md \
+                         CHANGELOG.md \
+                         src/ina226.h
+USE_MDFILE_AS_MAINPAGE = README.md
+FILE_PATTERNS          = *.h *.md
+EXTRACT_STATIC         = NO
+EXTRACT_PRIVATE        = NO
+MARKDOWN_ID_STYLE      = GITHUB
+
+#---------------------------------------------------------------------------
+# Warnings: every public symbol must be documented
+#---------------------------------------------------------------------------
+QUIET                  = YES
+WARN_IF_UNDOCUMENTED   = YES
+WARN_IF_DOC_ERROR      = YES
+WARN_IF_INCOMPLETE_DOC = YES
+WARN_NO_PARAMDOC       = YES
+WARN_AS_ERROR          = FAIL_ON_WARNINGS
+
+#---------------------------------------------------------------------------
+# HTML output with the doxygen-awesome-css theme (docs/doxygen-awesome-css)
+#---------------------------------------------------------------------------
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+GENERATE_TREEVIEW      = YES
+DISABLE_INDEX          = NO
+FULL_SIDEBAR           = NO
+HTML_EXTRA_STYLESHEET  = docs/doxygen-awesome-css/doxygen-awesome.css
+HTML_COLORSTYLE        = LIGHT
+SEARCHENGINE           = YES
+
+GENERATE_LATEX         = NO
+
+#---------------------------------------------------------------------------
+# No Graphviz diagrams (not useful for a single-header C API)
+#---------------------------------------------------------------------------
+HAVE_DOT               = NO
+INCLUDE_GRAPH          = NO
+INCLUDED_BY_GRAPH      = NO
