@@ -33,9 +33,6 @@
 #define INA226_MANUFACTURER_ID_REG          (0xFEU) /**< Manufacturer ID Register (R, 0x5449). */
 #define INA226_DIE_ID_REG                   (0xFFU) /**< Die ID Register (R, 0x2260). */
 
-/* Backward compatibility alias for previous spelling */
-#define INA226_MANCUFACTURE_ID_REG          INA226_MANUFACTURER_ID_REG /**< Backward compatibility alias. */
-
 /* ========================================================================= */
 /*                              HARDWARE SCALING CONSTANTS                   */
 /* ========================================================================= */
@@ -67,6 +64,22 @@
 /*                              ALERT FUNCTION CATEGORY MASKS                */
 /* ========================================================================= */
 
+/**
+ * @brief Alert function category bitmasks for validating and classifying alert_func values.
+ *
+ * The INA226 alert function field (Mask/Enable Register bits [15:10]) uses the following
+ * bit layout when represented as a 6-bit value:
+ *
+ *   Bit 5: Shunt Voltage Over-Limit   (SOL)
+ *   Bit 4: Shunt Voltage Under-Limit  (SUL)
+ *   Bit 3: Bus Voltage Over-Limit     (BOL)
+ *   Bit 2: Bus Voltage Under-Limit    (BUL)
+ *   Bit 1: Power Over-Limit           (POL)
+ *   Bit 0: Conversion Ready           (CVR)
+ *
+ * Bits [5:1] are the main alert sources (mutually exclusive).
+ * Bit 0 (CVR) can be combined with any main source as an optional overlay.
+ */
 #define INA226_ALERT_FUNC_MAIN_BITS_MASK      (0x3EU)  /**< Main alert function bits mask (bits 5-1). */
 #define INA226_ALERT_FUNC_SHUNT_CATEGORY_MASK (0x30U)  /**< Shunt voltage alert category mask (bits 5-4). */
 #define INA226_ALERT_FUNC_BUS_CATEGORY_MASK   (0x0CU)  /**< Bus voltage alert category mask (bits 3-2). */
