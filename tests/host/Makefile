@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c11 -g 			\
+CFLAGS = -Wall -Wextra -std=c99 -pedantic -g 			\
 		 -I../../src						\
 		 -I ..								\
 		 -I ../unity/src					\
@@ -12,13 +12,21 @@ BUILD_DIR = build
 
 TARGET = ${BUILD_DIR}/test_ina226_runner
 
+# Check for Unity submodule presence
+ifeq ($(wildcard ../unity/src/unity.c),)
+$(error Unity test framework not found. Please run: git submodule update --init --recursive)
+endif
+
 all: ${TARGET}
 	./${TARGET}
 
+test: all
+
 ${TARGET}: ${SRCS}
+	@mkdir -p ${BUILD_DIR}
 	${CC} ${CFLAGS} ${SRCS} -o ${TARGET}
 
 clean:
-	rm -f ${TARGET}
+	rm -rf ${BUILD_DIR}
 
-.PHONY: all clean
+.PHONY: all test clean
