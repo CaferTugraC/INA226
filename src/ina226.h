@@ -42,7 +42,7 @@ extern uint8_t INA226_Platform_I2C_Read(uint8_t dev_addr, uint8_t reg_addr, uint
 /* ========================================================================= */
 
 /**
- * @brief ina226 configuration opion type defination.
+ * @brief INA226 configuration option type definition.
  * 
  */
 typedef uint8_t INA226_Config_Option_t;
@@ -123,10 +123,16 @@ typedef uint16_t INA226_Alert_Func_t;
 #define INA226_ALERT_FUNC_POWER_OVER_LIMIT                          ((INA226_Alert_Func_t)0x02U)
 #define INA226_ALERT_FUNC_CONVERSION_READY                          ((INA226_Alert_Func_t)0x01U)
 #define INA226_ALERT_FUNC_SHUNT_VOLTAGE_OVER_LIMIT_CVR              ((INA226_Alert_Func_t)0x21U)
-#define INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT_CON_READY_CVR   ((INA226_Alert_Func_t)0x11U)
-#define INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT_CON_READY_CVR      ((INA226_Alert_Func_t)0x09U)
-#define INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT_CON_READY_CVR     ((INA226_Alert_Func_t)0x05U)
-#define INA226_ALERT_FUNC_POWER_OVER_LIMIT_CON_READY_CVR            ((INA226_Alert_Func_t)0x03U)
+#define INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT_CVR             ((INA226_Alert_Func_t)0x11U)
+#define INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT_CVR                ((INA226_Alert_Func_t)0x09U)
+#define INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT_CVR               ((INA226_Alert_Func_t)0x05U)
+#define INA226_ALERT_FUNC_POWER_OVER_LIMIT_CVR                      ((INA226_Alert_Func_t)0x03U)
+
+/* Backward compatibility aliases */
+#define INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT_CON_READY_CVR   INA226_ALERT_FUNC_SHUNT_VOLTAGE_UNDER_LIMIT_CVR
+#define INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT_CON_READY_CVR      INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT_CVR
+#define INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT_CON_READY_CVR     INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT_CVR
+#define INA226_ALERT_FUNC_POWER_OVER_LIMIT_CON_READY_CVR            INA226_ALERT_FUNC_POWER_OVER_LIMIT_CVR
 
 
 /**
@@ -166,7 +172,7 @@ INA226_Status_t INA226_Reset(const ina226_handle_t *sensor);
 /**
  * @brief Read the Manufacturer ID raw data from destination INA226 device. 
  * 
- * @param sensor : Destination INA226 devide Handler.
+ * @param sensor : Destination INA226 device handle.
  * @param out_mfg_id : pointer to store the Manufacturer ID data.
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success
@@ -178,7 +184,7 @@ INA226_Status_t INA226_Read_Manufacturer_ID(const ina226_handle_t *sensor, uint1
 /**
  * @brief Read the Die ID raw data from destination INA226 device.
  * 
- * @param sensor : Destination INA226 devide Handler.
+ * @param sensor : Destination INA226 device handle.
  * @param out_die_id : pointer to store the Die ID data.
  * @return INA226_Status_t 
  *         - 0 : INA226_OK; Success
@@ -253,7 +259,7 @@ INA226_Status_t INA226_Set_Averaging_Mode(const ina226_handle_t *sensor, INA226_
  *         - 1 : INA226_ERR_I2C; I2C communication error while writing the calibration register.
  *         - 2 : INA226_ERR_INVALID_PARAM; cal_reg_value is not valid for the selected measurement scaling.
  */
-INA226_Status_t INA226_Calibrate(ina226_handle_t *sensor);
+INA226_Status_t INA226_Calibrate(const ina226_handle_t *sensor);
 
 /**
  * @brief Set alert pin function to destination INA226 device.
