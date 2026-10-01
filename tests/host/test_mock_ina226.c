@@ -487,9 +487,6 @@ void test_INA226_Set_Alert_Limit_Should_Return_Error_Math_Overflow_For_Invalid_B
 
         invalid_limit_value = (INT16_MAX + 1) * INA226_BUS_VOLTAGE_LSB_UV; // Maximum value of the bus voltage register + 1.
         TEST_ASSERT_EQUAL(INA226_ERR_MATH_OVERFLOW, INA226_Set_Alert_Limit(&sensor, invalid_limit_value));
-
-        invalid_limit_value = -(int32_t)INA226_BUS_VOLTAGE_LSB_UV; // Minimum value of the bus voltage register - 1.
-        TEST_ASSERT_EQUAL(INA226_ERR_MATH_OVERFLOW, INA226_Set_Alert_Limit(&sensor, invalid_limit_value));
     }
 }
 
@@ -522,9 +519,91 @@ void test_INA226_Set_Alert_Limit_Should_Return_Error_Math_Overflow_For_Invalid_P
 
         invalid_limit_value = ((int32_t)UINT16_MAX + 1) * power_lsb; // Maximum value of the power register + 1.
         TEST_ASSERT_EQUAL(INA226_ERR_MATH_OVERFLOW, INA226_Set_Alert_Limit(&sensor, invalid_limit_value));
+    }
+}
 
-        invalid_limit_value = -1 * power_lsb; // Minimum value of the power register - 1.
-        TEST_ASSERT_EQUAL(INA226_ERR_MATH_OVERFLOW, INA226_Set_Alert_Limit(&sensor, invalid_limit_value));
+void test_INA226_Set_Alert_Limit_Should_Return_Invalid_Param_For_Negative_Bus_Limit_Values(void) {
+
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40 };
+
+    INA226_Alert_Func_t bus_category_alert_functions[] = {
+        INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT,
+        INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT,
+        INA226_ALERT_FUNC_BUS_VOLTAGE_OVER_LIMIT_CVR,
+        INA226_ALERT_FUNC_BUS_VOLTAGE_UNDER_LIMIT_CVR
+    };
+
+    int32_t negative_limit_values[] = { -1, -(int32_t)INA226_BUS_VOLTAGE_LSB_UV, INT32_MIN };
+
+    size_t num_category_alert_functions = sizeof(bus_category_alert_functions) / sizeof(bus_category_alert_functions[0]);
+    size_t num_negative_limit_values = sizeof(negative_limit_values) / sizeof(negative_limit_values[0]);
+
+    for (size_t i = 0; i < num_category_alert_functions; i++) {
+
+        TEST_ASSERT_EQUAL_MESSAGE(
+            INA226_OK,
+            INA226_Set_Alert_Pin_Function(&sensor, bus_category_alert_functions[i]),
+            "INA226_Set_Alert_Pin_Function not return INA226_OK."
+        );
+
+        for (size_t j = 0; j < num_negative_limit_values; j++) {
+
+            mock_ina226_registers[INA226_ALERT_LIM_REG] = 0x1234;
+
+            TEST_ASSERT_EQUAL_MESSAGE(
+                INA226_ERR_INVALID_PARAM,
+                INA226_Set_Alert_Limit(&sensor, negative_limit_values[j]),
+                "INA226_Set_Alert_Limit not return INA226_ERR_INVALID_PARAM for a negative bus voltage limit."
+            );
+
+            TEST_ASSERT_EQUAL_HEX16_MESSAGE(
+                0x1234,
+                mock_ina226_registers[INA226_ALERT_LIM_REG],
+                "Alert limit register must not be written when the limit is rejected."
+            );
+        }
+    }
+}
+
+void test_INA226_Set_Alert_Limit_Should_Return_Invalid_Param_For_Negative_Power_Limit_Values(void) {
+
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40, .current_resolution_uA = 100 };
+
+    INA226_Alert_Func_t power_category_alert_functions[] = {
+        INA226_ALERT_FUNC_POWER_OVER_LIMIT,
+        INA226_ALERT_FUNC_POWER_OVER_LIMIT_CVR
+    };
+
+    int32_t power_lsb = 25 * (int32_t)sensor.current_resolution_uA;
+    int32_t negative_limit_values[] = { -1, -power_lsb, INT32_MIN };
+
+    size_t num_category_alert_functions = sizeof(power_category_alert_functions) / sizeof(power_category_alert_functions[0]);
+    size_t num_negative_limit_values = sizeof(negative_limit_values) / sizeof(negative_limit_values[0]);
+
+    for (size_t i = 0; i < num_category_alert_functions; i++) {
+
+        TEST_ASSERT_EQUAL_MESSAGE(
+            INA226_OK,
+            INA226_Set_Alert_Pin_Function(&sensor, power_category_alert_functions[i]),
+            "INA226_Set_Alert_Pin_Function not return INA226_OK."
+        );
+
+        for (size_t j = 0; j < num_negative_limit_values; j++) {
+
+            mock_ina226_registers[INA226_ALERT_LIM_REG] = 0x1234;
+
+            TEST_ASSERT_EQUAL_MESSAGE(
+                INA226_ERR_INVALID_PARAM,
+                INA226_Set_Alert_Limit(&sensor, negative_limit_values[j]),
+                "INA226_Set_Alert_Limit not return INA226_ERR_INVALID_PARAM for a negative power limit."
+            );
+
+            TEST_ASSERT_EQUAL_HEX16_MESSAGE(
+                0x1234,
+                mock_ina226_registers[INA226_ALERT_LIM_REG],
+                "Alert limit register must not be written when the limit is rejected."
+            );
+        }
     }
 }
 
@@ -1226,6 +1305,8 @@ int main(void)
     RUN_TEST(test_INA226_Set_Alert_Limit_Should_Return_Error_Math_Overflow_For_Invalid_Shunt_Limit_Values);
     RUN_TEST(test_INA226_Set_Alert_Limit_Should_Return_Error_Math_Overflow_For_Invalid_Bus_Limit_Values);
     RUN_TEST(test_INA226_Set_Alert_Limit_Should_Return_Error_Math_Overflow_For_Invalid_Power_Limit_Values);
+    RUN_TEST(test_INA226_Set_Alert_Limit_Should_Return_Invalid_Param_For_Negative_Bus_Limit_Values);
+    RUN_TEST(test_INA226_Set_Alert_Limit_Should_Return_Invalid_Param_For_Negative_Power_Limit_Values);
     RUN_TEST(test_INA226_Set_Alert_Limit_Should_Write_Correct_Limit_Value_To_Register_For_Shunt);
     RUN_TEST(test_INA226_Set_Alert_Limit_Should_Write_Correct_Limit_Value_To_Register_For_Bus);
     RUN_TEST(test_INA226_Set_Alert_Limit_Should_Write_Correct_Limit_Value_To_Register_For_Power);
