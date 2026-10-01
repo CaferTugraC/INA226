@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: API documentation
+    url: https://cafertugrac.github.io/INA226/
+    about: Function reference, parameters and return codes.
+  - name: Open known bugs
+    url: https://github.com/CaferTugraC/INA226/issues?q=is%3Aissue+is%3Aopen+label%3Abug
+    about: Check whether your problem is already reported before opening a new issue.

@@ -1,0 +1,29 @@
+name: Documentation issue
+description: Something in the README, the API documentation, the CHANGELOG or a code comment is wrong, unclear or missing.
+title: "[Docs]: "
+labels: ["documentation", "triage"]
+body:
+  - type: input
+    id: location
+    attributes:
+      label: Location
+      description: Page, section, file and line, or a link.
+      placeholder: "README › Choosing the current LSB, or src/ina226.h:285"
+    validations:
+      required: true
+
+  - type: textarea
+    id: current
+    attributes:
+      label: What it says now
+      description: Quote the current text.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed
+    attributes:
+      label: What it should say
+      description: The correct information, and the source if possible (code behavior, datasheet section, test result).
+    validations:
+      required: true
