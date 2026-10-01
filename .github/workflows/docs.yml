@@ -10,6 +10,11 @@ on:
 permissions:
   contents: read
 
+# A new push to the same pull request cancels the older build. Deployments to main are never cancelled.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 env:
   DOXYGEN_VERSION: 1.18.0
   DOXYGEN_SHA256: 14fa81bdc34171edb5f1f02b1d60e74802f0439b77fa44e592565d517d72df90
@@ -18,6 +23,7 @@ jobs:
   build:
     name: Build documentation
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
       - name: Checkout (with theme submodule)
         uses: actions/checkout@v5
@@ -25,8 +31,9 @@ jobs:
           submodules: true
 
       - name: Install Doxygen ${{ env.DOXYGEN_VERSION }}
+        timeout-minutes: 5
         run: |
-          curl -sSfL -o doxygen.tar.gz \
+          curl -sSfL --retry 3 --connect-timeout 30 --max-time 180 -o doxygen.tar.gz \
             "https://github.com/doxygen/doxygen/releases/download/Release_${DOXYGEN_VERSION//./_}/doxygen-${DOXYGEN_VERSION}.linux.bin.tar.gz"
           echo "${DOXYGEN_SHA256}  doxygen.tar.gz" | sha256sum -c -
           tar xzf doxygen.tar.gz
@@ -46,6 +53,7 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     permissions:
       pages: write
       id-token: write
