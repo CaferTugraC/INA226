@@ -31,7 +31,7 @@ void Mock_I2C_Reset(void) {
     mock_ina226_registers[INA226_CALIBRATION_REG] = 0;
     mock_ina226_registers[INA226_MASK_EN_REG] = 0;
     mock_ina226_registers[INA226_ALERT_LIM_REG] = 0;
-    mock_ina226_registers[INA226_MANCUFACTURE_ID_REG] = 0x5449;
+    mock_ina226_registers[INA226_MANUFACTURER_ID_REG] = 0x5449;
     mock_ina226_registers[INA226_DIE_ID_REG] = 0x2260;
 }
 
@@ -1132,7 +1132,7 @@ void test_INA226_Read_Manufacturer_ID_Should_Return_Correct_Reg_Val(void) {
         "INA226_Read_Manufacturer_ID not return INA226_OK."
     );
 
-    TEST_ASSERT_EQUAL(mock_ina226_registers[INA226_MANCUFACTURE_ID_REG], manufacturer_id);
+    TEST_ASSERT_EQUAL(mock_ina226_registers[INA226_MANUFACTURER_ID_REG], manufacturer_id);
 }
 // Test for INA226_Read_Die_ID
 void test_INA226_Read_Die_ID_Should_Return_Invalid_Param_On_Null_Pointer(void) {
