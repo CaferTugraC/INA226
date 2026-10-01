@@ -838,6 +838,20 @@ void test_INA226_Calibrate_Should_Calculate_Correct_Values(void) {
         "INA226_Calibrate did not return INA226_OK for 2mOhm / 1000uA."
     );
     TEST_ASSERT_EQUAL_HEX16(2560, mock_ina226_registers[INA226_CALIBRATION_REG]);
+
+    // Case 3: Boundary case - maximum valid CAL = 32767 (0x7FFF, bit 15 is 0)
+    // 1 µA resolution, 156 255 µΩ -> 5.12e9 / 156255 = 32766.95 -> rounds to 32767
+    ina226_handle_t sensor3 = {
+        .ina226_i2c_addr = 0x40,
+        .shunt_resistor_uOhm = 156255,
+        .current_resolution_uA = 1
+    };
+    TEST_ASSERT_EQUAL_MESSAGE(
+        INA226_OK,
+        INA226_Calibrate(&sensor3),
+        "INA226_Calibrate did not return INA226_OK for maximum valid CAL (32767)."
+    );
+    TEST_ASSERT_EQUAL_HEX16(32767, mock_ina226_registers[INA226_CALIBRATION_REG]);
 }
 
 void test_INA226_Calibrate_Should_Round_To_Nearest(void) {
@@ -856,7 +870,16 @@ void test_INA226_Calibrate_Should_Round_To_Nearest(void) {
 }
 
 void test_INA226_Calibrate_Should_Return_Invalid_Param_Error_On_Out_Of_Range_Cal(void) {
-    // CAL > 0xFFFF: 1 µA resolution, 1 µΩ -> CAL = 5120000000 > 65535
+    // CAL = 32768 (0x8000): Bit 15 is set (reserved bit violation)
+    // 1 µA resolution, 156 250 µΩ -> 5.12e9 / 156250 = 32768
+    ina226_handle_t sensor_bit15 = {
+        .ina226_i2c_addr = 0x40,
+        .shunt_resistor_uOhm = 156250,
+        .current_resolution_uA = 1
+    };
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Calibrate(&sensor_bit15));
+
+    // CAL > 0xFFFF: 1 µA resolution, 1 µΩ -> CAL = 5120000000 > 32767
     ina226_handle_t sensor_overflow = {
         .ina226_i2c_addr = 0x40,
         .shunt_resistor_uOhm = 1,

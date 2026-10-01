@@ -394,7 +394,7 @@ INA226_Status_t INA226_Calibrate(const ina226_handle_t *sensor) {
     // round-to-nearest
     uint64_t cal = (numerator + (denominator / 2ULL)) / denominator;
 
-    if (cal == 0ULL || cal > 0xFFFFULL) {
+    if (cal == 0ULL || cal > INA226_CALIBRATION_MAX_VAL) {
         return INA226_ERR_INVALID_PARAM;
     }
 
