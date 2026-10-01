@@ -244,6 +244,13 @@ Every function returns an `INA226_Status_t` status code:
 The driver includes a comprehensive host-side unit test suite using the [Unity](https://github.com/ThrowTheSwitch/Unity) test framework. Tests run on the development machine (no target hardware needed) with a mock I2C backend that simulates the INA226 register map.
 
 ```bash
+# Clone repository with submodules (Unity test framework)
+git clone --recurse-submodules https://github.com/CaferTugraC/INA226.git
+
+# Or initialize submodules in an existing clone:
+git submodule update --init --recursive
+
+# Build and run host tests:
 cd tests/host
 make
 ```
@@ -254,7 +261,7 @@ make
 - Measurement calculations (positive, negative, zero, boundary values)
 - Math overflow detection (INT32 / UINT32 boundary conditions)
 - Alert system (function set/get, limit conversion for all categories, status flags)
-- Exhaustive invalid input sweeps (e.g., all 65535 possible alert function values tested)
+- Exhaustive invalid input sweeps (e.g., all 65536 possible alert function values tested)
 
 ---
 
