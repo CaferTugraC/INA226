@@ -1,10 +1,10 @@
 /**
  * @file test_target_ina226.c
- * @author Cafer Tuğra Çetin (cafercetin.tr@gmail.com)
+ * @author Cafer Tura Çetin (cafercetin.tr@gmail.com)
  * @brief On-target hardware integration tests for INA226 driver (Planned).
  * @version 0.3
  * 
- * @copyright Copyright (c) 2026 Cafer Tuğra Çetin
+ * @copyright Copyright (c) 2026 Cafer Tura Çetin
  * 
  * Distributed under the MIT License.
  * See LICENSE file in the project root for full license information.

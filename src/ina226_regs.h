@@ -1,11 +1,11 @@
 /**
  * @file ina226_regs.h
- * @author Cafer Tuğra Çetin (cafercetin.tr@gmail.com)
+ * @author Cafer Tura Çetin (cafercetin.tr@gmail.com)
  * @brief INA226 internal register definitions, masks, and bitfield positions.
  * @version 0.3
  * @date 2026-07-25
  * 
- * @copyright Copyright (c) 2026 Cafer Tuğra Çetin
+ * @copyright Copyright (c) 2026 Cafer Tura Çetin
  * SPDX-License-Identifier: MIT
  * 
  * Distributed under the MIT License.
