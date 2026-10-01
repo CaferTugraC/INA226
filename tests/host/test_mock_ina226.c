@@ -297,7 +297,7 @@ void test_INA226_Set_Alert_Pin_Function_Should_Return_Error_On_Invalid_Params(vo
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Set_Alert_Pin_Function(NULL, alert_func));
 
     // Non-Valid alert pin function test
-    for (uint32_t i = 0; i < 0xFFFF; i++) {
+    for (uint32_t i = 0; i <= 0xFFFF; i++) {
 
         bool is_valid = false;
 
