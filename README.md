@@ -7,7 +7,7 @@ Portable, bare-metal C99 driver for the Texas Instruments **INA226** 36 V, 16-bi
 <a href="https://github.com/CaferTugraC/INA226/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
 <img src="https://img.shields.io/badge/C-99-informational.svg" alt="C99">
 
-**📖 API documentation:** <https://cafertugrac.github.io/INA226/>
+**API documentation:** <https://cafertugrac.github.io/INA226/>
 
 ---
 
