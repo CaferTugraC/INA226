@@ -18,6 +18,26 @@
 #include <stdint.h>
 
 /* ========================================================================= */
+/*                                  VERSION                                  */
+/* ========================================================================= */
+
+#define INA226_VERSION_MAJOR        (0U) /**< Driver major version (incompatible API/ABI changes). */
+#define INA226_VERSION_MINOR        (3U) /**< Driver minor version (backward compatible additions). */
+#define INA226_VERSION_PATCH        (0U) /**< Driver patch version (backward compatible fixes). */
+
+/**
+ * @brief Driver version as a single comparable number: 0x00MMmmpp (major, minor, patch).
+ *
+ *        Example: "#if INA226_VERSION >= 0x000300U" checks for version 0.3.0 or newer.
+ */
+#define INA226_VERSION              ((INA226_VERSION_MAJOR << 16U) | (INA226_VERSION_MINOR << 8U) | INA226_VERSION_PATCH)
+
+/**
+ * @brief Driver version as a string literal ("MAJOR.MINOR.PATCH").
+ */
+#define INA226_VERSION_STRING       "0.3.0"
+
+/* ========================================================================= */
 /*                       PLATFORM I2C HOOK FUNCTIONS                         */
 /* ========================================================================= */
 
