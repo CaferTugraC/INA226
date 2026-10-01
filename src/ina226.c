@@ -23,18 +23,18 @@
 /* ========================================================================= */
 
 /**
- * @brief read 16-bit data from INA226.
+ * @brief Read 16-bit register value from INA226.
  * 
- * @param dev_addr : I2C address of destination INA226
- * @param reg_addr : Address of register to be read. 
- * @param value    : An external pointer for the value read from the register.
+ * @param dev_addr I2C 7-bit address of destination INA226.
+ * @param reg_addr Address of register to be read. 
+ * @param value    Pointer where the read 16-bit value will be stored.
  * @return INA226_Status_t
- *         - 0 : INA226_OK; Success
+ *         - 0 : INA226_OK; Success.
  *         - 1 : INA226_ERR_I2C; Error from INA226_Platform_I2C_Read.
- *         - 2 : INA226_ERR_INVALID_PARAM; Invalid param for INA226_Read_Reg.
+ *         - 2 : INA226_ERR_INVALID_PARAM; value is NULL.
  * @details The INA226 transmits data in Big-Endian format. To avoid hardware
- *           architecture discrepancies, the data is fetched into a byte buffer and then
- *           safely shifted into the destination pointer in the correct MSB-first order.
+ *          architecture discrepancies, the data is fetched into a byte buffer and then
+ *          safely shifted into the destination pointer in MSB-first order.
  */
 static INA226_Status_t INA226_Read_Reg(uint8_t dev_addr, uint8_t reg_addr, uint16_t *value) {
 
@@ -57,15 +57,14 @@ static INA226_Status_t INA226_Read_Reg(uint8_t dev_addr, uint8_t reg_addr, uint1
 }
 
 /**
- * @brief write 16-bit data to INA226.
+ * @brief Write 16-bit value to INA226 register.
  * 
- * @param dev_addr : I2C address of destination INA226.
- * @param reg_addr : Address of register to be write. 
- * @param value    : value to be written to register.
+ * @param dev_addr I2C 7-bit address of destination INA226.
+ * @param reg_addr Address of register to write. 
+ * @param value    16-bit value to be written to the register.
  * @return INA226_Status_t
- *         - 0 : INA226_OK; Success
+ *         - 0 : INA226_OK; Success.
  *         - 1 : INA226_ERR_I2C; Error from INA226_Platform_I2C_Write.
- *         - 2 : INA226_ERR_INVALID_PARAM; Invalid param for INA226_Write_Reg.
  * @details The INA226 expects data in Big-Endian format. To avoid hardware
  *          architecture discrepancies, the 16-bit value is split and formatted 
  *          into a byte buffer (MSB first) before being sent over I2C.
@@ -88,6 +87,17 @@ static INA226_Status_t INA226_Write_Reg(uint8_t dev_addr, uint8_t reg_addr, uint
     return INA226_OK;
 }
 
+/**
+ * @brief Helper function to perform read-modify-write on the configuration register.
+ * 
+ * @param addr   I2C 7-bit address of destination INA226.
+ * @param option Configuration field value to set.
+ * @param mask   Bitmask corresponding to the configuration field.
+ * @param pos    Bit shift position for the field.
+ * @return INA226_Status_t
+ *         - 0 : INA226_OK; Success.
+ *         - 1 : INA226_ERR_I2C; Error during I2C read or write.
+ */
 static INA226_Status_t set_config_option(uint8_t addr, INA226_Config_Option_t option, uint16_t mask, uint8_t pos) {
 
     uint16_t reg_value = 0U;
