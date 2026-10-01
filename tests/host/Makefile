@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -std=c11 -g 			\
-		 -I../../inc						\
+		 -I../../src						\
 		 -I ..								\
 		 -I ../unity/src					\
 
