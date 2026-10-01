@@ -1,11 +1,11 @@
 /**
  * @file ina226.c
- * @author Cafer Tuğra Çetin (cafercetin.tr@gmail.com)
+ * @author Cafer Tura Çetin (cafercetin.tr@gmail.com)
  * @brief INA226 sensor driver source file.
  * @version 0.3
  * @date 2026-07-25
  * 
- * @copyright Copyright (c) 2026 Cafer Tuğra Çetin
+ * @copyright Copyright (c) 2026 Cafer Tura Çetin
  * SPDX-License-Identifier: MIT
  * 
  * Distributed under the MIT License.

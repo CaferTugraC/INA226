@@ -288,4 +288,4 @@ INA226/
 
 Distributed under the **MIT License**. See [LICENSE](LICENSE) for details.
 
-Copyright © 2026 Cafer Tuğra Çetin
+Copyright © 2026 Cafer Tura Çetin
