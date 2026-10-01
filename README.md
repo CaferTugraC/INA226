@@ -93,7 +93,7 @@ No dynamic memory allocation (`malloc` / `free`) anywhere. All state lives in a 
    git clone https://github.com/CaferTugraC/INA226.git
    ```
 
-2. **Copy** `inc/ina226.h` and `src/ina226.c` into your project's source tree.
+2. **Copy** `src/ina226.h` and `src/ina226.c` into your project's source tree.
 
 3. **Include** the header:
    ```c
@@ -262,9 +262,8 @@ make
 
 ```
 INA226/
-├── inc/
-│   └── ina226.h              # Public API header (types, macros, function prototypes)
 ├── src/
+│   ├── ina226.h              # Public API header (types, macros, function prototypes)
 │   └── ina226.c              # Driver implementation
 ├── tests/
 │   ├── host/
