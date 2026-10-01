@@ -1,0 +1,109 @@
+name: Bug report
+description: The driver does not behave as documented (wrong value, crash, wrong error code, build failure).
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please fill in every required field; a report that can be reproduced gets fixed much faster.
+        For mistakes in the README or the API documentation, use the **Documentation issue** template instead.
+
+  - type: input
+    id: version
+    attributes:
+      label: Driver version
+      description: Release tag or commit hash. The version is also available in code as `INA226_VERSION_STRING`.
+      placeholder: "v0.3.0 or 25186bb"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Measurement (bus voltage, shunt voltage, current, power)
+        - Calibration
+        - Configuration (averaging, conversion time, operating mode)
+        - Alerts (function, limit, latch, status)
+        - Device ID / reset
+        - Build / compiler warnings
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the problem in one or two sentences.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: |
+        The smallest code that shows the problem. Include the `ina226_handle_t` values
+        (I²C address, `shunt_resistor_uOhm`, `current_resolution_uA`) and the function calls with their return codes.
+      render: c
+      placeholder: |
+        ina226_handle_t h = { 0x40, 100000, 100 };
+        INA226_Status_t st = INA226_Calibrate(&h);   /* returns ... */
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What should happen, according to the README, the API documentation or the INA226 datasheet?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What happens instead? Paste exact values, return codes or compiler output.
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Compiler, target and I²C implementation.
+      value: |
+        - Compiler and version (e.g. arm-none-eabi-gcc 13.2, avr-gcc 7.3):
+        - Compiler flags (e.g. -Os -std=c99):
+        - Target MCU / board (or "host unit tests"):
+        - I²C implementation of the hooks (e.g. STM32 HAL polling, Arduino Wire, mock):
+        - Real INA226 hardware? (yes / no; module and shunt value):
+    validations:
+      required: true
+
+  - type: textarea
+    id: registers
+    attributes:
+      label: Register values (optional)
+      description: Raw values read back from the device, if available (Configuration 00h, Calibration 05h, Mask/Enable 06h, Alert Limit 07h).
+      render: text
+
+  - type: textarea
+    id: workaround
+    attributes:
+      label: Workaround (optional)
+      description: Anything you found that avoids the problem.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched the open issues and this bug is not reported yet.
+          required: true
+        - label: I can reproduce the problem with the latest release or the `dev` branch.
+          required: false
