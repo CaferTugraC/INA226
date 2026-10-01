@@ -33,6 +33,7 @@ While the major version is `0`, a minor release may contain breaking changes; th
 - `-Wconversion` warnings in `INA226_Set_Alert_Pin_Function` and `INA226_Set_Alert_Limit` ([#41]).
 - Doxygen comments referring to the non-existent `cal_reg_value` parameter, and copy-paste errors in the ID function comments ([#43]).
 - Author name spelling in file headers and the README ([#44]).
+- `INA226_Read_Reg` could overflow a 16-bit `int` when shifting the register MSB (undefined behaviour on AVR and other 16-bit targets).
 
 ### Removed
 - The `inc/` directory ([#38]).

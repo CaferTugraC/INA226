@@ -1172,10 +1172,22 @@ void test_INA226_Version_Macros_Should_Be_Consistent(void) {
         "INA226_VERSION_STRING does not match MAJOR.MINOR.PATCH macros."
     );
 
-    TEST_ASSERT_EQUAL_HEX32_MESSAGE(
-        (INA226_VERSION_MAJOR << 16U) | (INA226_VERSION_MINOR << 8U) | INA226_VERSION_PATCH,
-        INA226_VERSION,
-        "INA226_VERSION does not match MAJOR/MINOR/PATCH macros."
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(
+        INA226_VERSION_MAJOR,
+        (uint32_t)((INA226_VERSION >> 16U) & 0xFFU),
+        "INA226_VERSION major byte does not match INA226_VERSION_MAJOR."
+    );
+
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(
+        INA226_VERSION_MINOR,
+        (uint32_t)((INA226_VERSION >> 8U) & 0xFFU),
+        "INA226_VERSION minor byte does not match INA226_VERSION_MINOR."
+    );
+
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(
+        INA226_VERSION_PATCH,
+        (uint32_t)(INA226_VERSION & 0xFFU),
+        "INA226_VERSION patch byte does not match INA226_VERSION_PATCH."
     );
 }
 
