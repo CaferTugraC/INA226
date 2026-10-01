@@ -53,7 +53,7 @@ static INA226_Status_t INA226_Read_Reg(uint8_t dev_addr, uint8_t reg_addr, uint1
         return INA226_ERR_I2C; 
     }
 
-    (*value) = (uint16_t)((buffer[0] << 8U) | buffer[1]);
+    (*value) = (uint16_t)(((uint16_t)buffer[0] << 8U) | buffer[1]);
 
     return INA226_OK;
 }

@@ -28,9 +28,11 @@
 /**
  * @brief Driver version as a single comparable number: 0x00MMmmpp (major, minor, patch).
  *
- *        Example: "#if INA226_VERSION >= 0x000300U" checks for version 0.3.0 or newer.
+ *        Example: "#if INA226_VERSION >= 0x000300UL" checks for version 0.3.0 or newer.
+ *        Uses unsigned long arithmetic so the value is correct on 16-bit int targets (e.g. AVR)
+ *        and inside preprocessor conditionals.
  */
-#define INA226_VERSION              ((INA226_VERSION_MAJOR << 16U) | (INA226_VERSION_MINOR << 8U) | INA226_VERSION_PATCH)
+#define INA226_VERSION              ((INA226_VERSION_MAJOR * 65536UL) + (INA226_VERSION_MINOR * 256UL) + INA226_VERSION_PATCH)
 
 /**
  * @brief Driver version as a string literal ("MAJOR.MINOR.PATCH").
