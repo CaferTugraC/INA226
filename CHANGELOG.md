@@ -24,6 +24,7 @@ While the major version is `0`, a minor release may contain breaking changes; th
 - **BREAKING (layout):** The public header moved from `inc/ina226.h` to `src/ina226.h`, and the driver now includes it as `"ina226.h"`. Update your include paths ([#38]).
 - Internal register definitions moved to `src/ina226_regs.h`. This file must be added to your project together with `ina226.c` ([#41]).
 - `INA226_Calibrate` now takes a `const ina226_handle_t *` ([#41]).
+- **BREAKING (behaviour):** `INA226_Set_Alert_Limit` now returns `INA226_ERR_INVALID_PARAM` instead of `INA226_ERR_MATH_OVERFLOW` when a negative limit is given for a bus voltage or power alert. A negative limit is an invalid argument for these alerts, not an overflow.
 - Host tests are built with `-std=c99 -pedantic` ([#40]).
 - README rewritten as a getting-started guide: installation with all three source files, porting examples, handle and address reference, measured code size and stack usage, usage notes and an API overview that links to the Doxygen site. Detailed API reference moved to the documentation site.
 

@@ -58,7 +58,7 @@ Measured with `-Os` by the [CI workflow](https://github.com/CaferTugraC/INA226/a
 
 | | ARM Cortex-M0 (`arm-none-eabi-gcc` 13.2) | AVR ATmega328P (`avr-gcc` 7.3) |
 |---|---|---|
-| Code size (`.text`) | 1216 B | 2446 B |
+| Code size (`.text`) | 1212 B | 2444 B |
 | Largest stack frame | 32 B | 28 B |
 | Worst-case stack depth¹ | 72 B | — |
 | RAM per device (`ina226_handle_t`) | 12 B | 9 B |
@@ -356,8 +356,8 @@ Every function returns an `INA226_Status_t`:
 |---|---|---|
 | `INA226_OK` | 0 | Success |
 | `INA226_ERR_I2C` | 1 | An I²C hook returned non-zero |
-| `INA226_ERR_INVALID_PARAM` | 2 | NULL pointer, option out of range, a zero shunt or LSB, or a calibration value outside 1 … 65 535 |
-| `INA226_ERR_MATH_OVERFLOW` | 3 | A converted value does not fit its destination. Also returned for a negative bus or power alert limit. |
+| `INA226_ERR_INVALID_PARAM` | 2 | NULL pointer, option out of range, a zero shunt or LSB, a calibration value outside 1 … 65 535, or a negative bus voltage or power alert limit |
+| `INA226_ERR_MATH_OVERFLOW` | 3 | A converted value does not fit its destination |
 | `INA226_ERR_INVALID_STATE` | 4 | `INA226_Set_Alert_Limit` called while no limit-based alert function is selected |
 
 ---

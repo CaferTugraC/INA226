@@ -323,8 +323,8 @@ INA226_Status_t INA226_Get_Alert_Pin_Function(const ina226_handle_t *sensor, INA
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success.
  *         - 1 : INA226_ERR_I2C; I2C communication error while reading/writing alert registers.
- *         - 2 : INA226_ERR_INVALID_PARAM; sensor is NULL.
- *         - 3 : INA226_ERR_MATH_OVERFLOW; Converted register value exceeds representable range, or negative limit provided for bus/power alert.
+ *         - 2 : INA226_ERR_INVALID_PARAM; sensor is NULL, or limit_value is negative for a bus voltage or power alert.
+ *         - 3 : INA226_ERR_MATH_OVERFLOW; Converted register value exceeds representable range.
  *         - 4 : INA226_ERR_INVALID_STATE; No limit-based alert function is configured (e.g. Conversion Ready).
  */
 INA226_Status_t INA226_Set_Alert_Limit(const ina226_handle_t *sensor, int32_t limit_value);

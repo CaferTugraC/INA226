@@ -272,7 +272,7 @@ INA226_Status_t INA226_Set_Alert_Limit(const ina226_handle_t *sensor, int32_t li
     else if (alert_func & INA226_ALERT_FUNC_BUS_CATEGORY_MASK) {
 
         if (limit_value < 0) {
-            return INA226_ERR_MATH_OVERFLOW;
+            return INA226_ERR_INVALID_PARAM;
         }
 
         // Bus voltage alert: Convert limit from microvolts to register value.
@@ -291,7 +291,7 @@ INA226_Status_t INA226_Set_Alert_Limit(const ina226_handle_t *sensor, int32_t li
     else if (alert_func & INA226_ALERT_FUNC_POWER_CATEGORY_MASK) {
 
         if (limit_value < 0) {
-            return INA226_ERR_MATH_OVERFLOW;
+            return INA226_ERR_INVALID_PARAM;
         }
 
         // Power alert: Convert limit from microwatts to register value.
