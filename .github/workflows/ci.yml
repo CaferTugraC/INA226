@@ -10,13 +10,21 @@ on:
 permissions:
   contents: read
 
+# A new push to the same branch or pull request cancels the older, still running workflow.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 env:
   STRICT_CFLAGS: -std=c99 -pedantic -Wall -Wextra -Wconversion -Wsign-conversion -Werror
+  # Retry and time out stalled package downloads instead of hanging.
+  APT_OPTIONS: -o Acquire::Retries=3 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30
 
 jobs:
   host-tests:
     name: Host unit tests
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
       - name: Checkout (with Unity submodule)
         uses: actions/checkout@v5
@@ -29,6 +37,7 @@ jobs:
   strict-build:
     name: Strict build (${{ matrix.cc }})
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
@@ -48,15 +57,17 @@ jobs:
   cross-build:
     name: Cross build (${{ matrix.target.name }})
     runs-on: ubuntu-24.04
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
         target:
           - name: ARM Cortex-M0
-            packages: gcc-arm-none-eabi libnewlib-arm-none-eabi
+            # Compiler only: the driver needs no C library, so it is built freestanding.
+            packages: gcc-arm-none-eabi binutils-arm-none-eabi
             cc: arm-none-eabi-gcc
             size: arm-none-eabi-size
-            flags: -mcpu=cortex-m0 -mthumb
+            flags: -mcpu=cortex-m0 -mthumb -ffreestanding
           - name: AVR ATmega328P
             packages: gcc-avr avr-libc binutils-avr
             cc: avr-gcc
@@ -67,9 +78,10 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Install toolchain
+        timeout-minutes: 5
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ${{ matrix.target.packages }}
+          sudo apt-get $APT_OPTIONS update
+          sudo apt-get $APT_OPTIONS install -y --no-install-recommends ${{ matrix.target.packages }}
 
       - name: Compile driver (-Os) with warnings as errors
         run: |
