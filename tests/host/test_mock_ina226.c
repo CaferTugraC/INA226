@@ -6,6 +6,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 
 // Host-side mock register storage for Unity tests.
 static uint16_t mock_ina226_registers[256];
@@ -1158,6 +1159,26 @@ void test_INA226_Read_Die_ID_Should_Return_Correct_Reg_Val(void) {
 }
 
 
+// Tests for INA226 version macros
+void test_INA226_Version_Macros_Should_Be_Consistent(void) {
+    char expected[16];
+
+    snprintf(expected, sizeof(expected), "%u.%u.%u",
+             INA226_VERSION_MAJOR, INA226_VERSION_MINOR, INA226_VERSION_PATCH);
+
+    TEST_ASSERT_EQUAL_STRING_MESSAGE(
+        expected,
+        INA226_VERSION_STRING,
+        "INA226_VERSION_STRING does not match MAJOR.MINOR.PATCH macros."
+    );
+
+    TEST_ASSERT_EQUAL_HEX32_MESSAGE(
+        (INA226_VERSION_MAJOR << 16U) | (INA226_VERSION_MINOR << 8U) | INA226_VERSION_PATCH,
+        INA226_VERSION,
+        "INA226_VERSION does not match MAJOR/MINOR/PATCH macros."
+    );
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -1245,6 +1266,9 @@ int main(void)
     // INA226_Read_Die_ID
     RUN_TEST(test_INA226_Read_Die_ID_Should_Return_Invalid_Param_On_Null_Pointer);
     RUN_TEST(test_INA226_Read_Die_ID_Should_Return_Correct_Reg_Val);
+
+    // INA226 version macros
+    RUN_TEST(test_INA226_Version_Macros_Should_Be_Consistent);
 
     return UNITY_END();
 }
