@@ -12,6 +12,7 @@ While the major version is `0`, a minor release may contain breaking changes; th
 - Version macros `INA226_VERSION_MAJOR`, `INA226_VERSION_MINOR`, `INA226_VERSION_PATCH`, `INA226_VERSION` and `INA226_VERSION_STRING` in `ina226.h`.
 - This changelog.
 - GitHub Actions CI: host unit tests, `-Werror` builds with GCC and Clang, and cross builds for ARM Cortex-M0 and AVR ATmega328P with code size and stack usage reports.
+- Doxygen documentation site using the doxygen-awesome-css theme, with `README.md` as the main page and the changelog as a separate page. CI fails on any Doxygen warning and publishes the site to GitHub Pages on every push to `main`.
 - Unit tests for `INA226_Calibrate` ([#39]).
 - `test` target, Unity submodule check and automatic `build/` directory creation in `tests/host/Makefile` ([#40]).
 - On-target test skeleton `tests/test_target_ina226.c` ([#41]).
