@@ -25,6 +25,7 @@ While the major version is `0`, a minor release may contain breaking changes; th
 - Internal register definitions moved to `src/ina226_regs.h`. This file must be added to your project together with `ina226.c` ([#41]).
 - `INA226_Calibrate` now takes a `const ina226_handle_t *` ([#41]).
 - Host tests are built with `-std=c99 -pedantic` ([#40]).
+- README rewritten as a getting-started guide: installation with all three source files, porting examples, handle and address reference, measured code size and stack usage, usage notes and an API overview that links to the Doxygen site. Detailed API reference moved to the documentation site.
 
 ### Deprecated
 - The `INA226_ALERT_FUNC_*_CON_READY_CVR` names. They remain as aliases of the new `_CVR` names and will be removed in a future release ([#41]).
