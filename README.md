@@ -39,7 +39,7 @@ Every public function follows a fixed path: validate → read register → compu
 
 ### 📦 Minimal Memory — Zero Heap, Tiny Stack, Small Handle
 
-No dynamic memory allocation (`malloc` / `free`) anywhere. All state lives in a caller-owned `ina226_handle_t` struct (~8 bytes). No internal global or static variables. Configuration options use `#define` constants instead of enums, ensuring zero additional ROM/RAM overhead.
+No dynamic memory allocation (`malloc` / `free`) anywhere. All state lives in a caller-owned `ina226_handle_t` struct (~12 bytes). No internal global or static variables. Configuration options use `#define` constants instead of enums, ensuring zero additional ROM/RAM overhead.
 
 ---
 
@@ -47,7 +47,7 @@ No dynamic memory allocation (`malloc` / `free`) anywhere. All state lives in a 
 
 | Property | Guarantee |
 |---|---|
-| RAM per sensor | ~8 bytes (`ina226_handle_t`) |
+| RAM per sensor | ~12 bytes (`ina226_handle_t`) |
 | Global/static variables | 0 bytes |
 | Heap allocations | None |
 | Peak stack per call | < 32 bytes |

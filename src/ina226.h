@@ -144,7 +144,7 @@ typedef INA226_Config_Option_t INA226_Alert_Latch_t;
  */
 typedef struct {
     uint8_t ina226_i2c_addr;
-    uint16_t shunt_resistor_uOhm;
+    uint32_t shunt_resistor_uOhm;
     uint32_t current_resolution_uA;
 } ina226_handle_t;
 
