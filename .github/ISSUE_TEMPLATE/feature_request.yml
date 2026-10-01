@@ -1,0 +1,51 @@
+name: Feature request
+description: Suggest a new function, option or improvement.
+title: "[Feature]: "
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The driver aims to stay small and portable: C99, no heap, no floating point, no global state.
+        Requests that keep these properties are easier to accept.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What are you trying to do, and why is it hard or impossible with the current API?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: A sketch of the API is very helpful (function names, parameters, return codes).
+      render: c
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Workarounds you use today, or other ways to solve the problem.
+
+  - type: dropdown
+    id: compatibility
+    attributes:
+      label: API compatibility
+      description: Would existing user code have to change?
+      options:
+        - "No: only adds new API"
+        - "Yes: changes or removes existing API (breaking)"
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: datasheet
+    attributes:
+      label: Datasheet reference (optional)
+      description: Register, bit or section of the INA226 datasheet this relates to.
