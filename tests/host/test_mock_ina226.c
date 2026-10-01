@@ -9,6 +9,7 @@
 
 // Host-side mock register storage for Unity tests.
 static uint16_t mock_ina226_registers[256];
+static bool mock_i2c_write_fail = false;
 
 // Directly seed a mock register value when a test needs a specific device state.
 void Mock_I2C_Set_Register(uint8_t reg_addr, uint16_t value) {
@@ -18,6 +19,7 @@ void Mock_I2C_Set_Register(uint8_t reg_addr, uint16_t value) {
 // Restore the mock device to its default power-on state before each test.
 void Mock_I2C_Reset(void) {
 
+    mock_i2c_write_fail = false;
     for (uint32_t i = 8; i < 254; i++) mock_ina226_registers[i] = 0;
 
         // Set default register values.
@@ -36,6 +38,10 @@ void Mock_I2C_Reset(void) {
 uint8_t INA226_Platform_I2C_Write(uint8_t dev_addr, uint8_t reg_addr, const uint8_t *data, uint16_t len) {
 
     (void)dev_addr;
+
+    if (mock_i2c_write_fail) {
+        return INA226_ERR_I2C;
+    }
 
     if (len == 2) {
 
@@ -706,6 +712,97 @@ void test_INA226_Get_Alert_Status_Should_Read_Correct_Alert_Status(void) {
 }
 
 // Tests for INA226_Calibrate
+void test_INA226_Calibrate_Should_Return_Invalid_Param_Error_On_Null_Pointer(void) {
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Calibrate(NULL));
+}
+
+void test_INA226_Calibrate_Should_Return_Invalid_Param_Error_On_Zero_Values(void) {
+    ina226_handle_t sensor1 = {
+        .ina226_i2c_addr = 0x40,
+        .shunt_resistor_uOhm = 0,
+        .current_resolution_uA = 100
+    };
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Calibrate(&sensor1));
+
+    ina226_handle_t sensor2 = {
+        .ina226_i2c_addr = 0x40,
+        .shunt_resistor_uOhm = 100000,
+        .current_resolution_uA = 0
+    };
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Calibrate(&sensor2));
+}
+
+void test_INA226_Calibrate_Should_Calculate_Correct_Values(void) {
+    // Case 1: 100 µA resolution, 100 000 µΩ (100 mΩ) -> CAL = 512
+    ina226_handle_t sensor1 = {
+        .ina226_i2c_addr = 0x40,
+        .shunt_resistor_uOhm = 100000,
+        .current_resolution_uA = 100
+    };
+    TEST_ASSERT_EQUAL_MESSAGE(
+        INA226_OK,
+        INA226_Calibrate(&sensor1),
+        "INA226_Calibrate did not return INA226_OK for 100mOhm / 100uA."
+    );
+    TEST_ASSERT_EQUAL_HEX16(512, mock_ina226_registers[INA226_CALIBRATION_REG]);
+
+    // Case 2: 1000 µA resolution, 2000 µΩ (2 mΩ) -> CAL = 2560
+    ina226_handle_t sensor2 = {
+        .ina226_i2c_addr = 0x40,
+        .shunt_resistor_uOhm = 2000,
+        .current_resolution_uA = 1000
+    };
+    TEST_ASSERT_EQUAL_MESSAGE(
+        INA226_OK,
+        INA226_Calibrate(&sensor2),
+        "INA226_Calibrate did not return INA226_OK for 2mOhm / 1000uA."
+    );
+    TEST_ASSERT_EQUAL_HEX16(2560, mock_ina226_registers[INA226_CALIBRATION_REG]);
+}
+
+void test_INA226_Calibrate_Should_Round_To_Nearest(void) {
+    // 1000 µA resolution, 3000 µΩ -> 5.12e9 / 3e6 = 1706.666... -> rounds to 1707
+    ina226_handle_t sensor = {
+        .ina226_i2c_addr = 0x40,
+        .shunt_resistor_uOhm = 3000,
+        .current_resolution_uA = 1000
+    };
+    TEST_ASSERT_EQUAL_MESSAGE(
+        INA226_OK,
+        INA226_Calibrate(&sensor),
+        "INA226_Calibrate did not return INA226_OK for rounding test."
+    );
+    TEST_ASSERT_EQUAL_HEX16(1707, mock_ina226_registers[INA226_CALIBRATION_REG]);
+}
+
+void test_INA226_Calibrate_Should_Return_Invalid_Param_Error_On_Out_Of_Range_Cal(void) {
+    // CAL > 0xFFFF: 1 µA resolution, 1 µΩ -> CAL = 5120000000 > 65535
+    ina226_handle_t sensor_overflow = {
+        .ina226_i2c_addr = 0x40,
+        .shunt_resistor_uOhm = 1,
+        .current_resolution_uA = 1
+    };
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Calibrate(&sensor_overflow));
+
+    // CAL == 0: product too large
+    ina226_handle_t sensor_zero = {
+        .ina226_i2c_addr = 0x40,
+        .shunt_resistor_uOhm = 4000000000UL,
+        .current_resolution_uA = 4000000000UL
+    };
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Calibrate(&sensor_zero));
+}
+
+void test_INA226_Calibrate_Should_Return_I2C_Error_On_Write_Fail(void) {
+    ina226_handle_t sensor = {
+        .ina226_i2c_addr = 0x40,
+        .shunt_resistor_uOhm = 100000,
+        .current_resolution_uA = 100
+    };
+    mock_i2c_write_fail = true;
+    TEST_ASSERT_EQUAL(INA226_ERR_I2C, INA226_Calibrate(&sensor));
+    mock_i2c_write_fail = false;
+}
 
 // Tests for INA226_Set_Averaging_Mode
 void test_INA226_Set_Averaging_Mode_Should_Return_Invalid_Param_Error_On_Null_Pointer(void) {
@@ -1103,6 +1200,14 @@ int main(void)
     // INA226_Get_Alert_Status
     RUN_TEST(test_INA226_Get_Alert_Status_Should_Return_Error_On_Invalid_Params);
     RUN_TEST(test_INA226_Get_Alert_Status_Should_Read_Correct_Alert_Status);
+
+    // INA226_Calibrate
+    RUN_TEST(test_INA226_Calibrate_Should_Return_Invalid_Param_Error_On_Null_Pointer);
+    RUN_TEST(test_INA226_Calibrate_Should_Return_Invalid_Param_Error_On_Zero_Values);
+    RUN_TEST(test_INA226_Calibrate_Should_Calculate_Correct_Values);
+    RUN_TEST(test_INA226_Calibrate_Should_Round_To_Nearest);
+    RUN_TEST(test_INA226_Calibrate_Should_Return_Invalid_Param_Error_On_Out_Of_Range_Cal);
+    RUN_TEST(test_INA226_Calibrate_Should_Return_I2C_Error_On_Write_Fail);
 
     // INA226_Set_Avg_Time
     RUN_TEST(test_INA226_Set_Averaging_Mode_Should_Return_Invalid_Param_Error_On_Null_Pointer);
