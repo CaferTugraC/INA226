@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 While the major version is `0`, a minor release may contain breaking changes; they are always listed under **Changed** and marked **BREAKING**.
 
-## [0.3.0] - Unreleased
+## [0.3.0] - 2026-10-01
 
 ### Added
 - Version macros `INA226_VERSION_MAJOR`, `INA226_VERSION_MINOR`, `INA226_VERSION_PATCH`, `INA226_VERSION` and `INA226_VERSION_STRING` in `ina226.h`.
