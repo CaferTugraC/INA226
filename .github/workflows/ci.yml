@@ -31,8 +31,18 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Build and run tests
-        run: make -C tests/host
+      - name: Build and run tests with coverage
+        run: make -C tests/host coverage
+
+      - name: Report code coverage
+        run: |
+          {
+            echo "### Code Coverage Report (ina226.c)"
+            echo
+            echo '```'
+            (cd tests/host && gcov -b -c -o build/test_ina226_runner-ina226 ../../src/ina226.c)
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
   strict-build:
     name: Strict build (${{ matrix.cc }})
