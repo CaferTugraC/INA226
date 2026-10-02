@@ -275,14 +275,15 @@ INA226_Status_t INA226_Set_Alert_Limit(const ina226_handle_t *sensor, int32_t li
             return INA226_ERR_INVALID_PARAM;
         }
 
+        // Reject before the rounding addition can overflow int32.
+        if (limit_value > (INT16_MAX * (int32_t)INA226_BUS_VOLTAGE_LSB_UV)) {
+            return INA226_ERR_MATH_OVERFLOW;
+        }
+
         // Bus voltage alert: Convert limit from microvolts to register value.
         // Bus Voltage LSB = 1.25 mV = 1250 uV. Register = limit_value_uV / 1250.
         // Integer round-to-nearest: (limit_value + half_lsb) / lsb.
         int32_t reg_val = (limit_value + ((int32_t)INA226_BUS_VOLTAGE_LSB_UV / 2)) / (int32_t)INA226_BUS_VOLTAGE_LSB_UV;
-
-        if (reg_val > INT16_MAX) {
-            return INA226_ERR_MATH_OVERFLOW;
-        }
 
         alert_limit_reg_val = (uint16_t)reg_val;
 
