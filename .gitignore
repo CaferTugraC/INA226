@@ -2,3 +2,4 @@ notes
 build
 tests/host/build
 docs/html
+.vscode/
