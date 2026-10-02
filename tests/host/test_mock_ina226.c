@@ -422,9 +422,19 @@ void test_INA226_Get_Alert_Pin_Function_Should_Read_Correct_Alert_Function_Optio
 // Tests for INA226_Set_Alert_Limit
 void test_INA226_Set_Alert_Limit_Should_Return_Error_On_Invalid_Params(void) {
 
-    int32_t limit_value = 0;
+    int32_t invalid_limit_value = 0;
+    int32_t valid_limit_value = 100;
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40 };
 
-    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Set_Alert_Limit(NULL, limit_value));
+    INA226_Status_t status = INA226_Set_Alert_Pin_Function(&sensor, INA226_ALERT_FUNC_POWER_OVER_LIMIT);
+    TEST_ASSERT_EQUAL_MESSAGE(INA226_OK, status, "INA226_Set_Alert_Pin_Function not return INA226_OK.");
+
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Set_Alert_Limit(&sensor, invalid_limit_value));
+
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Set_Alert_Limit(NULL, valid_limit_value));
+
+    sensor.current_resolution_uA = 0;
+    TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Set_Alert_Limit(&sensor, valid_limit_value));
 }
 
 void test_INA226_Set_Alert_Limit_Should_Return_Error_Math_Overflow_For_Invalid_Shunt_Limit_Values(void) {
