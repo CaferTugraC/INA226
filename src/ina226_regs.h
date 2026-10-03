@@ -38,6 +38,7 @@
 /* ========================================================================= */
 
 #define INA226_BUS_VOLTAGE_LSB_UV           (1250U) /**< Bus voltage LSB value in microvolts (1.25 mV). */
+#define INA226_CALIBRATION_MAX_VAL          (0x7FFFU) /**< Maximum calibration value (bits 14-0, bit 15 is reserved). */
 
 /* ========================================================================= */
 /*                              REGISTER FIELD MASKS & POSITIONS             */
