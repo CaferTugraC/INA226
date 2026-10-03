@@ -502,6 +502,10 @@ void test_INA226_Set_Alert_Limit_Should_Return_Error_Math_Overflow_For_Invalid_B
         invalid_limit_value = (INT16_MAX + 1) * INA226_BUS_VOLTAGE_LSB_UV; // Maximum value of the bus voltage register + 1.
         TEST_ASSERT_EQUAL(INA226_ERR_MATH_OVERFLOW, INA226_Set_Alert_Limit(&sensor, invalid_limit_value));
 
+        // Smallest limit that rounds to INT16_MAX + 1 (issue #79).
+        invalid_limit_value = INT16_MAX * (int32_t)INA226_BUS_VOLTAGE_LSB_UV + (int32_t)INA226_BUS_VOLTAGE_LSB_UV / 2;
+        TEST_ASSERT_EQUAL(INA226_ERR_MATH_OVERFLOW, INA226_Set_Alert_Limit(&sensor, invalid_limit_value));
+
         // Input type extreme: the rounding addition must not overflow int32 (issue #58).
         TEST_ASSERT_EQUAL(INA226_ERR_MATH_OVERFLOW, INA226_Set_Alert_Limit(&sensor, INT32_MAX));
     }
@@ -722,6 +726,23 @@ void test_INA226_Set_Alert_Limit_Should_Write_Correct_Limit_Value_To_Register_Fo
     TEST_ASSERT_EQUAL_MESSAGE(
         INA226_OK,
         INA226_Set_Alert_Limit(&sensor, 40958750), // 32767 (INT16_MAX) * 1250 uV = 40,958,750 uV
+        "INA226_Set_Alert_Limit not return INA226_OK."
+    );
+    TEST_ASSERT_EQUAL_HEX16(INT16_MAX, mock_ina226_registers[INA226_ALERT_LIM_REG]);
+
+    // Limits above the maximum that still round down to INT16_MAX (issue #79).
+    mock_ina226_registers[INA226_ALERT_LIM_REG] = 0;
+    TEST_ASSERT_EQUAL_MESSAGE(
+        INA226_OK,
+        INA226_Set_Alert_Limit(&sensor, 40958751), // 40,958,751 uV / 1250 uV = 32767.0008 -> 32767
+        "INA226_Set_Alert_Limit not return INA226_OK."
+    );
+    TEST_ASSERT_EQUAL_HEX16(INT16_MAX, mock_ina226_registers[INA226_ALERT_LIM_REG]);
+
+    mock_ina226_registers[INA226_ALERT_LIM_REG] = 0;
+    TEST_ASSERT_EQUAL_MESSAGE(
+        INA226_OK,
+        INA226_Set_Alert_Limit(&sensor, 40959374), // 40,959,374 uV / 1250 uV = 32767.4992 -> 32767
         "INA226_Set_Alert_Limit not return INA226_OK."
     );
     TEST_ASSERT_EQUAL_HEX16(INT16_MAX, mock_ina226_registers[INA226_ALERT_LIM_REG]);

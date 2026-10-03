@@ -8,10 +8,13 @@ While the major version is `0`, a minor release may contain breaking changes; th
 
 ## [Unreleased]
 
+### Changed
+- **BREAKING (behaviour):** `INA226_Calibrate` now returns `INA226_ERR_INVALID_PARAM` when the calculated CAL value is above 32 767. Bit 15 of the Calibration Register is not part of the calibration value, so CAL values from 32 768 to 65 535 used to write bit 15 and set a different calibration than the one the driver computed. Choose a larger `current_resolution_uA` or a larger shunt so that CAL fits in 15 bits ([#74]).
+
 ### Fixed
 - `ina226.h` can now be included from C++. Its declarations, including the platform I2C hooks, are wrapped in `extern "C"` guards ([#75]).
 - `INA226_Set_Alert_Limit` no longer divides by zero for a power alert when `current_resolution_uA` is 0. It now returns `INA226_ERR_INVALID_PARAM` ([#72]).
-- `INA226_Set_Alert_Limit` no longer overflows `int32_t` for a bus voltage limit above 40 958 750 µV. It now returns `INA226_ERR_MATH_OVERFLOW` before the conversion ([#73]).
+- `INA226_Set_Alert_Limit` no longer overflows `int32_t` for a bus voltage limit close to `INT32_MAX`. It now returns `INA226_ERR_MATH_OVERFLOW` before the conversion ([#73], [#80]).
 
 
 ## [0.3.0] - 2026-10-01
@@ -79,5 +82,7 @@ First versioned state of the driver.
 [#44]: https://github.com/CaferTugraC/INA226/pull/44
 [#72]: https://github.com/CaferTugraC/INA226/pull/72
 [#73]: https://github.com/CaferTugraC/INA226/pull/73
+[#74]: https://github.com/CaferTugraC/INA226/pull/74
 [#75]: https://github.com/CaferTugraC/INA226/pull/75
+[#80]: https://github.com/CaferTugraC/INA226/pull/80
 
