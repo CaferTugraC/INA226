@@ -74,7 +74,9 @@ Dependencies: `<stdint.h>` and `<stddef.h>` only.
 
 ### Requirements
 
-- A C99 (or newer) compiler: GCC, Clang, IAR, Keil/ARMCC, XC8/16/32, …
+- A C99 (or newer) compiler.
+  - **Tested in CI on every change:** GCC, Clang, `arm-none-eabi-gcc` (Cortex-M0), `avr-gcc` (ATmega328P).
+  - **Expected to work, not tested:** other C99 compilers such as IAR, Keil/ARMCC and XC8/16/32.
 - An I²C master peripheral and a working I²C driver on your target.
 
 ### Adding the driver to your project
