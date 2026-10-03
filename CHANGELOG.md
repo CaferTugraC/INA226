@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 While the major version is `0`, a minor release may contain breaking changes; they are always listed under **Changed** and marked **BREAKING**.
 
+## [Unreleased]
+
+### Fixed
+- `ina226.h` can now be included from C++. Its declarations, including the platform I2C hooks, are wrapped in `extern "C"` guards ([#75]).
+
+
 ## [0.3.0] - 2026-10-01
 
 ### Added
@@ -69,3 +75,5 @@ First versioned state of the driver.
 [#41]: https://github.com/CaferTugraC/INA226/pull/41
 [#43]: https://github.com/CaferTugraC/INA226/pull/43
 [#44]: https://github.com/CaferTugraC/INA226/pull/44
+[#75]: https://github.com/CaferTugraC/INA226/pull/75
+

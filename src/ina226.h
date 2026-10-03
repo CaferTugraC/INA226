@@ -17,6 +17,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* ========================================================================= */
 /*                                  VERSION                                  */
 /* ========================================================================= */
@@ -405,5 +409,9 @@ INA226_Status_t INA226_Read_Power(const ina226_handle_t *sensor, uint32_t *power
  *         - 2 : INA226_ERR_INVALID_PARAM; sensor is NULL or latch is not a valid latch option.
  */
 INA226_Status_t INA226_Set_Alert_Latch(const ina226_handle_t *sensor, INA226_Alert_Latch_t latch);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INA226_H_ */
