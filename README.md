@@ -49,7 +49,7 @@ Your application ──▶ ina226.h API ──▶ ina226.c ──▶ your 2 I²C
 | Alerts | Shunt and bus over/under limit, power over limit, conversion ready, combined limit + conversion ready, latched or transparent output, status readback |
 | Identification | Manufacturer ID and die ID readout |
 | Portability | Two user-supplied I²C hooks; byte-order independent; builds warning-free on GCC, Clang, ARM and AVR |
-| Safety | NULL and range checks on every public function; overflow checks wherever a result can overflow |
+| Safety | NULL checks and configuration/argument range checks on public functions; overflow checks wherever a result can overflow |
 | Footprint | No heap, no global or static variables, no floating point, no loops or recursion |
 
 ## Resource Usage
@@ -191,13 +191,16 @@ Each physical INA226 needs one `ina226_handle_t`. It is owned by your code, and 
 
 | Field | Unit | Valid range | Example |
 |---|---|---|---|
-| `ina226_i2c_addr` | — | `0x40` – `0x4F` (7-bit) | `0x40` |
+| `ina226_i2c_addr` | — | `0x00` – `0xFF` (typically `0x40` – `0x4F`, 7-bit) | `0x40` |
 | `shunt_resistor_uOhm` | µΩ | `1` – `4 294 967 295` | `100000` (0.1 Ω, "R100") |
 | `current_resolution_uA` | µA | `1` – `65 536`, see [limits](#numeric-limits) | `100` |
 
+> [!NOTE]
+> The driver passes `ina226_i2c_addr` directly to the platform I²C hooks without validation. This allows hardware configurations with I²C address translators (e.g., LTC4316) or platforms whose HAL expects pre-shifted addresses.
+
 ### I²C address
 
-Set by the A1 and A0 pins:
+Native INA226 address set by the A1 and A0 pins:
 
 | A1 \ A0 | GND | VS | SDA | SCL |
 |---|---|---|---|---|
