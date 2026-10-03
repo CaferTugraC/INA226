@@ -58,7 +58,7 @@ Measured with `-Os` by the [CI workflow](https://github.com/CaferTugraC/INA226/a
 
 | | ARM Cortex-M0 (`arm-none-eabi-gcc` 13.2) | AVR ATmega328P (`avr-gcc` 7.3) |
 |---|---|---|
-| Code size (`.text`) | 1212 B | 2444 B |
+| Code size (`.text`) | 1212 B | 2462 B |
 | Largest stack frame | 32 B | 28 B |
 | Worst-case stack depth¹ | 72 B | — |
 | RAM per device (`ina226_handle_t`) | 12 B | 9 B |
