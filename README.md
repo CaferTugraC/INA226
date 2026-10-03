@@ -66,6 +66,8 @@ Measured with `-Os` by the [CI workflow](https://github.com/CaferTugraC/INA226/a
 
 ¹ `INA226_Set_Alert_Limit` → `INA226_Get_Alert_Pin_Function` → `INA226_Read_Reg`, computed from the GCC call graph. It does not include your I²C hook.
 
+The values are measured on the object file `ina226.o` before linking. They do not include the libgcc helpers the driver calls for 32-bit and 64-bit multiplication and division (on Cortex-M0: `__aeabi_idiv`, `__aeabi_uidiv`, `__aeabi_lmul`, `__aeabi_ldivmod` and `__aeabi_uldivmod`), so a linked program uses more code and stack than shown.
+
 Dependencies: `<stdint.h>` and `<stddef.h>` only.
 
 ---
