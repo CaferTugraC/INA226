@@ -333,20 +333,25 @@ INA226_Status_t INA226_Get_Alert_Pin_Function(const ina226_handle_t *sensor, INA
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success.
  *         - 1 : INA226_ERR_I2C; I2C communication error while reading/writing alert registers.
- *         - 2 : INA226_ERR_INVALID_PARAM; sensor is NULL, or limit_value is negative for a bus voltage or power alert.
+ *         - 2 : INA226_ERR_INVALID_PARAM; sensor is NULL, limit_value is negative for a bus voltage or power alert,
+ *               or current_resolution_uA is 0 for a power alert.
  *         - 3 : INA226_ERR_MATH_OVERFLOW; Converted register value exceeds representable range.
  *         - 4 : INA226_ERR_INVALID_STATE; No limit-based alert function is configured (e.g. Conversion Ready).
  */
 INA226_Status_t INA226_Set_Alert_Limit(const ina226_handle_t *sensor, int32_t limit_value);
 
 /**
- * @brief Get alert pin assertion status from destination INA226 device.
+ * @brief Read the AFF and CVRF flags from the Mask/Enable register of destination INA226 device.
+ * 
+ * @note This function reads the flags, not the state of the ALERT pin. The device sets CVRF
+ *       after every conversion, even when Conversion Ready is not the selected alert function,
+ *       so the result can report a ready conversion while the pin is not asserted.
  * 
  * @note Reading this status queries the Mask/Enable register, which hardware-clears
  *       the Alert Function Flag (AFF) in latch mode and the Conversion Ready Flag (CVRF).
  * 
  * @param sensor       Destination INA226 device handle.
- * @param alert_status Pointer to store the destination device alert pin status.
+ * @param alert_status Pointer to store the AFF and CVRF flags.
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success.
  *         - 1 : INA226_ERR_I2C; I2C communication error while reading the mask/enable register.

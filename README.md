@@ -58,13 +58,15 @@ Measured with `-Os` by the [CI workflow](https://github.com/CaferTugraC/INA226/a
 
 | | ARM Cortex-M0 (`arm-none-eabi-gcc` 13.2) | AVR ATmega328P (`avr-gcc` 7.3) |
 |---|---|---|
-| Code size (`.text`) | 1212 B | 2444 B |
+| Code size (`.text`) | 1212 B | 2462 B |
 | Largest stack frame | 32 B | 28 B |
 | Worst-case stack depth¹ | 72 B | — |
 | RAM per device (`ina226_handle_t`) | 12 B | 9 B |
 | Global / static data | 0 B | 0 B |
 
 ¹ `INA226_Set_Alert_Limit` → `INA226_Get_Alert_Pin_Function` → `INA226_Read_Reg`, computed from the GCC call graph. It does not include your I²C hook.
+
+The values are measured on the object file `ina226.o` before linking. They do not include the libgcc helpers the driver calls for 32-bit and 64-bit multiplication and division (on Cortex-M0: `__aeabi_idiv`, `__aeabi_uidiv`, `__aeabi_lmul`, `__aeabi_ldivmod` and `__aeabi_uldivmod`), so a linked program uses more code and stack than shown.
 
 Dependencies: `<stdint.h>` and `<stddef.h>` only.
 
@@ -74,7 +76,9 @@ Dependencies: `<stdint.h>` and `<stddef.h>` only.
 
 ### Requirements
 
-- A C99 (or newer) compiler: GCC, Clang, IAR, Keil/ARMCC, XC8/16/32, …
+- A C99 (or newer) compiler.
+  - **Tested in CI on every change:** GCC, Clang, `arm-none-eabi-gcc` (Cortex-M0), `avr-gcc` (ATmega328P).
+  - **Expected to work, not tested:** other C99 compilers such as IAR, Keil/ARMCC and XC8/16/32.
 - An I²C master peripheral and a working I²C driver on your target.
 
 ### Adding the driver to your project

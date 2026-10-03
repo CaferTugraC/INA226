@@ -9,7 +9,7 @@
  * Distributed under the MIT License.
  * See LICENSE file in the project root for full license information.
  * 
- * @note This file is a placeholder/skeleton for future on-target Hardware-in-the-Loop (HIL)
+ * @note This file is a placeholder for future on-target Hardware-in-the-Loop (HIL)
  *       tests using real hardware (e.g. STM32 + INA226 over I2C).
  */
 
