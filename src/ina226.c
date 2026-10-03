@@ -296,6 +296,11 @@ INA226_Status_t INA226_Set_Alert_Limit(const ina226_handle_t *sensor, int32_t li
 
         // Power alert: Convert limit from microwatts to register value.
         // Power LSB = 25 * Current_LSB (per datasheet). Register = limit_value_uW / power_lsb.
+
+        if (sensor->current_resolution_uA == 0) {
+            return INA226_ERR_INVALID_PARAM;
+        }
+
         int64_t power_lsb = 25U * (int64_t)sensor->current_resolution_uA;
 
         // Integer round-to-nearest: (limit_value + half_lsb) / lsb.
