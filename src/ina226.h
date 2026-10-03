@@ -176,11 +176,17 @@ typedef INA226_Config_Option_t INA226_Alert_Latch_t;
 /**
  * @brief INA226 sensor handle structure containing hardware details and calibration parameters.
  * 
+ * @note The combination of shunt_resistor_uOhm and current_resolution_uA determines the internal
+ *       calibration register value (CAL). Because bit 15 of the Calibration Register is reserved,
+ *       the calculated CAL value must fall within the range [1 .. 32767]. If the product of these
+ *       two fields is too small, INA226_Calibrate() will return INA226_ERR_INVALID_PARAM.
+ * 
+ * @see INA226_Calibrate
  */
 typedef struct {
     uint8_t ina226_i2c_addr;          /**< I2C slave address (7-bit, e.g. 0x40). */
-    uint32_t shunt_resistor_uOhm;    /**< Shunt resistor resistance in micro-ohms (1 µΩ .. 4.29 kΩ). */
-    uint32_t current_resolution_uA;  /**< Current measurement resolution (LSB) in micro-amperes. */
+    uint32_t shunt_resistor_uOhm;     /**< Shunt resistor resistance in micro-ohms (must satisfy CAL <= 32767, see note). */
+    uint32_t current_resolution_uA;   /**< Current measurement resolution (LSB) in micro-amperes (must satisfy CAL <= 32767, see note). */
 } ina226_handle_t;
 
 /* ========================================================================= */
@@ -286,7 +292,7 @@ INA226_Status_t INA226_Set_Averaging_Mode(const ina226_handle_t *sensor, INA226_
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success.
  *         - 1 : INA226_ERR_I2C; I2C communication error while writing the calibration register.
- *         - 2 : INA226_ERR_INVALID_PARAM; sensor is NULL, shunt/resolution is 0, or calculated CAL is out of range (1..65535).
+ *         - 2 : INA226_ERR_INVALID_PARAM; sensor is NULL, shunt/resolution is 0, or calculated CAL is out of range (1..32767).
  */
 INA226_Status_t INA226_Calibrate(const ina226_handle_t *sensor);
 

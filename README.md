@@ -216,7 +216,7 @@ current_resolution_uA  ≥  I_max[µA] / 32768        (round up to a convenient 
 CAL                    =  5 120 000 000 / (current_resolution_uA × shunt_resistor_uOhm)
 ```
 
-`INA226_Calibrate()` computes `CAL` with round-to-nearest and returns `INA226_ERR_INVALID_PARAM` if it does not fit in 1 … 65 535. The shunt input saturates at ±81.92 mV, so `I_max ≤ 81.92 mV / R_shunt`.
+`INA226_Calibrate()` computes `CAL` with round-to-nearest and returns `INA226_ERR_INVALID_PARAM` if it does not fit in 1 … 32 767. The shunt input saturates at ±81.92 mV, so `I_max ≤ 81.92 mV / R_shunt`.
 
 | Shunt | I_max | Current LSB | CAL |
 |---|---|---|---|
@@ -359,7 +359,7 @@ Every function returns an `INA226_Status_t`:
 |---|---|---|
 | `INA226_OK` | 0 | Success |
 | `INA226_ERR_I2C` | 1 | An I²C hook returned non-zero |
-| `INA226_ERR_INVALID_PARAM` | 2 | NULL pointer, option out of range, a zero shunt or LSB, a calibration value outside 1 … 65 535, or a negative bus voltage or power alert limit |
+| `INA226_ERR_INVALID_PARAM` | 2 | NULL pointer, option out of range, a zero shunt or LSB, a calibration value outside 1 … 32 767, or a negative bus voltage or power alert limit |
 | `INA226_ERR_MATH_OVERFLOW` | 3 | A converted value does not fit its destination |
 | `INA226_ERR_INVALID_STATE` | 4 | `INA226_Set_Alert_Limit` called while no limit-based alert function is selected |
 
