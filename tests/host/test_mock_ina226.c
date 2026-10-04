@@ -86,7 +86,7 @@ void tearDown(void) {}
 // Tests for INA226_Read_Current function
 void test_INA226_Read_Current_Should_Return_Error_On_Invalid_Params(void) {
 
-    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40, .current_resolution_uA = 100 };
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40, .current_lsb_uA = 100 };
     int32_t current_val = 0;
 
     // Sensor pointer is NULL.
@@ -103,7 +103,7 @@ void test_INA226_Read_Current_Should_Detect_Math_Overflow(void) {
 
     // INT32_MAX = 2,147,483,647 
     // (100,000 uA = 100mA)
-    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40, .current_resolution_uA = 100000 };
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40, .current_lsb_uA = 100000 };
     int32_t current_val = 0;
 
     // 1. Positive overflow case (> INT32_MAX).
@@ -123,7 +123,7 @@ void test_INA226_Read_Current_Should_Detect_Math_Overflow(void) {
 
 void test_INA226_Read_Current_Should_Calculate_Correct_Values(void) {
     
-    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40, .current_resolution_uA = 500 }; // Current LSB is 500 uA.
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40, .current_lsb_uA = 500 }; // Current LSB is 500 uA.
     int32_t current_val = 0;
 
     // 1. Positive value read.
@@ -159,7 +159,7 @@ void test_INA226_Read_Current_Should_Calculate_Correct_Values(void) {
 // Tests for INA226_Read_Power function
 void test_INA226_Read_Power_Should_Return_Error_On_Invalid_Params(void) {
 
-    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40, .current_resolution_uA = 100 };
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40, .current_lsb_uA = 100 };
     uint32_t power_val = 0;
 
     // Sensor pointer is NULL.
@@ -178,7 +178,7 @@ void test_INA226_Read_Power_Should_Return_Error_On_Invalid_Params(void) {
 
 void test_INA226_Read_Power_Should_Detect_Math_Overflow(void) {
 
-    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40, .current_resolution_uA = 100000 };
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40, .current_lsb_uA = 100000 };
     uint32_t power_val = 0;
 
     // 1. Positive overflow case (> UINT32_MAX).
@@ -190,7 +190,7 @@ void test_INA226_Read_Power_Should_Detect_Math_Overflow(void) {
 
 void test_INA226_Read_Power_Should_Calculate_Correct_Values(void) {
 
-    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40, .current_resolution_uA = 500 };
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40, .current_lsb_uA = 500 };
     uint32_t power_val = 0;
 
     // 1. Positive value read.
@@ -433,7 +433,7 @@ void test_INA226_Set_Alert_Limit_Should_Return_Error_On_Invalid_Params(void) {
 
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Set_Alert_Limit(NULL, valid_limit_value));
 
-    sensor.current_resolution_uA = 0;
+    sensor.current_lsb_uA = 0;
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Set_Alert_Limit(&sensor, valid_limit_value));
 }
 
@@ -517,7 +517,7 @@ void test_INA226_Set_Alert_Limit_Should_Return_Error_Math_Overflow_For_Invalid_P
     int32_t invalid_limit_value;
 
     // Power category limit value tests
-    sensor.current_resolution_uA = 100;
+    sensor.current_lsb_uA = 100;
 
     INA226_Alert_Func_t power_category_alert_functions[] = {
         INA226_ALERT_FUNC_POWER_OVER_LIMIT,
@@ -536,7 +536,7 @@ void test_INA226_Set_Alert_Limit_Should_Return_Error_Math_Overflow_For_Invalid_P
             "INA226_Set_Alert_Pin_Function not return INA226_OK."
         );
 
-        int32_t power_lsb = 25 * sensor.current_resolution_uA;
+        int32_t power_lsb = 25 * sensor.current_lsb_uA;
 
         invalid_limit_value = ((int32_t)UINT16_MAX + 1) * power_lsb; // Maximum value of the power register + 1.
         TEST_ASSERT_EQUAL(INA226_ERR_MATH_OVERFLOW, INA226_Set_Alert_Limit(&sensor, invalid_limit_value));
@@ -546,12 +546,12 @@ void test_INA226_Set_Alert_Limit_Should_Return_Error_Math_Overflow_For_Invalid_P
     }
 }
 
-void test_INA226_Set_Alert_Limit_Should_Accept_Int32_Max_Power_Limit_For_Large_Current_Resolution(void) {
+void test_INA226_Set_Alert_Limit_Should_Accept_Int32_Max_Power_Limit_For_Large_Current_LSB(void) {
 
-    // With current_resolution_uA = UINT32_MAX the power LSB (25 * Current_LSB) exceeds INT32_MAX,
+    // With current_lsb_uA = UINT32_MAX the power LSB (25 * Current_LSB) exceeds INT32_MAX,
     // so every non-negative int32 limit is in range. Verifies that the power LSB computation
     // does not overflow and that INT32_MAX is accepted rather than rejected.
-    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40, .current_resolution_uA = UINT32_MAX };
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40, .current_lsb_uA = UINT32_MAX };
 
     INA226_Alert_Func_t power_category_alert_functions[] = {
         INA226_ALERT_FUNC_POWER_OVER_LIMIT,
@@ -626,14 +626,14 @@ void test_INA226_Set_Alert_Limit_Should_Return_Invalid_Param_For_Negative_Bus_Li
 
 void test_INA226_Set_Alert_Limit_Should_Return_Invalid_Param_For_Negative_Power_Limit_Values(void) {
 
-    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40, .current_resolution_uA = 100 };
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40, .current_lsb_uA = 100 };
 
     INA226_Alert_Func_t power_category_alert_functions[] = {
         INA226_ALERT_FUNC_POWER_OVER_LIMIT,
         INA226_ALERT_FUNC_POWER_OVER_LIMIT_CVR
     };
 
-    int32_t power_lsb = 25 * (int32_t)sensor.current_resolution_uA;
+    int32_t power_lsb = 25 * (int32_t)sensor.current_lsb_uA;
     int32_t negative_limit_values[] = { -1, -power_lsb, INT32_MIN };
 
     size_t num_category_alert_functions = sizeof(power_category_alert_functions) / sizeof(power_category_alert_functions[0]);
@@ -774,7 +774,7 @@ void test_INA226_Set_Alert_Limit_Should_Write_Correct_Limit_Value_To_Register_Fo
 
 void test_INA226_Set_Alert_Limit_Should_Write_Correct_Limit_Value_To_Register_For_Power(void) {
 
-    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40, .current_resolution_uA = 100 };
+    ina226_handle_t sensor = { .ina226_i2c_addr = 0x40, .current_lsb_uA = 100 };
 
     // Power
     TEST_ASSERT_EQUAL_MESSAGE(
@@ -787,7 +787,7 @@ void test_INA226_Set_Alert_Limit_Should_Write_Correct_Limit_Value_To_Register_Fo
     
     TEST_ASSERT_EQUAL_MESSAGE(
         INA226_OK,
-        INA226_Set_Alert_Limit(&sensor, 163837500), // 65535 (UINT16_MAX) * (25 * 100 (current_resolution_uA)) = 163.837.500 uW
+        INA226_Set_Alert_Limit(&sensor, 163837500), // 65535 (UINT16_MAX) * (25 * 100 (current_lsb_uA)) = 163.837.500 uW
         "INA226_Set_Alert_Limit not return INA226_OK."
     );
     TEST_ASSERT_EQUAL_HEX16(UINT16_MAX, mock_ina226_registers[INA226_ALERT_LIM_REG]);
@@ -803,7 +803,7 @@ void test_INA226_Set_Alert_Limit_Should_Write_Correct_Limit_Value_To_Register_Fo
     // midle
      TEST_ASSERT_EQUAL_MESSAGE(
         INA226_OK,
-        INA226_Set_Alert_Limit(&sensor, 2500000), // 1000 * (25 * 100 (current_resolution_uA)) = 2.500.000 uW
+        INA226_Set_Alert_Limit(&sensor, 2500000), // 1000 * (25 * 100 (current_lsb_uA)) = 2.500.000 uW
         "INA226_Set_Alert_Limit not return INA226_OK."
     );
     TEST_ASSERT_EQUAL_HEX16(1000, mock_ina226_registers[INA226_ALERT_LIM_REG]);
@@ -811,7 +811,7 @@ void test_INA226_Set_Alert_Limit_Should_Write_Correct_Limit_Value_To_Register_Fo
     // round to nearest    
      TEST_ASSERT_EQUAL_MESSAGE(
         INA226_OK,
-        INA226_Set_Alert_Limit(&sensor, 4000), // 1.6 * (25 * 100 (current_resolution_uA)) = 4.000 uW -> 2 to register.
+        INA226_Set_Alert_Limit(&sensor, 4000), // 1.6 * (25 * 100 (current_lsb_uA)) = 4.000 uW -> 2 to register.
         "INA226_Set_Alert_Limit not return INA226_OK."
     );
     TEST_ASSERT_EQUAL_HEX16(2, mock_ina226_registers[INA226_ALERT_LIM_REG]);
@@ -876,24 +876,24 @@ void test_INA226_Calibrate_Should_Return_Invalid_Param_Error_On_Zero_Values(void
     ina226_handle_t sensor1 = {
         .ina226_i2c_addr = 0x40,
         .shunt_resistor_uOhm = 0,
-        .current_resolution_uA = 100
+        .current_lsb_uA = 100
     };
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Calibrate(&sensor1));
 
     ina226_handle_t sensor2 = {
         .ina226_i2c_addr = 0x40,
         .shunt_resistor_uOhm = 100000,
-        .current_resolution_uA = 0
+        .current_lsb_uA = 0
     };
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Calibrate(&sensor2));
 }
 
 void test_INA226_Calibrate_Should_Calculate_Correct_Values(void) {
-    // Case 1: 100 µA resolution, 100 000 µΩ (100 mΩ) -> CAL = 512
+    // Case 1: 100 µA LSB, 100 000 µΩ (100 mΩ) -> CAL = 512
     ina226_handle_t sensor1 = {
         .ina226_i2c_addr = 0x40,
         .shunt_resistor_uOhm = 100000,
-        .current_resolution_uA = 100
+        .current_lsb_uA = 100
     };
     TEST_ASSERT_EQUAL_MESSAGE(
         INA226_OK,
@@ -902,11 +902,11 @@ void test_INA226_Calibrate_Should_Calculate_Correct_Values(void) {
     );
     TEST_ASSERT_EQUAL_HEX16(512, mock_ina226_registers[INA226_CALIBRATION_REG]);
 
-    // Case 2: 1000 µA resolution, 2000 µΩ (2 mΩ) -> CAL = 2560
+    // Case 2: 1000 µA LSB, 2000 µΩ (2 mΩ) -> CAL = 2560
     ina226_handle_t sensor2 = {
         .ina226_i2c_addr = 0x40,
         .shunt_resistor_uOhm = 2000,
-        .current_resolution_uA = 1000
+        .current_lsb_uA = 1000
     };
     TEST_ASSERT_EQUAL_MESSAGE(
         INA226_OK,
@@ -916,11 +916,11 @@ void test_INA226_Calibrate_Should_Calculate_Correct_Values(void) {
     TEST_ASSERT_EQUAL_HEX16(2560, mock_ina226_registers[INA226_CALIBRATION_REG]);
 
     // Case 3: Boundary case - maximum valid CAL = 32767 (0x7FFF, bit 15 is 0)
-    // 1 µA resolution, 156 255 µΩ -> 5.12e9 / 156255 = 32766.95 -> rounds to 32767
+    // 1 µA LSB, 156 255 µΩ -> 5.12e9 / 156255 = 32766.95 -> rounds to 32767
     ina226_handle_t sensor3 = {
         .ina226_i2c_addr = 0x40,
         .shunt_resistor_uOhm = 156255,
-        .current_resolution_uA = 1
+        .current_lsb_uA = 1
     };
     TEST_ASSERT_EQUAL_MESSAGE(
         INA226_OK,
@@ -937,10 +937,10 @@ void test_INA226_Calibrate_Should_Calculate_Correct_Values_For_All_Valid_Cal_Ran
 
     // Verify all 32,767 valid calibration register values (1 .. 0x7FFF)
     for (uint32_t expected_cal = 1; expected_cal <= INA226_CALIBRATION_MAX_VAL; expected_cal++) {
-        // For CAL = 1, product is 5.12e9 which exceeds UINT32_MAX for shunt when resolution is 1 uA.
-        // Using resolution = 2 uA yields shunt = 2.56e9 uOhm, fitting within uint32_t.
-        sensor.current_resolution_uA = (expected_cal == 1U) ? 2U : 1U;
-        sensor.shunt_resistor_uOhm = (uint32_t)((5120000000ULL / expected_cal) / sensor.current_resolution_uA);
+        // For CAL = 1, product is 5.12e9 which exceeds UINT32_MAX for shunt when the LSB is 1 uA.
+        // Using LSB = 2 uA yields shunt = 2.56e9 uOhm, fitting within uint32_t.
+        sensor.current_lsb_uA = (expected_cal == 1U) ? 2U : 1U;
+        sensor.shunt_resistor_uOhm = (uint32_t)((5120000000ULL / expected_cal) / sensor.current_lsb_uA);
 
         TEST_ASSERT_EQUAL_MESSAGE(
             INA226_OK,
@@ -952,11 +952,11 @@ void test_INA226_Calibrate_Should_Calculate_Correct_Values_For_All_Valid_Cal_Ran
 }
 
 void test_INA226_Calibrate_Should_Round_To_Nearest(void) {
-    // 1000 µA resolution, 3000 µΩ -> 5.12e9 / 3e6 = 1706.666... -> rounds to 1707
+    // 1000 µA LSB, 3000 µΩ -> 5.12e9 / 3e6 = 1706.666... -> rounds to 1707
     ina226_handle_t sensor = {
         .ina226_i2c_addr = 0x40,
         .shunt_resistor_uOhm = 3000,
-        .current_resolution_uA = 1000
+        .current_lsb_uA = 1000
     };
     TEST_ASSERT_EQUAL_MESSAGE(
         INA226_OK,
@@ -968,19 +968,19 @@ void test_INA226_Calibrate_Should_Round_To_Nearest(void) {
 
 void test_INA226_Calibrate_Should_Return_Invalid_Param_Error_On_Out_Of_Range_Cal(void) {
     // CAL = 32768 (0x8000): Bit 15 is set (reserved bit violation)
-    // 1 µA resolution, 156 250 µΩ -> 5.12e9 / 156250 = 32768
+    // 1 µA LSB, 156 250 µΩ -> 5.12e9 / 156250 = 32768
     ina226_handle_t sensor_bit15 = {
         .ina226_i2c_addr = 0x40,
         .shunt_resistor_uOhm = 156250,
-        .current_resolution_uA = 1
+        .current_lsb_uA = 1
     };
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Calibrate(&sensor_bit15));
 
-    // CAL > 0xFFFF: 1 µA resolution, 1 µΩ -> CAL = 5120000000 > 32767
+    // CAL > 0xFFFF: 1 µA LSB, 1 µΩ -> CAL = 5120000000 > 32767
     ina226_handle_t sensor_overflow = {
         .ina226_i2c_addr = 0x40,
         .shunt_resistor_uOhm = 1,
-        .current_resolution_uA = 1
+        .current_lsb_uA = 1
     };
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Calibrate(&sensor_overflow));
 
@@ -988,7 +988,7 @@ void test_INA226_Calibrate_Should_Return_Invalid_Param_Error_On_Out_Of_Range_Cal
     ina226_handle_t sensor_zero = {
         .ina226_i2c_addr = 0x40,
         .shunt_resistor_uOhm = 4000000000UL,
-        .current_resolution_uA = 4000000000UL
+        .current_lsb_uA = 4000000000UL
     };
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Calibrate(&sensor_zero));
 }
@@ -997,7 +997,7 @@ void test_INA226_Calibrate_Should_Return_I2C_Error_On_Write_Fail(void) {
     ina226_handle_t sensor = {
         .ina226_i2c_addr = 0x40,
         .shunt_resistor_uOhm = 100000,
-        .current_resolution_uA = 100
+        .current_lsb_uA = 100
     };
     mock_i2c_write_fail = true;
     TEST_ASSERT_EQUAL(INA226_ERR_I2C, INA226_Calibrate(&sensor));
@@ -1425,7 +1425,7 @@ int main(void)
     RUN_TEST(test_INA226_Set_Alert_Limit_Should_Return_Error_Math_Overflow_For_Invalid_Shunt_Limit_Values);
     RUN_TEST(test_INA226_Set_Alert_Limit_Should_Return_Error_Math_Overflow_For_Invalid_Bus_Limit_Values);
     RUN_TEST(test_INA226_Set_Alert_Limit_Should_Return_Error_Math_Overflow_For_Invalid_Power_Limit_Values);
-    RUN_TEST(test_INA226_Set_Alert_Limit_Should_Accept_Int32_Max_Power_Limit_For_Large_Current_Resolution);
+    RUN_TEST(test_INA226_Set_Alert_Limit_Should_Accept_Int32_Max_Power_Limit_For_Large_Current_LSB);
     RUN_TEST(test_INA226_Set_Alert_Limit_Should_Return_Invalid_Param_For_Negative_Bus_Limit_Values);
     RUN_TEST(test_INA226_Set_Alert_Limit_Should_Return_Invalid_Param_For_Negative_Power_Limit_Values);
     RUN_TEST(test_INA226_Set_Alert_Limit_Should_Write_Correct_Limit_Value_To_Register_For_Shunt);

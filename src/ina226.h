@@ -176,17 +176,23 @@ typedef INA226_Config_Option_t INA226_Alert_Latch_t;
 /**
  * @brief INA226 sensor handle structure containing hardware details and calibration parameters.
  * 
- * @note The combination of shunt_resistor_uOhm and current_resolution_uA determines the internal
- *       calibration register value (CAL). Because bit 15 of the Calibration Register is reserved,
- *       the calculated CAL value must fall within the range [1 .. 32767]. If the product of these
- *       two fields is too small, INA226_Calibrate() will return INA226_ERR_INVALID_PARAM.
+ * @note The combination of shunt_resistor_uOhm and current_lsb_uA determines the internal
+ *       calibration register value (CAL). Because bit 15 of the Calibration Register is not part
+ *       of the calibration value, the calculated CAL value must fall within the range [1 .. 32767].
+ *       If the product of these two fields is too small or too large, INA226_Calibrate() will
+ *       return INA226_ERR_INVALID_PARAM.
  * 
  * @see INA226_Calibrate
  */
 typedef struct {
     uint8_t ina226_i2c_addr;          /**< I2C slave address (7-bit, e.g. 0x40). */
-    uint32_t shunt_resistor_uOhm;     /**< Shunt resistor resistance in micro-ohms (must satisfy CAL <= 32767, see note). */
-    uint32_t current_resolution_uA;   /**< Current measurement resolution (LSB) in micro-amperes (must satisfy CAL <= 32767, see note). */
+    uint32_t shunt_resistor_uOhm;     /**< Shunt resistor resistance in micro-ohms. Together with current_lsb_uA it must give a CAL value
+                                           of 1 .. 32767 (see INA226_Calibrate()). */
+    uint32_t current_lsb_uA;          /**< Current_LSB in micro-amperes: the current that one count of the Current Register represents.
+                                           It also sets the power LSB (25 * Current_LSB). It scales the register value and does not
+                                           set the measurement resolution, which the 2.5 µV shunt voltage LSB limits to 2.5 µV / Rshunt.
+                                           Together with shunt_resistor_uOhm it must give a CAL value of 1 .. 32767
+                                           (see INA226_Calibrate()). */
 } ina226_handle_t;
 
 /* ========================================================================= */
@@ -281,18 +287,26 @@ INA226_Status_t INA226_Set_Averaging_Mode(const ina226_handle_t *sensor, INA226_
  * 
  * @details Calculates the 16-bit calibration register value using Equation 1 from the datasheet:
  *          CAL = 0.00512 / (Current_LSB [A] * Rshunt [Ω])
- *              = 5.12e9 / (current_resolution_uA * shunt_resistor_uOhm)
+ *              = 5.12e9 / (current_lsb_uA * shunt_resistor_uOhm)
  *          with round-to-nearest integer arithmetic.
  * 
- * @note The physical calibration register is an integer. Setting it introduces a minor quantization
- *       (rounding) error. Thus, the hardware's actual Current LSB might slightly differ
- *       (sub-microampere) from the requested current_resolution_uA.
+ * @note The Calibration Register holds an integer, so CAL is rounded. The device then uses
+ *       Current_LSB = 0.00512 / (CAL * Rshunt) (SBOS547A Sec. 7.5, Equation 1), which can differ
+ *       from the requested current_lsb_uA:
+ *          actual LSB     = current_lsb_uA * CAL_exact / CAL
+ *          relative error = (CAL_exact - CAL) / CAL, at most 0.5 / CAL
+ *       where CAL_exact is the unrounded result. The driver converts readings with current_lsb_uA,
+ *       so current and power readings carry this error. It is small for large CAL values and
+ *       reaches percent level for small ones: CAL >= 50 keeps it within 1 %, CAL >= 500 within 0.1 %.
+ *       CAL gets small when the current LSB or the shunt resistance is large.
+ *       Example: Rshunt = 0.1 Ω and current_lsb_uA = 1000 give CAL_exact = 51.2 and CAL = 51.
+ *       The actual LSB is 1003.92 µA, so readings are 0.39 % low.
  * 
- * @param sensor Destination INA226 device handle containing valid shunt resistance and current resolution.
+ * @param sensor Destination INA226 device handle containing valid shunt resistance and current LSB.
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success.
  *         - 1 : INA226_ERR_I2C; I2C communication error while writing the calibration register.
- *         - 2 : INA226_ERR_INVALID_PARAM; sensor is NULL, shunt/resolution is 0, or calculated CAL is out of range (1..32767).
+ *         - 2 : INA226_ERR_INVALID_PARAM; sensor is NULL, shunt/LSB is 0, or calculated CAL is out of range (1..32767).
  */
 INA226_Status_t INA226_Calibrate(const ina226_handle_t *sensor);
 
@@ -329,12 +343,12 @@ INA226_Status_t INA226_Get_Alert_Pin_Function(const ina226_handle_t *sensor, INA
  *       - Power Over Limit               : limit_value in microwatts  [µW]
  * 
  * @param sensor      Destination INA226 device handle.
- * @param limit_value Alert limit value in physical micro units (µV or µW, see @note).
+ * @param limit_value Alert limit value in µV for shunt and bus voltage alerts, or in µW for power alerts.
  * @return INA226_Status_t
  *         - 0 : INA226_OK; Success.
  *         - 1 : INA226_ERR_I2C; I2C communication error while reading/writing alert registers.
  *         - 2 : INA226_ERR_INVALID_PARAM; sensor is NULL, limit_value is negative for a bus voltage or power alert,
- *               or current_resolution_uA is 0 for a power alert.
+ *               or current_lsb_uA is 0 for a power alert.
  *         - 3 : INA226_ERR_MATH_OVERFLOW; Converted register value exceeds representable range.
  *         - 4 : INA226_ERR_INVALID_STATE; No limit-based alert function is configured (e.g. Conversion Ready).
  */
