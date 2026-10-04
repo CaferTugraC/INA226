@@ -302,11 +302,11 @@ INA226_Status_t INA226_Set_Alert_Limit(const ina226_handle_t *sensor, int32_t li
         // Power alert: Convert limit from microwatts to register value.
         // Power LSB = 25 * Current_LSB (per datasheet). Register = limit_value_uW / power_lsb.
 
-        if (sensor->current_resolution_uA == 0) {
+        if (sensor->current_lsb_uA == 0) {
             return INA226_ERR_INVALID_PARAM;
         }
 
-        int64_t power_lsb = 25U * (int64_t)sensor->current_resolution_uA;
+        int64_t power_lsb = 25U * (int64_t)sensor->current_lsb_uA;
 
         // Integer round-to-nearest: (limit_value + half_lsb) / lsb.
         int64_t reg_val_64 = ((int64_t)limit_value + (power_lsb / 2LL)) / power_lsb;
@@ -391,14 +391,14 @@ INA226_Status_t INA226_Calibrate(const ina226_handle_t *sensor) {
         return INA226_ERR_INVALID_PARAM;
     }
 
-    if (sensor->shunt_resistor_uOhm == 0 || sensor->current_resolution_uA == 0) {
+    if (sensor->shunt_resistor_uOhm == 0 || sensor->current_lsb_uA == 0) {
         return INA226_ERR_INVALID_PARAM;
     }
 
     // CAL = 0.00512 / (Current_LSB[A] * Rshunt[Ohm])
-    // CAL = 5.12e9 / (current_resolution_uA * shunt_resistor_uOhm)
+    // CAL = 5.12e9 / (current_lsb_uA * shunt_resistor_uOhm)
     const uint64_t numerator = 5120000000ULL;
-    const uint64_t denominator = (uint64_t)sensor->current_resolution_uA * 
+    const uint64_t denominator = (uint64_t)sensor->current_lsb_uA * 
                                  (uint64_t)sensor->shunt_resistor_uOhm;
 
     // round-to-nearest
@@ -426,8 +426,8 @@ INA226_Status_t INA226_Read_Current(const ina226_handle_t *sensor, int32_t *curr
     }
 
     // current_reg * current_lsb = current;
-    int64_t resolution_uA = (int64_t)sensor->current_resolution_uA;
-    int64_t curr64_uA = (int64_t)((int16_t)current_reg) * resolution_uA;
+    int64_t current_lsb_uA = (int64_t)sensor->current_lsb_uA;
+    int64_t curr64_uA = (int64_t)((int16_t)current_reg) * current_lsb_uA;
     
     if (curr64_uA > (int64_t)INT32_MAX) {
         return INA226_ERR_MATH_OVERFLOW;
@@ -495,7 +495,7 @@ INA226_Status_t INA226_Read_Power(const ina226_handle_t *sensor, uint32_t *power
     }
 
 
-    int64_t power_lsb = 25U * (int64_t)sensor->current_resolution_uA;
+    int64_t power_lsb = 25U * (int64_t)sensor->current_lsb_uA;
 
     // Power [uW] = Power Register Value * Power LSB [uW]
     int64_t pwr64_uW = ((int64_t)power_reg * power_lsb);

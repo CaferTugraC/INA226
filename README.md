@@ -197,7 +197,7 @@ Each physical INA226 needs one `ina226_handle_t`. It is owned by your code, and 
 |---|---|---|---|
 | `ina226_i2c_addr` | — | `0x00` – `0xFF` (typically `0x40` – `0x4F`, 7-bit) | `0x40` |
 | `shunt_resistor_uOhm` | µΩ | `1` – `4 294 967 295` | `100000` (0.1 Ω, "R100") |
-| `current_resolution_uA` | µA | `1` – `65 536`, see [limits](#numeric-limits) | `100` |
+| `current_lsb_uA` | µA | `1` – `65 536`, see [limits](#numeric-limits) | `100` |
 
 > [!NOTE]
 > The driver passes `ina226_i2c_addr` directly to the platform I²C hooks without validation. This allows hardware configurations with I²C address translators (e.g., LTC4316) or platforms whose HAL expects pre-shifted addresses.
@@ -216,8 +216,8 @@ Native INA226 address set by the A1 and A0 pins:
 ### Choosing the current LSB
 
 ```
-current_resolution_uA  ≥  I_max[µA] / 32768        (round up to a convenient value)
-CAL                    =  5 120 000 000 / (current_resolution_uA × shunt_resistor_uOhm)
+current_lsb_uA  ≥  I_max[µA] / 32768        (round up to a convenient value)
+CAL             =  5 120 000 000 / (current_lsb_uA × shunt_resistor_uOhm)
 ```
 
 `INA226_Calibrate()` computes `CAL` with round-to-nearest and returns `INA226_ERR_INVALID_PARAM` if it does not fit in 1 … 32 767. The shunt input saturates at ±81.92 mV, so `I_max ≤ 81.92 mV / R_shunt`.
@@ -239,9 +239,9 @@ CAL                    =  5 120 000 000 / (current_resolution_uA × shunt_resist
 #include "ina226.h"
 
 static const ina226_handle_t ina = {
-    .ina226_i2c_addr       = 0x40,
-    .shunt_resistor_uOhm   = 100000,   /* 0.1 Ω shunt */
-    .current_resolution_uA = 100,      /* 100 µA per LSB */
+    .ina226_i2c_addr     = 0x40,
+    .shunt_resistor_uOhm = 100000,     /* 0.1 Ω shunt */
+    .current_lsb_uA      = 100,        /* 100 µA per LSB */
 };
 
 int sensor_init(void)
@@ -326,7 +326,7 @@ while (status != INA226_ALERT_STATUS_CONVERSION_READY && status != INA226_ALERT_
 |---|---|---|
 | Bus voltage | 1.25 mV | 0 – 40.96 V register range (device rated 0 – 36 V) |
 | Shunt voltage | 2.5 µV | ±81.92 mV |
-| Current | `current_resolution_uA` | `INA226_ERR_MATH_OVERFLOW` if the LSB is above 65 536 µA |
+| Current | `current_lsb_uA` | `INA226_ERR_MATH_OVERFLOW` if the LSB is above 65 536 µA |
 | Power | 25 × current LSB | `INA226_ERR_MATH_OVERFLOW` if the LSB is above 2621 µA |
 
 ---
