@@ -1,0 +1,21 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "cm3",
+    "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/cm3",
+      "toolchainFile": "${sourceDir}/cmake/arm-none-eabi-cm3.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "MinSizeRel",
+        "CMAKE_C_FLAGS_MINSIZEREL": "-Os -g"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "cm3",
+      "configurePreset": "cm3"
+    }
+  ]
+}
