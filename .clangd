@@ -1,0 +1,9 @@
+CompileFlags:
+# Directory containing compile_commands.json. Set this to the active target build folder (e.g., build/cm3).
+  CompilationDatabase: build/cm3 
+  Remove: [-specs=*]
+---
+If:
+  PathMatch: tests/.*
+CompileFlags:
+  CompilationDatabase: build/host
