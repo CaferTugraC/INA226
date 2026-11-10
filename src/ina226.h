@@ -173,6 +173,16 @@ typedef INA226_Config_Option_t INA226_Alert_Latch_t;
 #define INA226_ALERT_LATCH_TRANSPARENT              ((INA226_Alert_Latch_t)0U) /**< Transparent mode (alert clears when condition clears). */
 #define INA226_ALERT_LATCH_ENABLE                   ((INA226_Alert_Latch_t)1U) /**< Latch mode (alert latches until Mask/Enable is read). */
 
+
+typedef struct {
+    uint8_t i2c_addr;
+    uint32_t r_shunt_uOhm;     /* 1 µΩ .. 4294 Ω */
+    void *platform_i2c_handle; 
+    void (*i2c_read)(uint8_t dev_addr, uint8_t reg_addr, const uint8_t *data, uint16_t len);
+    void (*i2c_write)(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
+} ina226_config_t;
+
+
 /**
  * @brief INA226 sensor handle structure containing hardware details and calibration parameters.
  * 
@@ -185,14 +195,9 @@ typedef INA226_Config_Option_t INA226_Alert_Latch_t;
  * @see INA226_Calibrate
  */
 typedef struct {
-    uint8_t ina226_i2c_addr;          /**< I2C slave address (7-bit, e.g. 0x40). */
-    uint32_t shunt_resistor_uOhm;     /**< Shunt resistor resistance in micro-ohms. Together with current_lsb_uA it must give a CAL value
-                                           of 1 .. 32767 (see INA226_Calibrate()). */
-    uint32_t current_lsb_uA;          /**< Current_LSB in micro-amperes: the current that one count of the Current Register represents.
-                                           It also sets the power LSB (25 * Current_LSB). It scales the register value and does not
-                                           set the measurement resolution, which the 2.5 µV shunt voltage LSB limits to 2.5 µV / Rshunt.
-                                           Together with shunt_resistor_uOhm it must give a CAL value of 1 .. 32767
-                                           (see INA226_Calibrate()). */
+    const ina226_config_t *cfg;
+    uint32_t current_lsb_q16_16_uA;
+    uint32_t power_lsb;
 } ina226_handle_t;
 
 /* ========================================================================= */
