@@ -3,12 +3,22 @@
   "configurePresets": [
     {
       "name": "cm3",
-    "generator": "Ninja",
+      "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/cm3",
       "toolchainFile": "${sourceDir}/cmake/arm-none-eabi-cm3.cmake",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "MinSizeRel",
         "CMAKE_C_FLAGS_MINSIZEREL": "-Os -g"
+      }
+    },
+    {
+      "name": "host",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/host",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "INA226_BUILD_TESTS": "ON",
+        "INA226_ENABLE_SANITIZERS": "ON"
       }
     }
   ],
@@ -16,6 +26,19 @@
     {
       "name": "cm3",
       "configurePreset": "cm3"
+    },
+    {
+      "name": "host",
+      "configurePreset": "host"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "host",
+      "configurePreset": "host",
+      "output": {
+        "outputOnFailure": true
+      }
     }
   ]
 }
