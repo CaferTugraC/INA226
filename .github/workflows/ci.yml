@@ -31,8 +31,21 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Build and run tests with coverage
-        run: make -C tests/host coverage
+      - name: Install build tools
+        timeout-minutes: 5
+        run: |
+          if ! command -v ninja >/dev/null 2>&1; then
+            sudo apt-get $APT_OPTIONS update
+            sudo apt-get $APT_OPTIONS install -y --no-install-recommends ninja-build
+          fi
+
+      - name: Configure and build tests with coverage
+        run: |
+          cmake --preset host -DINA226_ENABLE_COVERAGE=ON
+          cmake --build --preset host
+
+      - name: Run unit tests
+        run: ctest --preset host -V
 
       - name: Report code coverage
         run: |
@@ -40,7 +53,7 @@ jobs:
             echo "### Code Coverage Report (ina226.c)"
             echo
             echo '```'
-            (cd tests/host && gcov -b -c -o build/test_ina226_runner-ina226 ../../src/ina226.c)
+            gcov -b -c -o build/host/CMakeFiles/ina226.dir/src/ina226.c.o src/ina226.c
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
