@@ -79,7 +79,7 @@ static ina226_handle_t Make_Mock_Handle(const ina226_config_t *cfg) {
     ina226_handle_t sensor = {
         .cfg = cfg,
         .current_lsb_q16_16_uA = 0U,
-        .power_lsb = 0U
+        .power_lsb_q16_16_uW = 0U
     };
     Mock_Set_Active_Config(cfg);
     return sensor;
@@ -145,7 +145,7 @@ void tearDown(void) {}
 void test_INA226_Read_Current_Should_Return_Error_On_Invalid_Params(void) {
     ina226_config_t cfg = Make_Mock_Config(0x40U, 100000U);
     ina226_handle_t sensor = Make_Mock_Handle(&cfg);
-    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = Q16_16_FROM_INT(100U), .power_lsb = 0U };
+    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = Q16_16_FROM_INT(100U), .power_lsb_q16_16_uW = 0U };
     int32_t current_val = 0;
 
     // Sensor pointer is NULL.
@@ -271,7 +271,7 @@ void test_INA226_Read_Current_Should_Apply_Fractional_Q16_16_LSB(void) {
 void test_INA226_Read_Power_Should_Return_Error_On_Invalid_Params(void) {
     ina226_config_t cfg = Make_Mock_Config(0x40U, 100000U);
     ina226_handle_t sensor = Make_Mock_Handle(&cfg);
-    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = Q16_16_FROM_INT(100U), .power_lsb = 25U * Q16_16_FROM_INT(100U) };
+    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = Q16_16_FROM_INT(100U), .power_lsb_q16_16_uW = 25U * Q16_16_FROM_INT(100U) };
     uint32_t power_val = 0U;
 
     TEST_ASSERT_EQUAL(INA226_OK, INA226_Calibrate(&sensor, 100U));
@@ -313,7 +313,7 @@ void test_INA226_Read_Power_Should_Handle_Large_Q16_16_Values_Without_Overflow(v
     // fits within uint32_t without overflowing (65535 * 65535 = 4,294,836,225 < UINT32_MAX).
     ina226_config_t cfg = Make_Mock_Config(0x40U, 1000U);
     ina226_handle_t sensor = Make_Mock_Handle(&cfg);
-    sensor.power_lsb = Q16_16_FROM_INT(65535U);
+    sensor.power_lsb_q16_16_uW = Q16_16_FROM_INT(65535U);
     uint32_t power_val = 0U;
 
     mock_ina226_registers[INA226_POWER_REG] = 0xFFFFU;
@@ -370,7 +370,7 @@ void test_INA226_Read_Power_Should_Apply_Fractional_Q16_16_LSB(void) {
 void test_INA226_Read_Shunt_Voltage_Should_Return_Error_On_Invalid_Params(void) {
     ina226_config_t cfg = Make_Mock_Config(0x40U, 100000U);
     ina226_handle_t sensor = Make_Mock_Handle(&cfg);
-    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = 0U, .power_lsb = 0U };
+    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = 0U, .power_lsb_q16_16_uW = 0U };
     int32_t sh_voltage = 0;
 
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Read_Shunt_Voltage(NULL, NULL));
@@ -418,7 +418,7 @@ void test_INA226_Read_Shunt_Voltage_Should_Calculate_Correct_Values(void) {
 void test_INA226_Read_Bus_Voltage_Should_Return_Error_On_Invalid_Params(void) {
     ina226_config_t cfg = Make_Mock_Config(0x40U, 100000U);
     ina226_handle_t sensor = Make_Mock_Handle(&cfg);
-    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = 0U, .power_lsb = 0U };
+    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = 0U, .power_lsb_q16_16_uW = 0U };
     uint32_t bus_voltage = 0U;
 
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Read_Bus_Voltage(NULL, NULL));
@@ -466,7 +466,7 @@ void test_INA226_Datasheet_Table1_Example_End_To_End(void) {
     TEST_ASSERT_EQUAL_HEX8(0x45U, mock_last_dev_addr);
     TEST_ASSERT_EQUAL_HEX16(0x0A00U, mock_ina226_registers[INA226_CALIBRATION_REG]);
     TEST_ASSERT_EQUAL_UINT32(Q16_16_FROM_INT(1000U), sensor.current_lsb_q16_16_uA);
-    TEST_ASSERT_EQUAL_UINT32(25U * Q16_16_FROM_INT(1000U), sensor.power_lsb);
+    TEST_ASSERT_EQUAL_UINT32(25U * Q16_16_FROM_INT(1000U), sensor.power_lsb_q16_16_uW);
 
     mock_ina226_registers[INA226_SH_VOLTAGE_REG] = 0x1F40U;  // 8000 -> 20 mV
     mock_ina226_registers[INA226_BUS_VOLTAGE_REG] = 0x2570U; // 9584 -> 11.98 V
@@ -498,7 +498,7 @@ void test_INA226_Datasheet_Table1_Example_End_To_End(void) {
 void test_INA226_Set_Alert_Pin_Function_Should_Return_Error_On_Invalid_Params(void) {
     ina226_config_t cfg = Make_Mock_Config(0x40U, 100000U);
     ina226_handle_t sensor = Make_Mock_Handle(&cfg);
-    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = 0U, .power_lsb = 0U };
+    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = 0U, .power_lsb_q16_16_uW = 0U };
     INA226_Alert_Func_t alert_func = INA226_ALERT_FUNC_CONVERSION_READY;
 
     // NULL Test
@@ -578,7 +578,7 @@ void test_INA226_Set_Alert_Pin_Function_Should_Do_Correct_Bitwise_Operation(void
 void test_INA226_Get_Alert_Pin_Function_Should_Return_Error_On_Invalid_Params(void) {
     ina226_config_t cfg = Make_Mock_Config(0x40U, 100000U);
     ina226_handle_t sensor = Make_Mock_Handle(&cfg);
-    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = 0U, .power_lsb = 0U };
+    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = 0U, .power_lsb_q16_16_uW = 0U };
     INA226_Alert_Func_t alert_func = 0U;
 
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Get_Alert_Pin_Function(NULL, NULL));
@@ -635,7 +635,7 @@ void test_INA226_Set_Alert_Limit_Should_Return_Error_On_Invalid_Params(void) {
     int32_t valid_limit_value = 100;
     ina226_config_t cfg = Make_Mock_Config(0x40U, 100000U);
     ina226_handle_t sensor = Make_Mock_Handle(&cfg);
-    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = Q16_16_FROM_INT(100U), .power_lsb = 25U * Q16_16_FROM_INT(100U) };
+    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = Q16_16_FROM_INT(100U), .power_lsb_q16_16_uW = 25U * Q16_16_FROM_INT(100U) };
 
     INA226_Status_t status = INA226_Set_Alert_Pin_Function(&sensor, INA226_ALERT_FUNC_POWER_OVER_LIMIT);
     TEST_ASSERT_EQUAL_MESSAGE(INA226_OK, status, "INA226_Set_Alert_Pin_Function not return INA226_OK.");
@@ -1056,7 +1056,7 @@ void test_INA226_Set_Alert_Limit_Should_Write_Correct_Limit_Value_To_Register_Fo
 void test_INA226_Get_Alert_Status_Should_Return_Error_On_Invalid_Params(void) {
     ina226_config_t cfg = Make_Mock_Config(0x40U, 100000U);
     ina226_handle_t sensor = Make_Mock_Handle(&cfg);
-    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = 0U, .power_lsb = 0U };
+    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = 0U, .power_lsb_q16_16_uW = 0U };
     INA226_Alert_Status_t alert_status = INA226_ALERT_STATUS_NONE;
 
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Get_Alert_Status(NULL, NULL));
@@ -1108,7 +1108,7 @@ void test_INA226_Get_Alert_Status_Should_Read_Correct_Alert_Status(void) {
 // =========================================================================
 
 void test_INA226_Calibrate_Should_Return_Invalid_Param_Error_On_Null_Pointer(void) {
-    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = 0U, .power_lsb = 0U };
+    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = 0U, .power_lsb_q16_16_uW = 0U };
 
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Calibrate(NULL, 100U));
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Calibrate(&sensor_null_cfg, 100U));
@@ -1119,13 +1119,13 @@ void test_INA226_Calibrate_Should_Return_Invalid_Param_Error_On_Zero_Values(void
     ina226_handle_t sensor1 = Make_Mock_Handle(&cfg1);
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Calibrate(&sensor1, 100U));
     TEST_ASSERT_EQUAL_UINT32(0U, sensor1.current_lsb_q16_16_uA);
-    TEST_ASSERT_EQUAL_UINT32(0U, sensor1.power_lsb);
+    TEST_ASSERT_EQUAL_UINT32(0U, sensor1.power_lsb_q16_16_uW);
 
     ina226_config_t cfg2 = Make_Mock_Config(0x40U, 100000U);
     ina226_handle_t sensor2 = Make_Mock_Handle(&cfg2);
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Calibrate(&sensor2, 0U));
     TEST_ASSERT_EQUAL_UINT32(0U, sensor2.current_lsb_q16_16_uA);
-    TEST_ASSERT_EQUAL_UINT32(0U, sensor2.power_lsb);
+    TEST_ASSERT_EQUAL_UINT32(0U, sensor2.power_lsb_q16_16_uW);
 }
 
 void test_INA226_Calibrate_Should_Calculate_Correct_Values(void) {
@@ -1139,7 +1139,7 @@ void test_INA226_Calibrate_Should_Calculate_Correct_Values(void) {
     );
     TEST_ASSERT_EQUAL_HEX16(512U, mock_ina226_registers[INA226_CALIBRATION_REG]);
     TEST_ASSERT_EQUAL_UINT32(Q16_16_FROM_INT(100U), sensor1.current_lsb_q16_16_uA);
-    TEST_ASSERT_EQUAL_UINT32(25U * Q16_16_FROM_INT(100U), sensor1.power_lsb);
+    TEST_ASSERT_EQUAL_UINT32(25U * Q16_16_FROM_INT(100U), sensor1.power_lsb_q16_16_uW);
 
     // Case 2: 1000 uA LSB, 2,000 uOhm (2 mOhm) -> CAL = 2560 (exact, Datasheet Table 1)
     ina226_config_t cfg2 = Make_Mock_Config(0x40U, 2000U);
@@ -1151,7 +1151,7 @@ void test_INA226_Calibrate_Should_Calculate_Correct_Values(void) {
     );
     TEST_ASSERT_EQUAL_HEX16(2560U, mock_ina226_registers[INA226_CALIBRATION_REG]);
     TEST_ASSERT_EQUAL_UINT32(Q16_16_FROM_INT(1000U), sensor2.current_lsb_q16_16_uA);
-    TEST_ASSERT_EQUAL_UINT32(25U * Q16_16_FROM_INT(1000U), sensor2.power_lsb);
+    TEST_ASSERT_EQUAL_UINT32(25U * Q16_16_FROM_INT(1000U), sensor2.power_lsb_q16_16_uW);
 
     // Case 3: Boundary case - maximum valid CAL = 32767 (0x7FFF, bit 15 is 0)
     // 1 uA LSB, 156,255 uOhm -> 5.12e9 / 156255 = 32766.95 -> rounds to 32767
@@ -1165,7 +1165,7 @@ void test_INA226_Calibrate_Should_Calculate_Correct_Values(void) {
     );
     TEST_ASSERT_EQUAL_HEX16(32767U, mock_ina226_registers[INA226_CALIBRATION_REG]);
     TEST_ASSERT_UINT32_WITHIN(1U, 65536U, sensor3.current_lsb_q16_16_uA);
-    TEST_ASSERT_UINT32_WITHIN(25U, 25U * 65536U, sensor3.power_lsb);
+    TEST_ASSERT_UINT32_WITHIN(25U, 25U * 65536U, sensor3.power_lsb_q16_16_uW);
 }
 
 void test_INA226_Calibrate_Should_BackCalculate_Actual_Q16_16_LSB_From_Rounded_Cal(void) {
@@ -1179,7 +1179,7 @@ void test_INA226_Calibrate_Should_BackCalculate_Actual_Q16_16_LSB_From_Rounded_C
     TEST_ASSERT_EQUAL(INA226_OK, INA226_Calibrate(&sensor, 1000U));
     TEST_ASSERT_EQUAL_HEX16(51U, mock_ina226_registers[INA226_CALIBRATION_REG]);
     TEST_ASSERT_UINT32_WITHIN(1U, 65793004U, sensor.current_lsb_q16_16_uA);
-    TEST_ASSERT_UINT32_WITHIN(25U, 1644825098U, sensor.power_lsb);
+    TEST_ASSERT_UINT32_WITHIN(25U, 1644825098U, sensor.power_lsb_q16_16_uW);
 }
 
 void test_INA226_Calibrate_Should_Calculate_Correct_Values_For_All_Valid_Cal_Range(void) {
@@ -1200,7 +1200,7 @@ void test_INA226_Calibrate_Should_Calculate_Correct_Values_For_All_Valid_Cal_Ran
         );
         TEST_ASSERT_EQUAL_HEX16((uint16_t)expected_cal, mock_ina226_registers[INA226_CALIBRATION_REG]);
         TEST_ASSERT_GREATER_THAN_UINT32(0U, sensor.current_lsb_q16_16_uA);
-        TEST_ASSERT_GREATER_THAN_UINT32(0U, sensor.power_lsb);
+        TEST_ASSERT_GREATER_THAN_UINT32(0U, sensor.power_lsb_q16_16_uW);
     }
 }
 
@@ -1217,7 +1217,7 @@ void test_INA226_Calibrate_Should_Round_To_Nearest(void) {
     );
     TEST_ASSERT_EQUAL_HEX16(1707U, mock_ina226_registers[INA226_CALIBRATION_REG]);
     TEST_ASSERT_UINT32_WITHIN(1U, 65523202U, sensor.current_lsb_q16_16_uA);
-    TEST_ASSERT_UINT32_WITHIN(25U, 1638080062U, sensor.power_lsb);
+    TEST_ASSERT_UINT32_WITHIN(25U, 1638080062U, sensor.power_lsb_q16_16_uW);
 }
 
 void test_INA226_Calibrate_Should_Return_Invalid_Param_Error_On_Out_Of_Range_Cal(void) {
@@ -1267,7 +1267,7 @@ void test_INA226_Calibrate_Should_Return_I2C_Error_On_Write_Fail(void) {
 
     // Handle calibration fields must not be modified on I2C failure.
     TEST_ASSERT_EQUAL_UINT32(0U, sensor.current_lsb_q16_16_uA);
-    TEST_ASSERT_EQUAL_UINT32(0U, sensor.power_lsb);
+    TEST_ASSERT_EQUAL_UINT32(0U, sensor.power_lsb_q16_16_uW);
 }
 
 // =========================================================================
@@ -1275,7 +1275,7 @@ void test_INA226_Calibrate_Should_Return_I2C_Error_On_Write_Fail(void) {
 // =========================================================================
 
 void test_INA226_Set_Averaging_Mode_Should_Return_Invalid_Param_Error_On_Null_Pointer(void) {
-    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = 0U, .power_lsb = 0U };
+    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = 0U, .power_lsb_q16_16_uW = 0U };
 
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Set_Averaging_Mode(NULL, INA226_AVG_1));
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Set_Averaging_Mode(&sensor_null_cfg, INA226_AVG_1));
@@ -1346,7 +1346,7 @@ void test_INA226_Set_Averaging_Mode_Should_Write_Correct_Avg_Time_Option_To_Regi
 // =========================================================================
 
 void test_INA226_Set_Operating_Mode_Should_Return_Invalid_Param_Error_On_Null_Pointer(void) {
-    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = 0U, .power_lsb = 0U };
+    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = 0U, .power_lsb_q16_16_uW = 0U };
 
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Set_Operating_Mode(NULL, INA226_CONTINUOUS_BUS_AND_SHUNT_VOLTAGE));
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Set_Operating_Mode(&sensor_null_cfg, INA226_CONTINUOUS_BUS_AND_SHUNT_VOLTAGE));
@@ -1417,7 +1417,7 @@ void test_INA226_Set_Operating_Mode_Should_Write_Correct_Mode_Option_To_Register
 // =========================================================================
 
 void test_INA226_Set_Bus_Voltage_Conversion_Time_Should_Return_Invalid_Param_Error_On_Null_Pointer(void) {
-    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = 0U, .power_lsb = 0U };
+    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = 0U, .power_lsb_q16_16_uW = 0U };
 
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Set_Bus_Voltage_Conversion_Time(NULL, INA226_CT_140_US));
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Set_Bus_Voltage_Conversion_Time(&sensor_null_cfg, INA226_CT_140_US));
@@ -1488,7 +1488,7 @@ void test_INA226_Set_Bus_Voltage_Conversion_Time_Should_Write_Correct_Conv_Time_
 // =========================================================================
 
 void test_INA226_Set_Shunt_Voltage_Conversion_Time_Should_Return_Invalid_Param_Error_On_Null_Pointer(void) {
-    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = 0U, .power_lsb = 0U };
+    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = 0U, .power_lsb_q16_16_uW = 0U };
 
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Set_Shunt_Voltage_Conversion_Time(NULL, INA226_CT_140_US));
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Set_Shunt_Voltage_Conversion_Time(&sensor_null_cfg, INA226_CT_140_US));
@@ -1559,7 +1559,7 @@ void test_INA226_Set_Shunt_Voltage_Conversion_Time_Should_Write_Correct_Conv_Tim
 // =========================================================================
 
 void test_INA226_Reset_Should_Return_Invalid_Param_Error_On_Null_Pointer(void) {
-    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = Q16_16_FROM_INT(100U), .power_lsb = 25U * Q16_16_FROM_INT(100U) };
+    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = Q16_16_FROM_INT(100U), .power_lsb_q16_16_uW = 25U * Q16_16_FROM_INT(100U) };
 
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Reset(NULL));
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Reset(&sensor_null_cfg));
@@ -1572,7 +1572,7 @@ void test_INA226_Reset_Should_Write_Reset_Command_And_Clear_Handle_Calibration(v
     // Calibrate first so handle holds non-zero LSBs.
     TEST_ASSERT_EQUAL(INA226_OK, INA226_Calibrate(&sensor, 100U));
     TEST_ASSERT_NOT_EQUAL_UINT32(0U, sensor.current_lsb_q16_16_uA);
-    TEST_ASSERT_NOT_EQUAL_UINT32(0U, sensor.power_lsb);
+    TEST_ASSERT_NOT_EQUAL_UINT32(0U, sensor.power_lsb_q16_16_uW);
 
     TEST_ASSERT_EQUAL_MESSAGE(
         INA226_OK,
@@ -1585,7 +1585,7 @@ void test_INA226_Reset_Should_Write_Reset_Command_And_Clear_Handle_Calibration(v
     // Reset must zero calibration fields while preserving cfg pointer.
     TEST_ASSERT_EQUAL_PTR(&cfg, sensor.cfg);
     TEST_ASSERT_EQUAL_UINT32(0U, sensor.current_lsb_q16_16_uA);
-    TEST_ASSERT_EQUAL_UINT32(0U, sensor.power_lsb);
+    TEST_ASSERT_EQUAL_UINT32(0U, sensor.power_lsb_q16_16_uW);
 }
 
 void test_INA226_Reset_Should_Preserve_Handle_State_On_I2C_Fail(void) {
@@ -1594,7 +1594,7 @@ void test_INA226_Reset_Should_Preserve_Handle_State_On_I2C_Fail(void) {
 
     TEST_ASSERT_EQUAL(INA226_OK, INA226_Calibrate(&sensor, 100U));
     uint32_t expected_current_lsb = sensor.current_lsb_q16_16_uA;
-    uint32_t expected_power_lsb = sensor.power_lsb;
+    uint32_t expected_power_lsb = sensor.power_lsb_q16_16_uW;
 
     mock_i2c_write_fail = true;
     TEST_ASSERT_EQUAL(INA226_ERR_I2C, INA226_Reset(&sensor));
@@ -1602,7 +1602,7 @@ void test_INA226_Reset_Should_Preserve_Handle_State_On_I2C_Fail(void) {
 
     TEST_ASSERT_EQUAL_PTR(&cfg, sensor.cfg);
     TEST_ASSERT_EQUAL_UINT32(expected_current_lsb, sensor.current_lsb_q16_16_uA);
-    TEST_ASSERT_EQUAL_UINT32(expected_power_lsb, sensor.power_lsb);
+    TEST_ASSERT_EQUAL_UINT32(expected_power_lsb, sensor.power_lsb_q16_16_uW);
 }
 
 // =========================================================================
@@ -1610,7 +1610,7 @@ void test_INA226_Reset_Should_Preserve_Handle_State_On_I2C_Fail(void) {
 // =========================================================================
 
 void test_INA226_Set_Alert_Latch_Should_Return_Invalid_Param_Error_On_Null_Pointer(void) {
-    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = 0U, .power_lsb = 0U };
+    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = 0U, .power_lsb_q16_16_uW = 0U };
 
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Set_Alert_Latch(NULL, INA226_ALERT_LATCH_ENABLE));
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Set_Alert_Latch(&sensor_null_cfg, INA226_ALERT_LATCH_ENABLE));
@@ -1652,7 +1652,7 @@ void test_INA226_Set_Alert_Latch_Should_Write_Correct_Bit_To_Register(void) {
 void test_INA226_Read_Manufacturer_ID_Should_Return_Invalid_Param_On_Null_Pointer(void) {
     ina226_config_t cfg = Make_Mock_Config(0x40U, 100000U);
     ina226_handle_t sensor = Make_Mock_Handle(&cfg);
-    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = 0U, .power_lsb = 0U };
+    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = 0U, .power_lsb_q16_16_uW = 0U };
     uint16_t manufacturer_id = 0U;
 
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Read_Manufacturer_ID(NULL, NULL));
@@ -1683,7 +1683,7 @@ void test_INA226_Read_Manufacturer_ID_Should_Return_Correct_Reg_Val(void) {
 void test_INA226_Read_Die_ID_Should_Return_Invalid_Param_On_Null_Pointer(void) {
     ina226_config_t cfg = Make_Mock_Config(0x40U, 100000U);
     ina226_handle_t sensor = Make_Mock_Handle(&cfg);
-    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = 0U, .power_lsb = 0U };
+    ina226_handle_t sensor_null_cfg = { .cfg = NULL, .current_lsb_q16_16_uA = 0U, .power_lsb_q16_16_uW = 0U };
     uint16_t die_id = 0U;
 
     TEST_ASSERT_EQUAL(INA226_ERR_INVALID_PARAM, INA226_Read_Die_ID(NULL, NULL));
