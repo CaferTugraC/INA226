@@ -462,8 +462,15 @@ INA226_Status_t INA226_Calibrate(ina226_handle_t *sensor, uint32_t current_lsb) 
     // Store the actual Current_LSB (Q16.16 uA) and derive power_lsb_q16_16_uW = 25 * Current_LSB
     // per the INA226 datasheet, rounded from Q16.16 to the nearest integer [uW/LSB].
     sensor->current_lsb_q16_16_uA = actual_curr_lsb_q16_16_uA;
-    sensor->power_lsb_q16_16_uW = (uint32_t)(((25ULL * (uint64_t)actual_curr_lsb_q16_16_uA) + 32768ULL) >> 16U);
 
+    if ((25ULL * (uint64_t)actual_curr_lsb_q16_16_uA) > UINT32_MAX) {
+        sensor->power_lsb_q16_16_uW = 0U;
+        return INA226_ERR_MATH_OVERFLOW;
+    }
+    else {
+        sensor->power_lsb_q16_16_uW = (uint32_t)(25ULL * (uint64_t)actual_curr_lsb_q16_16_uA);
+    }
+    
     return INA226_OK;
 }
 
@@ -480,7 +487,7 @@ INA226_Status_t INA226_Read_Current(const ina226_handle_t *sensor, int32_t *curr
     }
 
     // current_reg * current_lsb_q16_16_uA is in Q48.16 [uA * 2^16]; round-to-nearest to [uA].
-    int64_t curr_q16_16 = (int64_t)current_reg * (int64_t)sensor->current_lsb_q16_16_uA;
+    int64_t curr_q16_16 = (int64_t)(int16_t)current_reg * (int64_t)sensor->current_lsb_q16_16_uA;
     int64_t curr64_uA = (curr_q16_16 + (curr_q16_16 >= 0 ? 32768LL : -32768LL)) / 65536LL;
 
     
@@ -550,7 +557,8 @@ INA226_Status_t INA226_Read_Power(const ina226_handle_t *sensor, uint32_t *power
     }
 
     // Power [uW] = Power Register Value * Power LSB [uW]
-    uint64_t pwr64_uW = (uint64_t)power_reg * (uint64_t)sensor->power_lsb_q16_16_uW;
+    uint64_t pwr64_q16_16_uW = (uint64_t)power_reg * (uint64_t)sensor->power_lsb_q16_16_uW;
+    uint64_t pwr64_uW =  (pwr64_q16_16_uW + 32768ULL) / 65536ULL;
 
     if (pwr64_uW > (uint64_t)UINT32_MAX) {
         return INA226_ERR_MATH_OVERFLOW;
