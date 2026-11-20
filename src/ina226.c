@@ -19,6 +19,7 @@
 #include "ina226.h"
 #include "ina226_regs.h"
 #include <stddef.h>
+#include <stdint.h>
 
 /* ========================================================================= */
 /*                              PRIVATE FUNCTIONS                            */
@@ -125,18 +126,27 @@ static INA226_Status_t set_config_option(uint8_t addr, INA226_Config_Option_t op
 /*                              PUBLIC FUNCTIONS                             */
 /* ========================================================================= */
 
-INA226_Status_t INA226_Reset(const ina226_handle_t *sensor) {
-    if (sensor == NULL) return INA226_ERR_INVALID_PARAM;
+INA226_Status_t INA226_Reset(ina226_handle_t *sensor) {
+    if (sensor == NULL || sensor->cfg == NULL) return INA226_ERR_INVALID_PARAM;
    
     uint16_t config_reg_val = INA226_CONFIG_RESET_MASK;
     
     // Setting the reset bit (15) is resets all register to default values. And this bit its self-clears.
     // There is no need to read current value of register, write reset mask directly to register. 
-    return INA226_Write_Reg(sensor->ina226_i2c_addr, INA226_CONFIG_REG, config_reg_val);
+    INA226_Status_t op_status;
+    op_status = INA226_Write_Reg(sensor->cfg->i2c_addr, INA226_CONFIG_REG, config_reg_val);
+    if (op_status != INA226_OK) {
+        return op_status;
+    }
+
+    sensor->current_lsb_q16_16_uA = 0;
+    sensor->power_lsb_q16_16_uW = 0;
+
+    return INA226_OK; 
 }
 
 INA226_Status_t INA226_Set_Shunt_Voltage_Conversion_Time(const ina226_handle_t *sensor, INA226_Conv_Time_t conv_time) {
-    if (sensor == NULL) return INA226_ERR_INVALID_PARAM;
+    if (sensor == NULL || sensor->cfg == NULL) return INA226_ERR_INVALID_PARAM;
 
     // Validate the conv_time parameter
     if (conv_time > INA226_CT_8244_US) {
@@ -144,11 +154,11 @@ INA226_Status_t INA226_Set_Shunt_Voltage_Conversion_Time(const ina226_handle_t *
     }
 
     // Set with Read Modify Write.
-    return set_config_option(sensor->ina226_i2c_addr, conv_time, INA226_CONFIG_SHUNT_CT_MASK, INA226_CONFIG_SHUNT_CT_POS);
+    return set_config_option(sensor->cfg->i2c_addr, conv_time, INA226_CONFIG_SHUNT_CT_MASK, INA226_CONFIG_SHUNT_CT_POS);
 }
 
 INA226_Status_t INA226_Set_Bus_Voltage_Conversion_Time(const ina226_handle_t *sensor, INA226_Conv_Time_t conv_time) {
-    if (sensor == NULL) return INA226_ERR_INVALID_PARAM;
+    if (sensor == NULL || sensor->cfg == NULL) return INA226_ERR_INVALID_PARAM;
 
     // Validate the conv_time parameter
     if (conv_time > INA226_CT_8244_US) {
@@ -156,11 +166,11 @@ INA226_Status_t INA226_Set_Bus_Voltage_Conversion_Time(const ina226_handle_t *se
     }
 
     // Set with Read Modify Write.
-    return set_config_option(sensor->ina226_i2c_addr, conv_time, INA226_CONFIG_BUS_CT_MASK, INA226_CONFIG_BUS_CT_POS);
+    return set_config_option(sensor->cfg->i2c_addr, conv_time, INA226_CONFIG_BUS_CT_MASK, INA226_CONFIG_BUS_CT_POS);
 }
 
 INA226_Status_t INA226_Set_Operating_Mode(const ina226_handle_t *sensor, INA226_Mode_t mode) {
-    if (sensor == NULL) return INA226_ERR_INVALID_PARAM;
+    if (sensor == NULL || sensor->cfg == NULL) return INA226_ERR_INVALID_PARAM;
     
     // Validate the mode parameter.
     if (mode > INA226_CONTINUOUS_BUS_AND_SHUNT_VOLTAGE) { // Continuous bus and shunt voltage is highest value mode can be.
@@ -168,11 +178,11 @@ INA226_Status_t INA226_Set_Operating_Mode(const ina226_handle_t *sensor, INA226_
     }
 
     // Set with Read Modify Write.
-    return set_config_option(sensor->ina226_i2c_addr, mode, INA226_CONFIG_MODE_MASK, INA226_CONFIG_MODE_POS);
+    return set_config_option(sensor->cfg->i2c_addr, mode, INA226_CONFIG_MODE_MASK, INA226_CONFIG_MODE_POS);
 }
 
 INA226_Status_t INA226_Set_Averaging_Mode(const ina226_handle_t *sensor, INA226_Avg_Time_t avg_time) {
-    if (sensor == NULL) return INA226_ERR_INVALID_PARAM;
+    if (sensor == NULL || sensor->cfg == NULL) return INA226_ERR_INVALID_PARAM;
 
     // Validate the avg_time parameter.
     if (avg_time > INA226_AVG_1024) {
@@ -180,12 +190,12 @@ INA226_Status_t INA226_Set_Averaging_Mode(const ina226_handle_t *sensor, INA226_
     }
     
     // Set with Read Modify Write.
-    return set_config_option(sensor->ina226_i2c_addr, avg_time, INA226_CONFIG_AVG_MASK, INA226_CONFIG_AVG_POS);
+    return set_config_option(sensor->cfg->i2c_addr, avg_time, INA226_CONFIG_AVG_MASK, INA226_CONFIG_AVG_POS);
 }
 
 INA226_Status_t INA226_Set_Alert_Pin_Function(const ina226_handle_t *sensor, INA226_Alert_Func_t alert_func) {
     
-    if (sensor == NULL) return INA226_ERR_INVALID_PARAM;
+    if (sensor == NULL || sensor->cfg == NULL) return INA226_ERR_INVALID_PARAM;
 
     // Validate the alert_func parameter using the bit-field structure of the alert function.
     // Extract the main alert source bits (bits [5:1]), excluding the Conversion Ready bit (bit 0).
@@ -213,7 +223,7 @@ INA226_Status_t INA226_Set_Alert_Pin_Function(const ina226_handle_t *sensor, INA
 
     uint16_t mask_en_reg = 0;
 
-    INA226_Status_t op_status = INA226_Read_Reg(sensor->ina226_i2c_addr, INA226_MASK_EN_REG, &mask_en_reg);
+    INA226_Status_t op_status = INA226_Read_Reg(sensor->cfg->i2c_addr, INA226_MASK_EN_REG, &mask_en_reg);
 
     if (op_status != INA226_OK) {
         return op_status;
@@ -222,15 +232,15 @@ INA226_Status_t INA226_Set_Alert_Pin_Function(const ina226_handle_t *sensor, INA
     mask_en_reg &= (uint16_t)(~INA226_MASK_ENABLE_ALERT_FUNC_MASK);
     mask_en_reg |= (uint16_t)((uint16_t)alert_func << (uint16_t)INA226_MASK_ENABLE_ALERT_FUNC_POS);
 
-    return INA226_Write_Reg(sensor->ina226_i2c_addr, INA226_MASK_EN_REG, mask_en_reg);
+    return INA226_Write_Reg(sensor->cfg->i2c_addr, INA226_MASK_EN_REG, mask_en_reg);
 }
 
 INA226_Status_t INA226_Get_Alert_Pin_Function(const ina226_handle_t *sensor, INA226_Alert_Func_t *alert_func) {
 
-    if (sensor == NULL || alert_func == NULL) return INA226_ERR_INVALID_PARAM;
+    if (sensor == NULL || sensor->cfg == NULL || alert_func == NULL) return INA226_ERR_INVALID_PARAM;
 
     uint16_t mask_en_reg = 0;
-    INA226_Status_t op_status = INA226_Read_Reg(sensor->ina226_i2c_addr, INA226_MASK_EN_REG, &mask_en_reg);
+    INA226_Status_t op_status = INA226_Read_Reg(sensor->cfg->i2c_addr, INA226_MASK_EN_REG, &mask_en_reg);
 
     if (op_status != INA226_OK) {
         return op_status;
@@ -243,7 +253,7 @@ INA226_Status_t INA226_Get_Alert_Pin_Function(const ina226_handle_t *sensor, INA
 
 INA226_Status_t INA226_Set_Alert_Limit(const ina226_handle_t *sensor, int32_t limit_value) {
 
-    if (sensor == NULL) return INA226_ERR_INVALID_PARAM;
+    if (sensor == NULL || sensor->cfg == NULL) return INA226_ERR_INVALID_PARAM;
 
     uint16_t alert_limit_reg_val = 0;
     INA226_Alert_Func_t alert_func;
@@ -300,16 +310,15 @@ INA226_Status_t INA226_Set_Alert_Limit(const ina226_handle_t *sensor, int32_t li
         }
 
         // Power alert: Convert limit from microwatts to register value.
-        // Power LSB = 25 * Current_LSB (per datasheet). Register = limit_value_uW / power_lsb.
-
-        if (sensor->current_lsb_uA == 0) {
+        // Power LSB = 25 * Current_LSB (per datasheet). Register = limit_value_uW / power_lsb_q16_16_uW.
+        if (sensor->power_lsb_q16_16_uW == 0U) {
             return INA226_ERR_INVALID_PARAM;
         }
 
-        int64_t power_lsb = 25U * (int64_t)sensor->current_lsb_uA;
+        int64_t power_lsb_q16_16_uW = (int64_t)sensor->power_lsb_q16_16_uW;
 
         // Integer round-to-nearest: (limit_value + half_lsb) / lsb.
-        int64_t reg_val_64 = ((int64_t)limit_value + (power_lsb / 2LL)) / power_lsb;
+        int64_t reg_val_64 = ((int64_t)limit_value + (power_lsb_q16_16_uW / 2LL)) / power_lsb_q16_16_uW;
 
         if (reg_val_64 > (int64_t)UINT16_MAX) {
             return INA226_ERR_MATH_OVERFLOW;
@@ -329,16 +338,16 @@ INA226_Status_t INA226_Set_Alert_Limit(const ina226_handle_t *sensor, int32_t li
 
     }
 
-    return INA226_Write_Reg(sensor->ina226_i2c_addr, INA226_ALERT_LIM_REG, alert_limit_reg_val);
+    return INA226_Write_Reg(sensor->cfg->i2c_addr, INA226_ALERT_LIM_REG, alert_limit_reg_val);
 }
 
 INA226_Status_t INA226_Get_Alert_Status(const ina226_handle_t *sensor, INA226_Alert_Status_t *alert_status) {
 
-    if (sensor == NULL || alert_status == NULL) return INA226_ERR_INVALID_PARAM;
+    if (sensor == NULL || sensor->cfg == NULL || alert_status == NULL) return INA226_ERR_INVALID_PARAM;
 
     uint16_t mask_en_reg = 0;
 
-    INA226_Status_t op_status = INA226_Read_Reg(sensor->ina226_i2c_addr, INA226_MASK_EN_REG, &mask_en_reg);
+    INA226_Status_t op_status = INA226_Read_Reg(sensor->cfg->i2c_addr, INA226_MASK_EN_REG, &mask_en_reg);
 
     if (op_status != INA226_OK) {
         return op_status;
@@ -366,11 +375,11 @@ INA226_Status_t INA226_Get_Alert_Status(const ina226_handle_t *sensor, INA226_Al
 }
 
 INA226_Status_t INA226_Set_Alert_Latch(const ina226_handle_t *sensor, INA226_Alert_Latch_t latch) {
-    if (sensor == NULL) return INA226_ERR_INVALID_PARAM;
+    if (sensor == NULL || sensor->cfg == NULL) return INA226_ERR_INVALID_PARAM;
     if (latch > INA226_ALERT_LATCH_ENABLE) return INA226_ERR_INVALID_PARAM;
 
     uint16_t mask_en_reg = 0;
-    INA226_Status_t op_status = INA226_Read_Reg(sensor->ina226_i2c_addr, INA226_MASK_EN_REG, &mask_en_reg);
+    INA226_Status_t op_status = INA226_Read_Reg(sensor->cfg->i2c_addr, INA226_MASK_EN_REG, &mask_en_reg);
 
     if (op_status != INA226_OK) {
         return op_status;
@@ -382,52 +391,98 @@ INA226_Status_t INA226_Set_Alert_Latch(const ina226_handle_t *sensor, INA226_Ale
         mask_en_reg &= (uint16_t)(~INA226_MASK_EN_LEN_BIT);
     }
 
-    return INA226_Write_Reg(sensor->ina226_i2c_addr, INA226_MASK_EN_REG, mask_en_reg);
+    return INA226_Write_Reg(sensor->cfg->i2c_addr, INA226_MASK_EN_REG, mask_en_reg);
 }
-
-INA226_Status_t INA226_Calibrate(const ina226_handle_t *sensor) {
-    
-    if (sensor == NULL) {
+    // TODO
+INA226_Status_t INA226_Calibrate(ina226_handle_t *sensor, uint32_t current_lsb) {
+   
+    if (sensor == NULL || sensor->cfg == NULL) {
         return INA226_ERR_INVALID_PARAM;
     }
 
-    if (sensor->shunt_resistor_uOhm == 0 || sensor->current_lsb_uA == 0) {
+    if (sensor->cfg->r_shunt_uOhm == 0U || current_lsb == 0U) {
         return INA226_ERR_INVALID_PARAM;
     }
 
     // CAL = 0.00512 / (Current_LSB[A] * Rshunt[Ohm])
-    // CAL = 5.12e9 / (current_lsb_uA * shunt_resistor_uOhm)
+    // CAL = 5.12e9 / (current_lsb_uA * r_shunt_uOhm)
     const uint64_t numerator = 5120000000ULL;
-    const uint64_t denominator = (uint64_t)sensor->current_lsb_uA * 
-                                 (uint64_t)sensor->shunt_resistor_uOhm;
+    const uint64_t denominator = (uint64_t)current_lsb * 
+                                 (uint64_t)sensor->cfg->r_shunt_uOhm;
 
-    // round-to-nearest
+    // calculate cal register value with round-to-nearest
     uint64_t cal = (numerator + (denominator / 2ULL)) / denominator;
 
     if (cal == 0ULL || cal > INA226_CALIBRATION_MAX_VAL) {
         return INA226_ERR_INVALID_PARAM;
     }
 
-    uint16_t calibration_reg_val = (uint16_t)cal;
-    
-    return INA226_Write_Reg(sensor->ina226_i2c_addr, INA226_CALIBRATION_REG, calibration_reg_val);
+    const uint16_t calibration_reg_val = (uint16_t)cal;
+
+    uint32_t actual_curr_lsb_q16_16_uA;
+
+    /*
+     * Recompute the actual Current_LSB in Q16.16 fixed-point [uA * 2^16] from the
+     * rounded 15-bit calibration register value so subsequent reads match the chip's
+     * true scaling without using floating-point arithmetic:
+     *   actual_curr_lsb_q16_16_uA = (5.12e9 * 2^16) / (calibration_reg_val * r_shunt)
+     *                             = (2560000000 * 2^17) / (r_shunt * calibration_reg_val)
+     */
+    const uint32_t r_shunt = sensor->cfg->r_shunt_uOhm;
+
+    // 1) Compute (2560000000 * 2^17) / r_shunt using 32-bit long division.
+    //    Because 2560000000 * 2^17 exceeds 32 bits, split the 17-bit shift into
+    //    three remainder-carrying stages (6 + 6 + 5 = 17 bits) yielding (rent_hi << 17) + rent_lo.
+    uint32_t rent_hi = 2560000000U / r_shunt;
+    uint32_t rem0    = 2560000000U % r_shunt;
+
+    uint32_t q1      = (rem0 << 6U) / r_shunt;
+    uint32_t rem1    = (rem0 << 6U) % r_shunt;
+
+    uint32_t q2      = (rem1 << 6U) / r_shunt;
+    uint32_t rem2    = (rem1 << 6U) % r_shunt;
+
+    uint32_t q3      = (rem2 << 5U) / r_shunt;
+    uint32_t rent_lo = (q1 << 11U) | (q2 << 5U) | q3;
+
+    // 2) Divide the intermediate quotient ((rent_hi << 17) + rent_lo) by
+    //    calibration_reg_val (1..32767) with round-to-nearest, then recombine.
+    uint32_t cur_hi  = rent_hi / calibration_reg_val;
+    uint32_t cur_rem = rent_hi % calibration_reg_val;
+    uint32_t cur_lo  = ((cur_rem << 17U) + rent_lo + ((uint32_t)calibration_reg_val >> 1U)) / calibration_reg_val;
+
+    actual_curr_lsb_q16_16_uA = (cur_hi << 17U) + cur_lo;
+
+    // Write the calibration register first; only update handle state on success.
+    INA226_Status_t op_status = INA226_Write_Reg(sensor->cfg->i2c_addr, INA226_CALIBRATION_REG, calibration_reg_val);
+    if (op_status != INA226_OK) {
+        return op_status;
+    }
+
+    // Store the actual Current_LSB (Q16.16 uA) and derive power_lsb_q16_16_uW = 25 * Current_LSB
+    // per the INA226 datasheet, rounded from Q16.16 to the nearest integer [uW/LSB].
+    sensor->current_lsb_q16_16_uA = actual_curr_lsb_q16_16_uA;
+    sensor->power_lsb_q16_16_uW = (uint32_t)(((25ULL * (uint64_t)actual_curr_lsb_q16_16_uA) + 32768ULL) >> 16U);
+
+    return INA226_OK;
 }
 
 INA226_Status_t INA226_Read_Current(const ina226_handle_t *sensor, int32_t *current) {
 
-    if (sensor == NULL || current == NULL) return INA226_ERR_INVALID_PARAM;
+    if (sensor == NULL || sensor->cfg == NULL || current == NULL) return INA226_ERR_INVALID_PARAM;
 
     uint16_t current_reg = 0U;
     
-    INA226_Status_t op_status = INA226_Read_Reg(sensor->ina226_i2c_addr, INA226_CURRENT_REG, &current_reg);
+    INA226_Status_t op_status = INA226_Read_Reg(sensor->cfg->i2c_addr, INA226_CURRENT_REG, &current_reg);
 
     if (op_status != INA226_OK) {
         return op_status;
     }
 
-    // current_reg * current_lsb = current;
-    int64_t current_lsb_uA = (int64_t)sensor->current_lsb_uA;
-    int64_t curr64_uA = (int64_t)((int16_t)current_reg) * current_lsb_uA;
+    // current_reg * current_lsb_q16_16_uA is in Q48.16 [uA * 2^16]; round-to-nearest to [uA].
+    int64_t curr_q16_16 = (int64_t)current_reg * (int64_t)sensor->current_lsb_q16_16_uA;
+    int64_t curr64_uA = (curr_q16_16 + (curr_q16_16 >= 0 ? 32768LL : -32768LL)) / 65536LL;
+
     
     if (curr64_uA > (int64_t)INT32_MAX) {
         return INA226_ERR_MATH_OVERFLOW;
@@ -444,11 +499,11 @@ INA226_Status_t INA226_Read_Current(const ina226_handle_t *sensor, int32_t *curr
 
 INA226_Status_t INA226_Read_Shunt_Voltage(const ina226_handle_t *sensor, int32_t *voltage) {
 
-    if (sensor == NULL || voltage == NULL) return INA226_ERR_INVALID_PARAM;
+    if (sensor == NULL || sensor->cfg == NULL || voltage == NULL) return INA226_ERR_INVALID_PARAM;
 
     uint16_t shunt_voltage_reg = 0U;
 
-    INA226_Status_t op_status = INA226_Read_Reg(sensor->ina226_i2c_addr, INA226_SH_VOLTAGE_REG, &shunt_voltage_reg);
+    INA226_Status_t op_status = INA226_Read_Reg(sensor->cfg->i2c_addr, INA226_SH_VOLTAGE_REG, &shunt_voltage_reg);
 
     if (op_status != INA226_OK) {
         return op_status;
@@ -466,11 +521,11 @@ INA226_Status_t INA226_Read_Shunt_Voltage(const ina226_handle_t *sensor, int32_t
 
 INA226_Status_t INA226_Read_Bus_Voltage(const ina226_handle_t *sensor, uint32_t *voltage) {
 
-    if (sensor == NULL || voltage == NULL) return INA226_ERR_INVALID_PARAM;
+    if (sensor == NULL || sensor->cfg == NULL || voltage == NULL) return INA226_ERR_INVALID_PARAM;
 
     uint16_t bus_voltage_reg = 0U;
     
-    INA226_Status_t op_status = INA226_Read_Reg(sensor->ina226_i2c_addr, INA226_BUS_VOLTAGE_REG, &bus_voltage_reg);
+    INA226_Status_t op_status = INA226_Read_Reg(sensor->cfg->i2c_addr, INA226_BUS_VOLTAGE_REG, &bus_voltage_reg);
 
     if (op_status != INA226_OK) {
         return op_status;
@@ -484,49 +539,42 @@ INA226_Status_t INA226_Read_Bus_Voltage(const ina226_handle_t *sensor, uint32_t 
 
 INA226_Status_t INA226_Read_Power(const ina226_handle_t *sensor, uint32_t *power) {
 
-    if (sensor == NULL || power == NULL) return INA226_ERR_INVALID_PARAM;
+    if (sensor == NULL || sensor->cfg == NULL || power == NULL) return INA226_ERR_INVALID_PARAM;
 
     uint16_t power_reg = 0U;
     
-    INA226_Status_t op_status = INA226_Read_Reg(sensor->ina226_i2c_addr, INA226_POWER_REG, &power_reg);
+    INA226_Status_t op_status = INA226_Read_Reg(sensor->cfg->i2c_addr, INA226_POWER_REG, &power_reg);
 
     if (op_status != INA226_OK) {
         return op_status;
     }
 
-
-    int64_t power_lsb = 25U * (int64_t)sensor->current_lsb_uA;
-
     // Power [uW] = Power Register Value * Power LSB [uW]
-    int64_t pwr64_uW = ((int64_t)power_reg * power_lsb);
+    uint64_t pwr64_uW = (uint64_t)power_reg * (uint64_t)sensor->power_lsb_q16_16_uW;
 
-    if (pwr64_uW > (int64_t)UINT32_MAX) {
+    if (pwr64_uW > (uint64_t)UINT32_MAX) {
         return INA226_ERR_MATH_OVERFLOW;
     }
-    else if (pwr64_uW < 0) {
-        return INA226_ERR_MATH_OVERFLOW;
-    }
-    else {
-        (*power) = (uint32_t)pwr64_uW;
-    }
+
+    (*power) = (uint32_t)pwr64_uW;
 
     return INA226_OK;
 }
 
 INA226_Status_t INA226_Read_Manufacturer_ID(const ina226_handle_t *sensor, uint16_t *out_mfg_id) {
 
-    if (sensor == NULL || out_mfg_id == NULL) {
+    if (sensor == NULL || sensor->cfg == NULL || out_mfg_id == NULL) {
         return INA226_ERR_INVALID_PARAM;
     }
 
-    return INA226_Read_Reg(sensor->ina226_i2c_addr, INA226_MANUFACTURER_ID_REG, out_mfg_id);
+    return INA226_Read_Reg(sensor->cfg->i2c_addr, INA226_MANUFACTURER_ID_REG, out_mfg_id);
 }
 
 INA226_Status_t INA226_Read_Die_ID(const ina226_handle_t *sensor, uint16_t *out_die_id) {
     
-    if (sensor == NULL || out_die_id == NULL) {
+    if (sensor == NULL || sensor->cfg == NULL || out_die_id == NULL) {
         return INA226_ERR_INVALID_PARAM;
     } 
 
-    return INA226_Read_Reg(sensor->ina226_i2c_addr, INA226_DIE_ID_REG, out_die_id);
+    return INA226_Read_Reg(sensor->cfg->i2c_addr, INA226_DIE_ID_REG, out_die_id);
 }

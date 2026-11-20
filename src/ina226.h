@@ -178,8 +178,8 @@ typedef struct {
     uint8_t i2c_addr;
     uint32_t r_shunt_uOhm;     /* 1 µΩ .. 4294 Ω */
     void *platform_i2c_handle; 
-    void (*i2c_read)(uint8_t dev_addr, uint8_t reg_addr, const uint8_t *data, uint16_t len);
-    void (*i2c_write)(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
+    uint8_t (*i2c_read)(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
+    uint8_t (*i2c_write)(uint8_t dev_addr, uint8_t reg_addr, const uint8_t *data, uint16_t len);
 } ina226_config_t;
 
 
@@ -197,7 +197,7 @@ typedef struct {
 typedef struct {
     const ina226_config_t *cfg;
     uint32_t current_lsb_q16_16_uA;
-    uint32_t power_lsb;
+    uint32_t power_lsb_q16_16_uW;
 } ina226_handle_t;
 
 /* ========================================================================= */
@@ -205,7 +205,7 @@ typedef struct {
 /* ========================================================================= */
 
 /**
- * @brief Reset the destination INA226 device to default register states.
+ * @brief Reset the destination INA226 device to default register states and return ina226_handle_t to default values.
  * 
  * @param sensor Destination INA226 device handle.
  * @return INA226_Status_t
@@ -213,7 +213,7 @@ typedef struct {
  *         - 1 : INA226_ERR_I2C; I2C communication error while writing to the configuration register.
  *         - 2 : INA226_ERR_INVALID_PARAM; sensor is NULL.
  */
-INA226_Status_t INA226_Reset(const ina226_handle_t *sensor);
+INA226_Status_t INA226_Reset(ina226_handle_t *sensor);
 
 /**
  * @brief Read the Manufacturer ID from destination INA226 device. 
@@ -313,7 +313,7 @@ INA226_Status_t INA226_Set_Averaging_Mode(const ina226_handle_t *sensor, INA226_
  *         - 1 : INA226_ERR_I2C; I2C communication error while writing the calibration register.
  *         - 2 : INA226_ERR_INVALID_PARAM; sensor is NULL, shunt/LSB is 0, or calculated CAL is out of range (1..32767).
  */
-INA226_Status_t INA226_Calibrate(const ina226_handle_t *sensor);
+INA226_Status_t INA226_Calibrate(ina226_handle_t *sensor, uint32_t current_lsb);
 
 /**
  * @brief Configure alert pin function for destination INA226 device.
