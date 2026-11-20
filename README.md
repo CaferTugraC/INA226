@@ -376,7 +376,9 @@ Host unit tests use [Unity](https://github.com/ThrowTheSwitch/Unity) and a mocke
 ```bash
 git clone --recurse-submodules https://github.com/CaferTugraC/INA226.git
 cd INA226
-make -C tests/host
+cmake --preset host
+cmake --build --preset host
+ctest --preset host
 ```
 
 In an existing clone without submodules, run `git submodule update --init --recursive` first.
@@ -400,7 +402,8 @@ INA226/
 │   ├── ina226.c            # Driver implementation
 │   └── ina226_regs.h       # Internal register definitions
 ├── tests/
-│   ├── host/               # Host unit tests (Unity) and Makefile
+│   ├── CMakeLists.txt      # Host test target and CTest configuration
+│   ├── host/               # Host unit tests (Unity)
 │   ├── test_target_ina226.c  # On-target tests (planned)
 │   └── unity/              # Unity test framework (submodule)
 ├── docs/
