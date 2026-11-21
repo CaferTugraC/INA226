@@ -18,7 +18,8 @@ static bool mock_i2c_read_fail = false;
 static uint8_t mock_last_dev_addr = 0U;
 
 // Actual mock I2C write handler invoked via ina226_config_t function pointer.
-static uint8_t Mock_I2C_Write_Callback(uint8_t dev_addr, uint8_t reg_addr, const uint8_t *data, uint16_t len) {
+static uint8_t Mock_I2C_Write_Callback(void *platform_i2c_handle, uint8_t dev_addr, uint8_t reg_addr, const uint8_t *data, uint16_t len) {
+    (void)platform_i2c_handle;
     mock_last_dev_addr = dev_addr;
 
     if (mock_i2c_write_fail || data == NULL || len != 2U) {
@@ -30,7 +31,8 @@ static uint8_t Mock_I2C_Write_Callback(uint8_t dev_addr, uint8_t reg_addr, const
 }
 
 // Actual mock I2C read handler invoked via ina226_config_t function pointer.
-static uint8_t Mock_I2C_Read_Callback(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len) {
+static uint8_t Mock_I2C_Read_Callback(void *platform_i2c_handle, uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len) {
+    (void)platform_i2c_handle;
     mock_last_dev_addr = dev_addr;
 
     if (mock_i2c_read_fail || data == NULL || len != 2U) {
@@ -50,20 +52,6 @@ static uint8_t Mock_I2C_Read_Callback(uint8_t dev_addr, uint8_t reg_addr, uint8_
     return INA226_OK;
 }
 
-static const ina226_config_t mock_default_cfg = {
-    .i2c_addr = 0x40U,
-    .r_shunt_uOhm = 100000U,
-    .platform_i2c_handle = NULL,
-    .i2c_read = Mock_I2C_Read_Callback,
-    .i2c_write = Mock_I2C_Write_Callback
-};
-
-static const ina226_config_t *mock_active_cfg = &mock_default_cfg;
-
-static void Mock_Set_Active_Config(const ina226_config_t *cfg) {
-    mock_active_cfg = cfg;
-}
-
 static ina226_config_t Make_Mock_Config(uint8_t addr, uint32_t r_shunt_uOhm) {
     ina226_config_t cfg = {
         .i2c_addr = addr,
@@ -80,7 +68,6 @@ static ina226_handle_t Make_Mock_Handle(const ina226_config_t *cfg) {
         .cfg = cfg,
         .current_lsb_q16_16_uA = 0U
     };
-    Mock_Set_Active_Config(cfg);
     return sensor;
 }
 
@@ -94,7 +81,6 @@ void Mock_I2C_Reset(void) {
     mock_i2c_write_fail = false;
     mock_i2c_read_fail = false;
     mock_last_dev_addr = 0U;
-    mock_active_cfg = &mock_default_cfg;
 
     for (uint32_t i = 8U; i < 254U; i++) {
         mock_ina226_registers[i] = 0U;
@@ -111,24 +97,6 @@ void Mock_I2C_Reset(void) {
     mock_ina226_registers[INA226_ALERT_LIM_REG] = 0U;
     mock_ina226_registers[INA226_MANUFACTURER_ID_REG] = 0x5449U;
     mock_ina226_registers[INA226_DIE_ID_REG] = 0x2260U;
-}
-
-// Global platform I2C hooks wrap the ina226_config_t function pointers so that
-// all mock I2C work executes through the config callbacks.
-uint8_t INA226_Platform_I2C_Write(uint8_t dev_addr, uint8_t reg_addr, const uint8_t *data, uint16_t len) {
-    if (mock_active_cfg == NULL || mock_active_cfg->i2c_write == NULL) {
-        return INA226_ERR_I2C;
-    }
-
-    return mock_active_cfg->i2c_write(dev_addr, reg_addr, data, len);
-}
-
-uint8_t INA226_Platform_I2C_Read(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len) {
-    if (mock_active_cfg == NULL || mock_active_cfg->i2c_read == NULL) {
-        return INA226_ERR_I2C;
-    }
-
-    return mock_active_cfg->i2c_read(dev_addr, reg_addr, data, len);
 }
 
 void setUp(void) {
@@ -2012,19 +1980,15 @@ void test_INA226_Functions_Should_Forward_Configured_I2C_Address(void) {
     ina226_handle_t sensor_b = Make_Mock_Handle(&cfg_b);
     uint16_t id_val = 0U;
 
-    Mock_Set_Active_Config(&cfg_a);
     TEST_ASSERT_EQUAL(INA226_OK, INA226_Read_Manufacturer_ID(&sensor_a, &id_val));
     TEST_ASSERT_EQUAL_HEX8(0x41U, mock_last_dev_addr);
 
-    Mock_Set_Active_Config(&cfg_b);
     TEST_ASSERT_EQUAL(INA226_OK, INA226_Read_Die_ID(&sensor_b, &id_val));
     TEST_ASSERT_EQUAL_HEX8(0x4FU, mock_last_dev_addr);
 
-    Mock_Set_Active_Config(&cfg_a);
     TEST_ASSERT_EQUAL(INA226_OK, INA226_Set_Averaging_Mode(&sensor_a, INA226_AVG_4));
     TEST_ASSERT_EQUAL_HEX8(0x41U, mock_last_dev_addr);
 
-    Mock_Set_Active_Config(&cfg_b);
     TEST_ASSERT_EQUAL(INA226_OK, INA226_Reset(&sensor_b));
     TEST_ASSERT_EQUAL_HEX8(0x4FU, mock_last_dev_addr);
 }

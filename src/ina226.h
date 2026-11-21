@@ -44,32 +44,6 @@ extern "C" {
 #define INA226_VERSION_STRING       "0.3.0"
 
 /* ========================================================================= */
-/*                       PLATFORM I2C HOOK FUNCTIONS                         */
-/* ========================================================================= */
-
-/**
- * @brief Platform I2C write function to be implemented by the user.
- * 
- * @param dev_addr Destination INA226 7-bit device address.
- * @param reg_addr Destination register address of INA226.
- * @param data     Pointer to data bytes to be written.
- * @param len      Number of bytes to write.
- * @return uint8_t 0 = success, non-zero = communication error.
- */
-extern uint8_t INA226_Platform_I2C_Write(uint8_t dev_addr, uint8_t reg_addr, const uint8_t *data, uint16_t len);
-
-/**
- * @brief Platform I2C read function to be implemented by the user.
- * 
- * @param dev_addr Destination INA226 7-bit device address.
- * @param reg_addr Destination register address of INA226.
- * @param data     Pointer to buffer where read data will be stored.
- * @param len      Number of bytes to read.
- * @return uint8_t 0 = success, non-zero = communication error.
- */
-extern uint8_t INA226_Platform_I2C_Read(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
-
-/* ========================================================================= */
 /*                              TYPES & DEFINES                              */
 /* ========================================================================= */
 
@@ -177,9 +151,9 @@ typedef INA226_Config_Option_t INA226_Alert_Latch_t;
 typedef struct {
     uint8_t i2c_addr;
     uint32_t r_shunt_uOhm;     /* 1 µΩ .. 4294 Ω */
-    void *platform_i2c_handle; 
-    uint8_t (*i2c_read)(uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
-    uint8_t (*i2c_write)(uint8_t dev_addr, uint8_t reg_addr, const uint8_t *data, uint16_t len);
+    void *platform_i2c_handle;
+    uint8_t (*i2c_read)(void *platform_i2c_handle, uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len);
+    uint8_t (*i2c_write)(void *platform_i2c_handle, uint8_t dev_addr, uint8_t reg_addr, const uint8_t *data, uint16_t len);
 } ina226_config_t;
 
 
