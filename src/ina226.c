@@ -108,6 +108,10 @@ static INA226_Status_t INA226_Write_Reg(const ina226_config_t *cfg, uint8_t reg_
  */
 static INA226_Status_t set_config_option(const ina226_config_t *cfg, INA226_Config_Option_t option, uint16_t mask, uint8_t pos) {
 
+    if (cfg == NULL || cfg->i2c_write == NULL) {
+        return INA226_ERR_INVALID_PARAM;
+    }
+
     uint16_t reg_value = 0U;
 
     // Read the register value of destination device.
@@ -199,7 +203,7 @@ INA226_Status_t INA226_Set_Averaging_Mode(const ina226_handle_t *sensor, INA226_
 
 INA226_Status_t INA226_Set_Alert_Pin_Function(const ina226_handle_t *sensor, INA226_Alert_Func_t alert_func) {
     
-    if (sensor == NULL || sensor->cfg == NULL) return INA226_ERR_INVALID_PARAM;
+    if (sensor == NULL || sensor->cfg == NULL || sensor->cfg->i2c_write == NULL) return INA226_ERR_INVALID_PARAM;
 
     // Validate the alert_func parameter using the bit-field structure of the alert function.
     // Extract the main alert source bits (bits [5:1]), excluding the Conversion Ready bit (bit 0).
@@ -257,7 +261,7 @@ INA226_Status_t INA226_Get_Alert_Pin_Function(const ina226_handle_t *sensor, INA
 
 INA226_Status_t INA226_Set_Alert_Limit(const ina226_handle_t *sensor, int32_t limit_value) {
 
-    if (sensor == NULL || sensor->cfg == NULL) return INA226_ERR_INVALID_PARAM;
+    if (sensor == NULL || sensor->cfg == NULL || sensor->cfg->i2c_write == NULL) return INA226_ERR_INVALID_PARAM;
 
     uint16_t alert_limit_reg_val = 0;
     INA226_Alert_Func_t alert_func;
@@ -377,7 +381,7 @@ INA226_Status_t INA226_Get_Alert_Status(const ina226_handle_t *sensor, INA226_Al
 }
 
 INA226_Status_t INA226_Set_Alert_Latch(const ina226_handle_t *sensor, INA226_Alert_Latch_t latch) {
-    if (sensor == NULL || sensor->cfg == NULL) return INA226_ERR_INVALID_PARAM;
+    if (sensor == NULL || sensor->cfg == NULL || sensor->cfg->i2c_write == NULL) return INA226_ERR_INVALID_PARAM;
     if (latch > INA226_ALERT_LATCH_ENABLE) return INA226_ERR_INVALID_PARAM;
 
     uint16_t mask_en_reg = 0;
