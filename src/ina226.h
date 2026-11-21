@@ -197,7 +197,6 @@ typedef struct {
 typedef struct {
     const ina226_config_t *cfg;
     uint32_t current_lsb_q16_16_uA;
-    uint32_t power_lsb_q16_16_uW;
 } ina226_handle_t;
 
 /* ========================================================================= */
