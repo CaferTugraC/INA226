@@ -276,14 +276,20 @@ INA226_Status_t INA226_Set_Alert_Limit(const ina226_handle_t *sensor, int32_t li
 
         // Shunt voltage alert: Convert limit from microvolts to register value.
         // Shunt Voltage LSB = 2.5 uV. Register = limit_value_uV / 2.5.
-        // Integer round-to-nearest: (2 * x + bias) / 5, where bias corrects rounding direction.
-        int64_t reg_val_64 = (2LL * (int64_t)limit_value + (limit_value >= 0 ? 2LL : -2LL)) / 5LL;
-
-        if (reg_val_64 > INT16_MAX || reg_val_64 < INT16_MIN) {
+        // Reject values outside the representable int16 register range before scaling
+        // (avoids int32 overflow and 64-bit division libcalls):
+        //   (2 *  81918 + 2) / 5 =  32767 (INT16_MAX)
+        //   (2 * -81921 - 2) / 5 = -32768 (INT16_MIN)
+        const int32_t shunt_limit_max_uV = ((5 * (int32_t)INT16_MAX) + 2) / 2;
+        const int32_t shunt_limit_min_uV = ((5 * (int32_t)INT16_MIN) - 2) / 2;
+        if (limit_value > shunt_limit_max_uV || limit_value < shunt_limit_min_uV) {
             return INA226_ERR_MATH_OVERFLOW;
         }
 
-        alert_limit_reg_val = (uint16_t)(int16_t)reg_val_64;
+        // Integer round-to-nearest: (2 * x + bias) / 5, where bias corrects rounding direction.
+        int32_t reg_val = ((2 * limit_value) + (limit_value >= 0 ? 2 : -2)) / 5;
+
+        alert_limit_reg_val = (uint16_t)(int16_t)reg_val;
 
     }
 
@@ -322,15 +328,31 @@ INA226_Status_t INA226_Set_Alert_Limit(const ina226_handle_t *sensor, int32_t li
         }
         
         // Power alert: Convert limit from microwatts to register value.
-        // Power LSB = 25 * Current_LSB (per datasheet). Register = limit_value_uW / power_lsb.
-        uint64_t reg_val_64;
-        reg_val_64 = (uint64_t)(((uint32_t)limit_value / 25U) / sensor->current_lsb_q16_16_uA) << 16;
+        // Power LSB in Q16.16 [uW * 2^16] = 25 * current_lsb_q16_16_uA (max 37 bits).
+        // Register = round((limit_value * 2^16) / power_lsb_q16_16).
+        const uint64_t power_lsb_q16_16 = (uint64_t)sensor->current_lsb_q16_16_uA * 25ULL;
+        const uint64_t scaled_limit = ((uint64_t)(uint32_t)limit_value << 16U) + (power_lsb_q16_16 >> 1U);
 
-        if (reg_val_64 > (int64_t)UINT16_MAX) { 
+        // Overflow check before dividing: quotient >= 65536 iff scaled_limit >= power_lsb_q16_16 * 2^16.
+        // power_lsb_q16_16 << 16 fits in 53 bits, so no uint64_t overflow is possible.
+        if (scaled_limit >= (power_lsb_q16_16 << 16U)) {
             return INA226_ERR_MATH_OVERFLOW;
         }
 
-        alert_limit_reg_val = (uint16_t)reg_val_64;
+        // Exact 16-bit restoring division with remainder carrying (avoids __aeabi_uldivmod).
+        uint64_t rem = scaled_limit;
+        uint64_t divisor = power_lsb_q16_16 << 15U;
+        uint16_t reg_val = 0U;
+        for (uint32_t bit = 0U; bit < 16U; bit++) {
+            reg_val = (uint16_t)(reg_val << 1U);
+            if (rem >= divisor) {
+                rem -= divisor;
+                reg_val |= 1U;
+            }
+            divisor >>= 1U;
+        }
+
+        alert_limit_reg_val = reg_val;
 
     }
 
@@ -412,18 +434,48 @@ INA226_Status_t INA226_Calibrate(ina226_handle_t *sensor, uint32_t current_lsb) 
 
     // CAL = 0.00512 / (Current_LSB[A] * Rshunt[Ohm])
     // CAL = 5.12e9 / (current_lsb_uA * r_shunt_uOhm)
-    const uint64_t numerator = 5120000000ULL;
-    const uint64_t denominator = (uint64_t)current_lsb * 
-                                 (uint64_t)sensor->cfg->r_shunt_uOhm;
+    //     = (2 * 2560000000) / denominator
+    // Compute with 32-bit sequential division + exact remainder carrying to avoid
+    // 64-bit division libcalls (__aeabi_uldivmod) on 32-bit MCUs, while reusing
+    // rent_hi and rem0 for the Q16.16 actual Current_LSB computation below.
+    const uint32_t r_shunt = sensor->cfg->r_shunt_uOhm;
+    const uint64_t denominator = (uint64_t)current_lsb * (uint64_t)r_shunt;
 
-    // calculate cal register value with round-to-nearest
-    uint64_t cal = (numerator + (denominator / 2ULL)) / denominator;
+    uint32_t rent_hi  = 2560000000U / r_shunt;
+    uint32_t rem0     = 2560000000U % r_shunt;
+
+    uint32_t q1   = rent_hi / current_lsb;
+    uint32_t rem1 = rent_hi % current_lsb;
+
+    // Exact remainder of 2560000000 % denominator; guaranteed <= 2560000000U (fits in uint32_t).
+    uint32_t rem = (r_shunt * rem1) + rem0;
+
+    // Combine both halves and round-to-nearest: floor((2*rem + floor(denominator/2)) / denominator)
+    // Since rem < denominator, the extra quotient is in {0, 1, 2}.
+    // 2*rem <= 5.12e9 and (denominator >> 1) < 2^63, so total_rem never overflows uint64_t.
+    uint64_t total_rem = (2ULL * (uint64_t)rem) + (denominator >> 1U);
+
+    uint64_t cal = 2ULL * (uint64_t)q1;
+    if (total_rem >= denominator) {
+        cal += 1ULL;
+        total_rem -= denominator;
+        if (total_rem >= denominator) {
+            cal += 1ULL;
+        }
+    }
+    
 
     if (cal == 0ULL || cal > INA226_CALIBRATION_MAX_VAL) {
         return INA226_ERR_INVALID_PARAM;
     }
 
     const uint16_t calibration_reg_val = (uint16_t)cal;
+
+    // actual_curr_lsb_q16_16_uA = (5.12e9 * 2^16) / (calibration_reg_val * r_shunt)
+    // Overflows uint32_t (>= 2^32) iff calibration_reg_val * r_shunt <= 5.12e9 / 2^16 = 78125.
+    if ((uint64_t)calibration_reg_val * (uint64_t)r_shunt <= (5120000000ULL >> 16U)) {
+        return INA226_ERR_MATH_OVERFLOW;
+    }
 
     uint32_t actual_curr_lsb_q16_16_uA;
 
@@ -434,22 +486,20 @@ INA226_Status_t INA226_Calibrate(ina226_handle_t *sensor, uint32_t current_lsb) 
      *   actual_curr_lsb_q16_16_uA = (5.12e9 * 2^16) / (calibration_reg_val * r_shunt)
      *                             = (2560000000 * 2^17) / (r_shunt * calibration_reg_val)
      */
-    const uint32_t r_shunt = sensor->cfg->r_shunt_uOhm;
 
-    // 1) Compute (2560000000 * 2^17) / r_shunt using 32-bit long division.
-    //    Because 2560000000 * 2^17 exceeds 32 bits, split the 17-bit shift into
-    //    three remainder-carrying stages (6 + 6 + 5 = 17 bits) yielding (rent_hi << 17) + rent_lo.
-    uint32_t rent_hi = 2560000000U / r_shunt;
-    uint32_t rem0    = 2560000000U % r_shunt;
-
-    uint32_t q1      = (rem0 << 6U) / r_shunt;
-    uint32_t rem1    = (rem0 << 6U) % r_shunt;
-
-    uint32_t q2      = (rem1 << 6U) / r_shunt;
-    uint32_t rem2    = (rem1 << 6U) % r_shunt;
-
-    uint32_t q3      = (rem2 << 5U) / r_shunt;
-    uint32_t rent_lo = (q1 << 11U) | (q2 << 5U) | q3;
+    // 1) Compute the 17 fractional bits of (2560000000 * 2^17) / r_shunt via a 17-step
+    //    shift-subtract loop on a 64-bit remainder. Works across the full uint32_t
+    //    r_shunt range (1 uOhm .. UINT32_MAX) without overflow or 64-bit div libcalls.
+    uint64_t frac_rem = (uint64_t)rem0;
+    uint32_t rent_lo  = 0U;
+    for (uint8_t bit = 0U; bit < 17U; bit++) {
+        frac_rem <<= 1U;
+        rent_lo <<= 1U;
+        if (frac_rem >= (uint64_t)r_shunt) {
+            frac_rem -= (uint64_t)r_shunt;
+            rent_lo |= 1U;
+        }
+    }
 
     // 2) Divide the intermediate quotient ((rent_hi << 17) + rent_lo) by
     //    calibration_reg_val (1..32767) with round-to-nearest, then recombine.
