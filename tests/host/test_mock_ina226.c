@@ -1360,6 +1360,60 @@ void test_INA226_Calibrate_Should_Detect_Current_LSB_Q16_16_Overflow(void) {
     TEST_ASSERT_EQUAL_UINT32(0U, sensor_exact_ovf.current_lsb_q16_16_uA);
 }
 
+void test_INA226_Calibrate_Should_Handle_Q16_16_Exact_Boundaries_And_Rounding_Edges(void) {
+    ina226_config_t cfg = Make_Mock_Config(0x40U, 100000U);
+    ina226_handle_t sensor = Make_Mock_Handle(&cfg);
+
+    // Pre-calibrate to a non-zero state so error paths verify preservation of existing handle state.
+    TEST_ASSERT_EQUAL(INA226_OK, INA226_Calibrate(&sensor, 100U));
+    const uint32_t prev_valid_q16_16 = sensor.current_lsb_q16_16_uA;
+    TEST_ASSERT_EQUAL_UINT32(Q16_16_FROM_INT(100U), prev_valid_q16_16);
+
+    // CB-1: CAL = 1, r_shunt = 78125 -> CAL * r_shunt == 78125 (exact overflow: actual Q16.16 == 2^32).
+    mock_ina226_registers[INA226_CALIBRATION_REG] = 0x1234U;
+    cfg.r_shunt_uOhm = 78125U;
+    TEST_ASSERT_EQUAL(INA226_ERR_MATH_OVERFLOW, INA226_Calibrate(&sensor, 65536U));
+    TEST_ASSERT_EQUAL_HEX16(0x1234U, mock_ina226_registers[INA226_CALIBRATION_REG]);
+    TEST_ASSERT_EQUAL_UINT32(prev_valid_q16_16, sensor.current_lsb_q16_16_uA);
+
+    // CB-2: CAL = 1, r_shunt = 78126 -> CAL * r_shunt == 78126 (largest valid Q16.16 value).
+    const uint64_t denom_78126 = 78126ULL;
+    const uint32_t ref_max_q16_16 = (uint32_t)(((5120000000ULL << 16U) + (denom_78126 / 2ULL)) / denom_78126);
+    cfg.r_shunt_uOhm = 78126U;
+    TEST_ASSERT_EQUAL(INA226_OK, INA226_Calibrate(&sensor, 65535U));
+    TEST_ASSERT_EQUAL_HEX16(1U, mock_ina226_registers[INA226_CALIBRATION_REG]);
+    TEST_ASSERT_UINT32_WITHIN(1U, ref_max_q16_16, sensor.current_lsb_q16_16_uA);
+
+    // CB-3: CAL = 13021, r_shunt = 6 -> CAL * r_shunt == 78126 and cur_hi == 32767 (max cur_hi << 17).
+    cfg.r_shunt_uOhm = 6U;
+    TEST_ASSERT_EQUAL(INA226_OK, INA226_Calibrate(&sensor, 65535U));
+    TEST_ASSERT_EQUAL_HEX16(13021U, mock_ina226_registers[INA226_CALIBRATION_REG]);
+    TEST_ASSERT_UINT32_WITHIN(1U, ref_max_q16_16, sensor.current_lsb_q16_16_uA);
+
+    // CB-4: Rounding-induced overflow (requested current_lsb < 65536, but CAL rounds down to 78 -> 78000 <= 78125).
+    cfg.r_shunt_uOhm = 100000U;
+    TEST_ASSERT_EQUAL(INA226_OK, INA226_Calibrate(&sensor, 100U));
+    mock_ina226_registers[INA226_CALIBRATION_REG] = 0x1234U;
+    cfg.r_shunt_uOhm = 1000U;
+    TEST_ASSERT_EQUAL(INA226_ERR_MATH_OVERFLOW, INA226_Calibrate(&sensor, 65500U));
+    TEST_ASSERT_EQUAL_HEX16(0x1234U, mock_ina226_registers[INA226_CALIBRATION_REG]);
+    TEST_ASSERT_EQUAL_UINT32(prev_valid_q16_16, sensor.current_lsb_q16_16_uA);
+
+    // CB-5: Rounding-induced valid calibration (requested current_lsb == 65536, CAL rounds up to 8 -> 80000 > 78125).
+    cfg.r_shunt_uOhm = 10000U;
+    TEST_ASSERT_EQUAL(INA226_OK, INA226_Calibrate(&sensor, 65536U));
+    TEST_ASSERT_EQUAL_HEX16(8U, mock_ina226_registers[INA226_CALIBRATION_REG]);
+    TEST_ASSERT_EQUAL_UINT32(Q16_16_FROM_INT(64000U), sensor.current_lsb_q16_16_uA);
+
+    // CB-6: 32-bit intermediate sum ceiling stress (CAL = 32767, cur_rem = 32766 = CAL_MAX - 1).
+    const uint64_t denom_cb6 = 32767ULL * 78128ULL;
+    const uint32_t ref_cb6_q16_16 = (uint32_t)(((5120000000ULL << 16U) + (denom_cb6 / 2ULL)) / denom_cb6);
+    cfg.r_shunt_uOhm = 78128U;
+    TEST_ASSERT_EQUAL(INA226_OK, INA226_Calibrate(&sensor, 2U));
+    TEST_ASSERT_EQUAL_HEX16(32767U, mock_ina226_registers[INA226_CALIBRATION_REG]);
+    TEST_ASSERT_UINT32_WITHIN(1U, ref_cb6_q16_16, sensor.current_lsb_q16_16_uA);
+}
+
 void test_INA226_Calibrate_Should_Accept_High_Current_LSB_Without_Power_LSB_Limit(void) {
     // Since Power_LSB is derived dynamically in 64-bit instead of stored in uint32_t,
     // Current_LSB > 2621.44 uA must succeed as long as Current_LSB fits in Q16.16 (< 65536 uA).
@@ -1994,6 +2048,232 @@ void test_INA226_Functions_Should_Forward_Configured_I2C_Address(void) {
 }
 
 // =========================================================================
+// Multi-I2C Bus & platform_i2c_handle Isolation Tests
+// =========================================================================
+
+typedef struct {
+    uint16_t regs[256];
+    uint32_t read_count;
+    uint32_t write_count;
+    uint8_t  last_dev_addr;
+    bool     read_fail;
+    bool     write_fail;
+} mock_i2c_bus_t;
+
+static uint32_t mock_alt_bus_read_calls = 0U;
+static uint32_t mock_alt_bus_write_calls = 0U;
+static void *mock_alt_bus_last_handle = NULL;
+
+static void Mock_Bus_Init(mock_i2c_bus_t *bus) {
+    for (uint32_t i = 0U; i < 256U; i++) {
+        bus->regs[i] = 0U;
+    }
+    bus->regs[INA226_CONFIG_REG] = 0x4127U;
+    bus->regs[INA226_MANUFACTURER_ID_REG] = 0x5449U;
+    bus->regs[INA226_DIE_ID_REG] = 0x2260U;
+    bus->read_count = 0U;
+    bus->write_count = 0U;
+    bus->last_dev_addr = 0U;
+    bus->read_fail = false;
+    bus->write_fail = false;
+}
+
+static uint8_t Mock_MultiBus_Write_Callback(void *platform_i2c_handle, uint8_t dev_addr, uint8_t reg_addr, const uint8_t *data, uint16_t len) {
+    if (platform_i2c_handle == NULL || data == NULL || len != 2U) {
+        return INA226_ERR_I2C;
+    }
+
+    mock_i2c_bus_t *bus = (mock_i2c_bus_t *)platform_i2c_handle;
+    bus->last_dev_addr = dev_addr;
+
+    if (bus->write_fail) {
+        return INA226_ERR_I2C;
+    }
+
+    bus->write_count++;
+    bus->regs[reg_addr] = (uint16_t)(((uint16_t)data[0] << 8U) | (uint16_t)data[1]);
+    return INA226_OK;
+}
+
+static uint8_t Mock_MultiBus_Read_Callback(void *platform_i2c_handle, uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len) {
+    if (platform_i2c_handle == NULL || data == NULL || len != 2U) {
+        return INA226_ERR_I2C;
+    }
+
+    mock_i2c_bus_t *bus = (mock_i2c_bus_t *)platform_i2c_handle;
+    bus->last_dev_addr = dev_addr;
+
+    if (bus->read_fail) {
+        return INA226_ERR_I2C;
+    }
+
+    bus->read_count++;
+    uint16_t val = bus->regs[reg_addr];
+    data[0] = (uint8_t)(val >> 8U);
+    data[1] = (uint8_t)(val & 0xFFU);
+
+    if (reg_addr == INA226_MASK_EN_REG) {
+        bus->regs[reg_addr] &= (uint16_t)~(INA226_MASK_EN_AFF_BIT | INA226_MASK_EN_CVRF_BIT);
+    }
+
+    return INA226_OK;
+}
+
+static uint8_t Mock_AltBus_Write_Callback(void *platform_i2c_handle, uint8_t dev_addr, uint8_t reg_addr, const uint8_t *data, uint16_t len) {
+    mock_alt_bus_write_calls++;
+    mock_alt_bus_last_handle = platform_i2c_handle;
+    return Mock_MultiBus_Write_Callback(platform_i2c_handle, dev_addr, reg_addr, data, len);
+}
+
+static uint8_t Mock_AltBus_Read_Callback(void *platform_i2c_handle, uint8_t dev_addr, uint8_t reg_addr, uint8_t *data, uint16_t len) {
+    mock_alt_bus_read_calls++;
+    mock_alt_bus_last_handle = platform_i2c_handle;
+    return Mock_MultiBus_Read_Callback(platform_i2c_handle, dev_addr, reg_addr, data, len);
+}
+
+void test_INA226_MultiBus_Should_Isolate_Sensors_Sharing_Same_I2C_Address(void) {
+    mock_i2c_bus_t bus_a;
+    mock_i2c_bus_t bus_b;
+    Mock_Bus_Init(&bus_a);
+    Mock_Bus_Init(&bus_b);
+
+    // Both sensors use identical 7-bit address 0x40 on separate I2C buses with different shunts.
+    const ina226_config_t cfg_a = {
+        .i2c_addr = 0x40U,
+        .r_shunt_uOhm = 100000U, // 100 mOhm
+        .platform_i2c_handle = &bus_a,
+        .i2c_read = Mock_MultiBus_Read_Callback,
+        .i2c_write = Mock_MultiBus_Write_Callback
+    };
+    const ina226_config_t cfg_b = {
+        .i2c_addr = 0x40U,
+        .r_shunt_uOhm = 2000U,   // 2 mOhm
+        .platform_i2c_handle = &bus_b,
+        .i2c_read = Mock_MultiBus_Read_Callback,
+        .i2c_write = Mock_MultiBus_Write_Callback
+    };
+
+    ina226_handle_t sensor_a = Make_Mock_Handle(&cfg_a);
+    ina226_handle_t sensor_b = Make_Mock_Handle(&cfg_b);
+
+    // MB-1: Write isolation during calibration.
+    TEST_ASSERT_EQUAL(INA226_OK, INA226_Calibrate(&sensor_a, 100U));
+    TEST_ASSERT_EQUAL_HEX16(512U, bus_a.regs[INA226_CALIBRATION_REG]);
+    TEST_ASSERT_EQUAL_HEX16(0U, bus_b.regs[INA226_CALIBRATION_REG]);
+    TEST_ASSERT_EQUAL_UINT32(1U, bus_a.write_count);
+    TEST_ASSERT_EQUAL_UINT32(0U, bus_b.write_count);
+    TEST_ASSERT_EQUAL_HEX8(0x40U, bus_a.last_dev_addr);
+
+    TEST_ASSERT_EQUAL(INA226_OK, INA226_Calibrate(&sensor_b, 1000U));
+    TEST_ASSERT_EQUAL_HEX16(512U, bus_a.regs[INA226_CALIBRATION_REG]);
+    TEST_ASSERT_EQUAL_HEX16(2560U, bus_b.regs[INA226_CALIBRATION_REG]);
+    TEST_ASSERT_EQUAL_UINT32(1U, bus_b.write_count);
+    TEST_ASSERT_EQUAL_HEX8(0x40U, bus_b.last_dev_addr);
+    TEST_ASSERT_EQUAL_UINT32(Q16_16_FROM_INT(100U), sensor_a.current_lsb_q16_16_uA);
+    TEST_ASSERT_EQUAL_UINT32(Q16_16_FROM_INT(1000U), sensor_b.current_lsb_q16_16_uA);
+
+    // MB-2: RMW isolation on Configuration Register.
+    TEST_ASSERT_EQUAL(INA226_OK, INA226_Set_Averaging_Mode(&sensor_a, INA226_AVG_64));
+    uint16_t expected_cfg_a = (uint16_t)((0x4127U & (uint16_t)~INA226_CONFIG_AVG_MASK) |
+                                         ((uint16_t)INA226_AVG_64 << INA226_CONFIG_AVG_POS));
+    TEST_ASSERT_EQUAL_HEX16(expected_cfg_a, bus_a.regs[INA226_CONFIG_REG]);
+    TEST_ASSERT_EQUAL_HEX16(0x4127U, bus_b.regs[INA226_CONFIG_REG]);
+    TEST_ASSERT_EQUAL_UINT32(1U, bus_a.read_count);
+    TEST_ASSERT_EQUAL_UINT32(2U, bus_a.write_count);
+    TEST_ASSERT_EQUAL_UINT32(0U, bus_b.read_count);
+    TEST_ASSERT_EQUAL_UINT32(1U, bus_b.write_count);
+
+    // MB-3: Read isolation on Current Register.
+    bus_a.regs[INA226_CURRENT_REG] = 100U; // 100 * 100 uA = 10,000 uA
+    bus_b.regs[INA226_CURRENT_REG] = 200U; // 200 * 1000 uA = 200,000 uA
+    int32_t cur_a = 0;
+    int32_t cur_b = 0;
+
+    TEST_ASSERT_EQUAL(INA226_OK, INA226_Read_Current(&sensor_a, &cur_a));
+    TEST_ASSERT_EQUAL(INA226_OK, INA226_Read_Current(&sensor_b, &cur_b));
+    TEST_ASSERT_EQUAL_INT32(10000, cur_a);
+    TEST_ASSERT_EQUAL_INT32(200000, cur_b);
+    TEST_ASSERT_EQUAL_UINT32(2U, bus_a.read_count);
+    TEST_ASSERT_EQUAL_UINT32(1U, bus_b.read_count);
+
+    // MB-4: Bus-local I2C error isolation (read and write).
+    bus_a.read_fail = true;
+    cur_a = -999;
+    cur_b = -999;
+    TEST_ASSERT_EQUAL(INA226_ERR_I2C, INA226_Read_Current(&sensor_a, &cur_a));
+    TEST_ASSERT_EQUAL_INT32(-999, cur_a);
+    TEST_ASSERT_EQUAL(INA226_OK, INA226_Read_Current(&sensor_b, &cur_b));
+    TEST_ASSERT_EQUAL_INT32(200000, cur_b);
+    bus_a.read_fail = false;
+
+    bus_a.write_fail = true;
+    TEST_ASSERT_EQUAL(INA226_ERR_I2C, INA226_Reset(&sensor_a));
+    TEST_ASSERT_EQUAL_UINT32(Q16_16_FROM_INT(100U), sensor_a.current_lsb_q16_16_uA);
+    TEST_ASSERT_EQUAL_HEX16(expected_cfg_a, bus_a.regs[INA226_CONFIG_REG]);
+
+    TEST_ASSERT_EQUAL(INA226_OK, INA226_Reset(&sensor_b));
+    TEST_ASSERT_EQUAL_UINT32(0U, sensor_b.current_lsb_q16_16_uA);
+    TEST_ASSERT_EQUAL_HEX16(INA226_CONFIG_RESET_MASK, bus_b.regs[INA226_CONFIG_REG]);
+    bus_a.write_fail = false;
+}
+
+void test_INA226_MultiBus_Should_Dispatch_Distinct_Callbacks_And_Handles(void) {
+    mock_i2c_bus_t bus_1;
+    mock_i2c_bus_t bus_2;
+    Mock_Bus_Init(&bus_1);
+    Mock_Bus_Init(&bus_2);
+    bus_2.regs[INA226_MANUFACTURER_ID_REG] = 0x1234U;
+
+    mock_alt_bus_read_calls = 0U;
+    mock_alt_bus_write_calls = 0U;
+    mock_alt_bus_last_handle = NULL;
+
+    const ina226_config_t cfg_1 = {
+        .i2c_addr = 0x40U,
+        .r_shunt_uOhm = 100000U,
+        .platform_i2c_handle = &bus_1,
+        .i2c_read = Mock_MultiBus_Read_Callback,
+        .i2c_write = Mock_MultiBus_Write_Callback
+    };
+    const ina226_config_t cfg_2 = {
+        .i2c_addr = 0x40U,
+        .r_shunt_uOhm = 100000U,
+        .platform_i2c_handle = &bus_2,
+        .i2c_read = Mock_AltBus_Read_Callback,
+        .i2c_write = Mock_AltBus_Write_Callback
+    };
+
+    ina226_handle_t sensor_1 = Make_Mock_Handle(&cfg_1);
+    ina226_handle_t sensor_2 = Make_Mock_Handle(&cfg_2);
+    uint16_t mfg_1 = 0U;
+    uint16_t mfg_2 = 0U;
+
+    // Operations on sensor_1 must not invoke sensor_2's callbacks.
+    TEST_ASSERT_EQUAL(INA226_OK, INA226_Read_Manufacturer_ID(&sensor_1, &mfg_1));
+    TEST_ASSERT_EQUAL(INA226_OK, INA226_Set_Operating_Mode(&sensor_1, INA226_SHUT_DOWN));
+    TEST_ASSERT_EQUAL_HEX16(0x5449U, mfg_1);
+    TEST_ASSERT_EQUAL_UINT32(0U, mock_alt_bus_read_calls);
+    TEST_ASSERT_EQUAL_UINT32(0U, mock_alt_bus_write_calls);
+    TEST_ASSERT_EQUAL_UINT32(2U, bus_1.read_count);
+    TEST_ASSERT_EQUAL_UINT32(1U, bus_1.write_count);
+    TEST_ASSERT_EQUAL_UINT32(0U, bus_2.read_count);
+    TEST_ASSERT_EQUAL_UINT32(0U, bus_2.write_count);
+
+    // Operations on sensor_2 must invoke Mock_AltBus_* with &bus_2 and leave bus_1 untouched.
+    TEST_ASSERT_EQUAL(INA226_OK, INA226_Read_Manufacturer_ID(&sensor_2, &mfg_2));
+    TEST_ASSERT_EQUAL_PTR(&bus_2, mock_alt_bus_last_handle);
+    TEST_ASSERT_EQUAL(INA226_OK, INA226_Set_Operating_Mode(&sensor_2, INA226_CONTINUOUS_BUS_VOLTAGE));
+    TEST_ASSERT_EQUAL_PTR(&bus_2, mock_alt_bus_last_handle);
+    TEST_ASSERT_EQUAL_HEX16(0x1234U, mfg_2);
+    TEST_ASSERT_EQUAL_UINT32(2U, mock_alt_bus_read_calls);
+    TEST_ASSERT_EQUAL_UINT32(1U, mock_alt_bus_write_calls);
+    TEST_ASSERT_EQUAL_UINT32(2U, bus_1.read_count);
+    TEST_ASSERT_EQUAL_UINT32(1U, bus_1.write_count);
+    TEST_ASSERT_EQUAL_UINT32(2U, bus_2.read_count);
+    TEST_ASSERT_EQUAL_UINT32(1U, bus_2.write_count);
+}
+
+// =========================================================================
 // Tests for INA226 version macros
 // =========================================================================
 
@@ -2092,6 +2372,7 @@ int main(void) {
     RUN_TEST(test_INA226_Calibrate_Should_Round_To_Nearest);
     RUN_TEST(test_INA226_Calibrate_Should_Return_Invalid_Param_Error_On_Out_Of_Range_Cal);
     RUN_TEST(test_INA226_Calibrate_Should_Detect_Current_LSB_Q16_16_Overflow);
+    RUN_TEST(test_INA226_Calibrate_Should_Handle_Q16_16_Exact_Boundaries_And_Rounding_Edges);
     RUN_TEST(test_INA226_Calibrate_Should_Accept_High_Current_LSB_Without_Power_LSB_Limit);
     RUN_TEST(test_INA226_Calibrate_Should_Return_I2C_Error_On_Write_Fail);
 
@@ -2138,6 +2419,8 @@ int main(void) {
     RUN_TEST(test_INA226_Read_Functions_Should_Return_I2C_Error_And_Preserve_Output_On_Read_Fail);
     RUN_TEST(test_INA226_Config_And_Mask_RMW_Functions_Should_Return_I2C_Error_On_Read_Or_Write_Fail);
     RUN_TEST(test_INA226_Functions_Should_Forward_Configured_I2C_Address);
+    RUN_TEST(test_INA226_MultiBus_Should_Isolate_Sensors_Sharing_Same_I2C_Address);
+    RUN_TEST(test_INA226_MultiBus_Should_Dispatch_Distinct_Callbacks_And_Handles);
 
     // INA226 version macros
     RUN_TEST(test_INA226_Version_Macros_Should_Be_Consistent);
