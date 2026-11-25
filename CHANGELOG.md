@@ -8,13 +8,27 @@ While the major version is `0`, a minor release may contain breaking changes; th
 
 ## [Unreleased]
 
+### Added
+- `ina226_config_t` structure for immutable per-device hardware and transport settings (`i2c_addr`, `r_shunt_uOhm`, `platform_i2c_handle`, `i2c_read`, and `i2c_write`), enabling `const`/flash storage and multiple INA226 devices on independent I²C buses.
+
 ### Changed
-- **BREAKING (behaviour):** `INA226_Calibrate` now returns `INA226_ERR_INVALID_PARAM` when the calculated CAL value is above 32 767. Bit 15 of the Calibration Register is not part of the calibration value, so CAL values from 32 768 to 65 535 used to write bit 15 and set a different calibration than the one the driver computed. Choose a larger `current_lsb_uA` or a larger shunt so that CAL fits in 15 bits ([#74]).
+- **BREAKING (API / ABI):** Redesigned `ina226_handle_t` to hold a `const ina226_config_t *cfg` pointer and a driver-managed `current_lsb_q16_16_uA` field (unsigned Q16.16 fixed-point µA), replacing `ina226_i2c_addr`, `shunt_resistor_uOhm`, and `current_lsb_uA`.
+- **BREAKING (API):** Replaced the global `INA226_Platform_I2C_Read` and `INA226_Platform_I2C_Write` link-time hooks with per-device `i2c_read` and `i2c_write` function pointers and an opaque `platform_i2c_handle` in `ina226_config_t`.
+- **BREAKING (API):** `INA226_Calibrate` now takes a mutable `ina226_handle_t *` and a `uint32_t current_lsb` parameter in µA. It back-calculates the effective `Current_LSB` from the rounded 15-bit `CAL` register in Q16.16 fixed-point to remove calibration rounding error from current, power, and power-alert scaling, and returns `INA226_ERR_MATH_OVERFLOW` if the effective LSB reaches 65 536 µA (`CAL * r_shunt_uOhm <= 78 125`).
+- **BREAKING (API):** `INA226_Reset` now takes a mutable `ina226_handle_t *` and clears `current_lsb_q16_16_uA` to `0` on I²C success while preserving `cfg`.
+- **BREAKING (behaviour):** `INA226_Set_Alert_Limit` now returns `INA226_ERR_INVALID_STATE` when a power alert is configured on an uncalibrated handle (`current_lsb_q16_16_uA == 0`).
+- **BREAKING (behaviour):** `INA226_Calibrate` now returns `INA226_ERR_INVALID_PARAM` when the calculated CAL value is above 32 767. Bit 15 of the Calibration Register is not part of the calibration value, so CAL values from 32 768 to 65 535 used to write bit 15 and set a different calibration than the one the driver computed. Choose a larger `current_lsb` or a larger shunt so that CAL fits in 15 bits ([#74]).
+- Power LSB (`25 * Current_LSB`) is now derived dynamically in 64-bit arithmetic from `current_lsb_q16_16_uA` instead of being stored separately, allowing calibration with effective `Current_LSB` values up to `< 65 536 µA`.
+- Eliminated 64-bit division libcalls (`__aeabi_uldivmod` / `__aeabi_ldivmod`) from `INA226_Calibrate` and `INA226_Set_Alert_Limit` using 32-bit remainder-carrying division and bounded shift-subtract loops.
 
 ### Fixed
-- `ina226.h` can now be included from C++. Its declarations, including the platform I2C hooks, are wrapped in `extern "C"` guards ([#75]).
-- `INA226_Set_Alert_Limit` no longer divides by zero for a power alert when `current_lsb_uA` is 0. It now returns `INA226_ERR_INVALID_PARAM` ([#72]).
-- `INA226_Set_Alert_Limit` no longer overflows `int32_t` for a bus voltage limit close to `INT32_MAX`. It now returns `INA226_ERR_MATH_OVERFLOW` before the conversion ([#73], [#80]).
+- `ina226.h` can now be included from C++. Its declarations are wrapped in `extern "C"` guards ([#75]).
+- `INA226_Set_Alert_Limit` no longer divides by zero for a power alert on an uncalibrated handle (originally returned `INA226_ERR_INVALID_PARAM` in [#72]; updated to `INA226_ERR_INVALID_STATE` with the calibration redesign).
+- `INA226_Set_Alert_Limit` no longer overflows `int32_t` for a bus voltage limit close to `INT32_MAX` ([#73], [#80]) or for extreme shunt voltage limits (`INT32_MIN` / `INT32_MAX`), returning `INA226_ERR_MATH_OVERFLOW` before scaling.
+- Read-modify-write paths now validate `cfg->i2c_write != NULL` before reading registers, avoiding spurious I²C reads when the write callback is missing.
+
+### Removed
+- Global `INA226_Platform_I2C_Read` and `INA226_Platform_I2C_Write` declarations from `ina226.h` (replaced by `ina226_config_t` callbacks).
 
 
 ## [0.3.0] - 2026-10-01
