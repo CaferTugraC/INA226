@@ -24,6 +24,17 @@
 /*                              PRIVATE FUNCTIONS                            */
 /* ========================================================================= */
 
+/* CAL as written by INA226_Calibrate; the device's actual current LSB follows it. */
+static uint8_t calc_calibration_reg(const ina226_handle_t *sensor, uint16_t *cal) {
+    uint64_t denominator, value;
+    if (sensor->shunt_resistor_uOhm == 0U || sensor->current_resolution_uA == 0U) return 0U;
+    denominator = (uint64_t)sensor->current_resolution_uA * (uint64_t)sensor->shunt_resistor_uOhm;
+    value = (5120000000ULL + (denominator / 2ULL)) / denominator;
+    if (value == 0ULL || value > 0xFFFFULL) return 0U;
+    (*cal) = (uint16_t)value;
+    return 1U;
+}
+
 /**
  * @brief Read 16-bit register value from INA226.
  * 
@@ -415,9 +426,19 @@ INA226_Status_t INA226_Read_Current(const ina226_handle_t *sensor, int32_t *curr
         return op_status;
     }
 
-    // current_reg * current_lsb = current;
-    int64_t resolution_uA = (int64_t)sensor->current_resolution_uA;
-    int64_t curr64_uA = (int64_t)((int16_t)current_reg) * resolution_uA;
+    // The device works with the LSB implied by the rounded CAL register.
+    uint16_t cal = 0U;
+    int64_t raw = (int64_t)(int16_t)current_reg;
+    int64_t curr64_uA;
+
+    if (calc_calibration_reg(sensor, &cal) != 0U) {
+        int64_t denominator = (int64_t)cal * (int64_t)sensor->shunt_resistor_uOhm;
+        int64_t numerator = raw * 5120000000LL;
+        curr64_uA = (numerator >= 0 ? numerator + denominator / 2 : numerator - denominator / 2) / denominator;
+    }
+    else {
+        curr64_uA = raw * (int64_t)sensor->current_resolution_uA;
+    }
     
     if (curr64_uA > (int64_t)INT32_MAX) {
         return INA226_ERR_MATH_OVERFLOW;
@@ -485,10 +506,17 @@ INA226_Status_t INA226_Read_Power(const ina226_handle_t *sensor, uint32_t *power
     }
 
 
-    int64_t power_lsb = 25U * (int64_t)sensor->current_resolution_uA;
+    // Power LSB = 25 * current LSB, with the LSB implied by the rounded CAL register.
+    uint16_t cal = 0U;
+    int64_t pwr64_uW;
 
-    // Power [uW] = Power Register Value * Power LSB [uW]
-    int64_t pwr64_uW = ((int64_t)power_reg * power_lsb);
+    if (calc_calibration_reg(sensor, &cal) != 0U) {
+        int64_t denominator = (int64_t)cal * (int64_t)sensor->shunt_resistor_uOhm;
+        pwr64_uW = ((int64_t)power_reg * 128000000000LL + denominator / 2) / denominator;
+    }
+    else {
+        pwr64_uW = (int64_t)power_reg * 25LL * (int64_t)sensor->current_resolution_uA;
+    }
 
     if (pwr64_uW > (int64_t)UINT32_MAX) {
         return INA226_ERR_MATH_OVERFLOW;
